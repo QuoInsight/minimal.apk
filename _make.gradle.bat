@@ -9,11 +9,17 @@ rem C:\Users\ckl036\.gradle\caches\transforms-2\files-2.1\f74e6ff14c4a8225c29151
 
 start notepad build.gradle
 echo Next: run gradle ...
-pause
+rem pause
+:@start
 call %GRADLE_EXE% assembleRelease
 
 rem #Execution failed for task ':installDebug'.
 rem # com.android.builder.testing.api.DeviceException: No connected devices!
 
-start C:\Data\adm\mobile\Android\apk\gradle\build\outputs\apk
+dir C:\Data\adm\mobile\Android\apk\gradle\build\outputs\apk\release
+rem start C:\Data\adm\mobile\Android\apk\gradle\build\outputs\apk
+
+echo.
+echo Next: run gradle again ...
 pause
+goto @start
