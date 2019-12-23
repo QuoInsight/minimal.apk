@@ -112,8 +112,11 @@ public class MainActivity extends Activity {
 
     TextView txt9 = new TextView(this);
       txt9.setGravity(Gravity.CENTER_HORIZONTAL);
-      txt9.setAutoLinkMask(android.text.util.Linkify.ALL);  txt9.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
-      txt9.setText("[ <A href='https://github.com/QuoInsight/minimal.apk'>src</A> ]");
+      txt9.setAutoLinkMask(android.text.util.Linkify.ALL);  txt9.setLinksClickable(true);
+      txt9.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+      txt9.setText(android.text.Html.fromHtml(
+        "[ <A href=\"https://github.com/QuoInsight/minimal.apk\">src</A> ]"
+      ));
 
     LinearLayout layout = new LinearLayout(this);
       layout.setGravity(Gravity.CENTER);  // Gravity.CENTER
