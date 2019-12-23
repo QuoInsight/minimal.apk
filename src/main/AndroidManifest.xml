@@ -4,7 +4,7 @@
    package="com.quoinsight.minimal"
 >
     <application
-       android:label="QuoInsight.Minimal"
+       android:label="☸QuoInsight.Minimal"
        tools:replace="android:icon"
        android:icon="@drawable/icon"
     >
