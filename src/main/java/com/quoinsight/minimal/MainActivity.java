@@ -17,11 +17,27 @@ import android.widget.AdapterView;
 
 import android.widget.EditText;
 
+import android.widget.ScrollView;
 import android.widget.LinearLayout;
 import android.view.Gravity;
 import android.view.View;
 
 public class MainActivity extends Activity {
+  public void launchUrl(String url) {
+    Intent intent = new Intent();
+      intent.setAction(Intent.ACTION_VIEW);
+      intent.addCategory(Intent.CATEGORY_BROWSABLE);
+      intent.setData(android.net.Uri.parse(url));
+    startActivity(intent);
+  }
+
+  public void launchApp(String className) {
+    Intent intent = new Intent(Intent.ACTION_MAIN);
+      intent.addCategory(Intent.CATEGORY_LAUNCHER);
+      intent.setPackage(className);
+    startActivity(intent);
+  }
+
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
@@ -31,7 +47,10 @@ public class MainActivity extends Activity {
 
     TextView txt1 = new TextView(this);
       txt1.setGravity(Gravity.CENTER_HORIZONTAL);
-      txt1.setText("Hello world!\n[" + sdf.format(new java.util.Date()) + "]");
+      // txt1.setText("Hello world!\n[" + sdf.format(new java.util.Date()) + "]");
+      txt1.setText(android.text.Html.fromHtml(
+        "Hello world!<br><small><small>[" + sdf.format(new java.util.Date()) + "]</small></small>"
+      ));
 
     final Spinner spinner1 = new Spinner(this);
       final java.util.Hashtable<String, String> radioStations = new java.util.Hashtable<String, String>();
@@ -46,8 +65,7 @@ public class MainActivity extends Activity {
       );
       spinner1.setAdapter(adapter);
       spinner1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-        @Override
-        public void onItemSelected(
+        @Override public void onItemSelected(
           AdapterView<?> parent, View view, int position, long id
         ) {
             // Log.v("item", (String) parent.getItemAtPosition(position));
@@ -56,8 +74,7 @@ public class MainActivity extends Activity {
             Toast.LENGTH_LONG).show();  // .setDuration(int duration)
         }
 
-        @Override
-        public void onNothingSelected(AdapterView<?> parent) {
+        @Override public void onNothingSelected(AdapterView<?> parent) {
             // TODO Auto-generated method stub
         }
       });
@@ -67,14 +84,7 @@ public class MainActivity extends Activity {
       button1.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
-            Intent intent = new Intent();
-            intent.setAction(Intent.ACTION_VIEW);
-            intent.addCategory(Intent.CATEGORY_BROWSABLE);
-            intent.setData(android.net.Uri.parse(
-              // "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8"
-              radioStations.get(spinner1.getSelectedItem().toString())
-            ));
-            startActivity(intent);
+            launchUrl( radioStations.get(spinner1.getSelectedItem().toString()) );
           }
         }
       );
@@ -90,9 +100,15 @@ public class MainActivity extends Activity {
       txt2.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+              "ss", java.util.Locale.getDefault()
+            );          
             int batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
             // TextView txt2 = (TextView) v; // findViewById(v.getId());
-            ((TextView) v).setText("Battery Level:\n" + Integer.toString(batLevel) + "%");
+            ((TextView) v).setText(android.text.Html.fromHtml(
+              "<small><small><small><small>Battery Level# " + sdf.format(new java.util.Date()) + " :</small></small></small></small>"
+                 + "" + Integer.toString(batLevel) + "%"
+            ));
           }
         }
       );
@@ -117,9 +133,8 @@ public class MainActivity extends Activity {
     EditText edit1 = new EditText(this);
       edit1.setGravity(Gravity.CENTER_HORIZONTAL);
       edit1.setText("testing ...");
-      edit1.setOnTouchListener(new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, android.view.MotionEvent motionEvent) {
+      edit1.setOnTouchListener(new View.OnTouchListener(){
+        @Override public boolean onTouch(View view, android.view.MotionEvent motionEvent) {
           view.getParent().requestDisallowInterceptTouchEvent(true);
           switch (motionEvent.getAction() & android.view.MotionEvent.ACTION_MASK){
             case android.view.MotionEvent.ACTION_UP:
@@ -135,23 +150,30 @@ public class MainActivity extends Activity {
       txt9.setLinksClickable(true);  // do not setAutoLinkMask !! txt9.setAutoLinkMask(android.text.util.Linkify.ALL);
       txt9.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
       txt9.setText(android.text.Html.fromHtml(
-        " [ <A href='https://github.com/QuoInsight/minimal.apk'>src</A> ]"
+        " [ <A href='https://github.com/QuoInsight/minimal.apk'>src</A> ] "
+         + " [ <A href='https://play.google.com/store/apps/details?id=com.quoinsight.minimal'>install</A> ] "
       ));
 
-    LinearLayout layout = new LinearLayout(this);
-      layout.setGravity(Gravity.CENTER);  // Gravity.CENTER
-      layout.setOrientation(LinearLayout.VERTICAL);
-      LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
-      );
-      layout.addView(txt1, params);
-      layout.addView(spinner1, params);
-      layout.addView(button1, params);
-      layout.addView(txt2, params);
-      layout.addView(button9, params);
-      layout.addView(edit1, params);
-      layout.addView(txt9, params);
+    // startActivityForResult(new Intent(android.provider.Settings.ACTION_SETTINGS), 0);
+    // launchApp("com.otherapp.package");
 
-    setContentView(layout);
+    ScrollView scrollable = new ScrollView(this);
+      scrollable.setLayoutParams(new ScrollView.LayoutParams(ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.MATCH_PARENT));
+      LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);  layout.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+          LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        layout.addView(txt1, params);
+        LinearLayout layout2 = new LinearLayout(this);
+          layout2.setOrientation(LinearLayout.HORIZONTAL);  layout2.setGravity(Gravity.CENTER);
+          layout2.addView(spinner1, params);  layout2.addView(button1, params);
+        layout.addView(layout2, params);
+        layout.addView(txt2, params);
+        layout.addView(button9, params);
+        layout.addView(edit1, params);
+        layout.addView(txt9, params);
+      scrollable.addView(layout);
+    setContentView(scrollable);
   }
 }
