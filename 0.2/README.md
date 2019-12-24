@@ -1,0 +1,2 @@
+- added custom app icon; showing the timestamp when app was launched; a dropdown list of radio stations and button to launch the corresponding streaming URL in default browser; showing the device's battery level; hyperlink to the source codes; and, a quit button
+- all in a simple LinearLayout.VERTICAL with Gravity.CENTER 
