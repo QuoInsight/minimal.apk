@@ -113,6 +113,16 @@ public class MainActivity extends Activity {
         }
       );
 
+    Button button2 = new Button(this);
+      button2.setText("Next");
+      button2.setOnClickListener(
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            startActivity(new Intent(v.getContext(), SubActivity.class));
+          }
+        }
+      );
+
     Button button9 = new Button(this);
       button9.setText("Quit");
       button9.setOnClickListener(
@@ -152,6 +162,7 @@ public class MainActivity extends Activity {
       txt9.setText(android.text.Html.fromHtml(
         " [ <A href='https://github.com/QuoInsight/minimal.apk'>src</A> ] "
          + " [ <A href='https://play.google.com/store/apps/details?id=com.quoinsight.minimal'>install</A> ] "
+          + " [ <A href='https://sites.google.com/site/quoinsight/home/minimal-apk'>about</A> ] "
       ));
 
     // startActivityForResult(new Intent(android.provider.Settings.ACTION_SETTINGS), 0);
@@ -170,10 +181,13 @@ public class MainActivity extends Activity {
           layout2.addView(spinner1, params);  layout2.addView(button1, params);
         layout.addView(layout2, params);
         layout.addView(txt2, params);
+        layout.addView(button2, params);
         layout.addView(button9, params);
         layout.addView(edit1, params);
         layout.addView(txt9, params);
       scrollable.addView(layout);
+      // avoid EditText from gaining focus at Activity startup 
+      txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
     setContentView(scrollable);
   }
 }
