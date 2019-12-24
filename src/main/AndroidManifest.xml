@@ -12,13 +12,13 @@
        tools:replace="android:icon"
        android:icon="@drawable/icon"
     >
-      <activity android:name="MainActivity" android:launchMode="singleTask">
+      <activity android:name="MainActivity" android:launchMode="singleInstance">
         <intent-filter>
           <action android:name="android.intent.action.MAIN" />
           <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
-      <activity android:name="SubActivity" android:launchMode="singleTask"
+      <activity android:name="SubActivity" android:launchMode="singleTop"
          android:label="QuoInsight☸Minimal.SubActivity"
       >
         <intent-filter>
