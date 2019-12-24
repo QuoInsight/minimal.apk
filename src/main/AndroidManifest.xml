@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+  # inspired by https://czak.pl/2016/01/13/minimal-android-project.html
   thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/AndroidManifest.xml
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -11,10 +12,17 @@
        tools:replace="android:icon"
        android:icon="@drawable/icon"
     >
-      <activity android:name="MainActivity">
+      <activity android:name="MainActivity" android:launchMode="singleTask">
         <intent-filter>
           <action android:name="android.intent.action.MAIN" />
           <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+      </activity>
+      <activity android:name="SubActivity" android:launchMode="singleTask"
+         android:label="QuoInsight☸Minimal.SubActivity"
+      >
+        <intent-filter>
+          <category android:name="android.intent.category.DEFAULT" />
         </intent-filter>
       </activity>
     </application>
