@@ -2,6 +2,9 @@
   <!--
     R.menu.menu ==> .\src\main\res\menu\menu.xml
     @string/settings ==> .\src\main\res\values\strings.xml : <string name="settings">
+
+    thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/res/menu/menu.xml
+    ⋮OptionsMenu vs. ≡NavigationDrawer
   -->
   <item
     android:id="@+id/main_menu_settings"
