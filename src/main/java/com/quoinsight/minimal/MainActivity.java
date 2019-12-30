@@ -4,9 +4,6 @@ package com.quoinsight.minimal;
   # thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/java/com/quoinsight/minimal/MainActivity.java
 */
 
-import android.app.Activity;
-import android.content.Intent;
-
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;  
@@ -22,21 +19,92 @@ import android.widget.LinearLayout;
 import android.view.Gravity;
 import android.view.View;
 
-public class MainActivity extends Activity {
+public class MainActivity extends android.app.Activity {
+
+  public void quit() {
+    android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder(this);
+    alrt.setMessage("Are you sure?").setPositiveButton("Yes", new android.content.DialogInterface.OnClickListener() {
+      @Override public void onClick(android.content.DialogInterface dialog, int which) {
+        /*
+        switch (which) {
+          case android.content.DialogInterface.BUTTON_POSITIVE:
+            //Yes button clicked
+            break;
+        }
+        */
+
+        //this.finishAffinity();
+        if (android.os.Build.VERSION.SDK_INT >= 21)
+          finishAndRemoveTask(); else finish();
+        /*
+          https://stackoverflow.com/questions/22166282/close-application-and-remove-from-recent-apps
+          Note: this won't address the availability of "force stop" in the application info.
+            Android allows you to force stop an application even if it does not have any processes running.
+            Force stop puts the package into a specific stopped state, where it can't receive broadcast events.
+        */
+
+        // System.exit(0);
+      }
+    }).setNegativeButton("No", null).show();
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   public void launchUrl(String url) {
-    Intent intent = new Intent();
-      intent.setAction(Intent.ACTION_VIEW);
-      intent.addCategory(Intent.CATEGORY_BROWSABLE);
+    android.content.Intent intent = new android.content.Intent();
+      intent.setAction(android.content.Intent.ACTION_VIEW);
+      intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
       intent.setData(android.net.Uri.parse(url));
     startActivity(intent);
   }
 
   public void launchApp(String className) {
-    Intent intent = new Intent(Intent.ACTION_MAIN);
-      intent.addCategory(Intent.CATEGORY_LAUNCHER);
+    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_MAIN);
+      intent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
       intent.setPackage(className);
     startActivity(intent);
   }
+
+  public int getBatteryLevel() {
+    android.os.BatteryManager bm = (android.os.BatteryManager)getSystemService(BATTERY_SERVICE);
+    int batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
+    return batLevel;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+/*
+  private static final int NEW_MENU_ID=android.view.Menu.FIRST+1;
+  @Override public boolean onCreateOptionsMenu(android.view.Menu menu) {
+    super.onCreateOptionsMenu(menu);
+    menu.add(0, NEW_MENU_ID, 0, "New"); 
+    return true;
+  }
+*/
+
+  @Override public boolean onCreateOptionsMenu(android.view.Menu menu) {
+    super.onCreateOptionsMenu(menu);
+    android.view.MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.menu, menu);  // [.\src\main\res\menu\menu.xml]
+    return true;
+  }
+  @Override public boolean onOptionsItemSelected(android.view.MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.main_menu_settings:
+        return true;
+      case R.id.main_menu_about:
+        launchUrl("https://sites.google.com/site/quoinsight/home/minimal-apk");
+        return true;
+      case R.id.main_menu_quit:
+        quit();
+        return true;
+      default:
+        break;
+    }
+    return false;
+  }
+
+  //////////////////////////////////////////////////////////////////////
 
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -68,7 +136,7 @@ public class MainActivity extends Activity {
         @Override public void onItemSelected(
           AdapterView<?> parent, View view, int position, long id
         ) {
-            // Log.v("item", (String) parent.getItemAtPosition(position));
+            // android.util.Log.v("item", (String) parent.getItemAtPosition(position));
             Toast.makeText(MainActivity.this, 
               "selected item: " + (String)parent.getItemAtPosition(position),
             Toast.LENGTH_LONG).show();  // .setDuration(int duration)
@@ -89,13 +157,10 @@ public class MainActivity extends Activity {
         }
       );
 
-    final android.os.BatteryManager bm = (android.os.BatteryManager)getSystemService(BATTERY_SERVICE);
-    int batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
-
     TextView txt2 = new TextView(this);
       txt2.setGravity(Gravity.CENTER_HORIZONTAL);
       txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 60);
-      txt2.setText("Battery Level:\n" + Integer.toString(batLevel) + "%");
+      txt2.setText("Battery Level:\n" + Integer.toString(getBatteryLevel()) + "%");
       txt2.setClickable(true);
       txt2.setOnClickListener(
         new View.OnClickListener() {
@@ -103,11 +168,10 @@ public class MainActivity extends Activity {
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
               "ss", java.util.Locale.getDefault()
             );          
-            int batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
             // TextView txt2 = (TextView) v; // findViewById(v.getId());
             ((TextView) v).setText(android.text.Html.fromHtml(
               "<small><small><small><small>Battery Level# " + sdf.format(new java.util.Date()) + " :</small></small></small></small>"
-                 + "" + Integer.toString(batLevel) + "%"
+                 + "" + Integer.toString(getBatteryLevel()) + "%"
             ));
           }
         }
@@ -118,7 +182,7 @@ public class MainActivity extends Activity {
       button2.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
-            startActivity(new Intent(v.getContext(), SubActivity.class));
+            startActivity(new android.content.Intent(v.getContext(), OtherActivity.class));
           }
         }
       );
@@ -133,9 +197,8 @@ public class MainActivity extends Activity {
             ).show();  // .setDuration(int duration)
 
             try { Thread.sleep(3000); } catch(InterruptedException e) {}
-            //this.finishAffinity();
-            finishAndRemoveTask();
-            // System.exit(0);
+
+            quit();
           }
         }
       );
@@ -165,7 +228,7 @@ public class MainActivity extends Activity {
           + " [ <A href='https://sites.google.com/site/quoinsight/home/minimal-apk'>about</A> ] "
       ));
 
-    // startActivityForResult(new Intent(android.provider.Settings.ACTION_SETTINGS), 0);
+    // startActivityForResult(new android.content.Intent(android.provider.Settings.ACTION_SETTINGS), 0);
     // launchApp("com.otherapp.package");
 
     ScrollView scrollable = new ScrollView(this);
@@ -190,4 +253,5 @@ public class MainActivity extends Activity {
       txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
     setContentView(scrollable);
   }
+
 }
