@@ -2,6 +2,7 @@ package com.quoinsight.minimal;
 /*
   # inspired by https://czak.pl/2016/01/13/minimal-android-project.html
   # thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/java/com/quoinsight/minimal/MainActivity.java
+  # this is fully standalone and not referencing/using any resource/xml files
 */
 
 import android.widget.TextView;
@@ -123,12 +124,13 @@ public class MainActivity extends android.app.Activity {
     final Spinner spinner1 = new Spinner(this);
       final java.util.Hashtable<String, String> radioStations = new java.util.Hashtable<String, String>();
         // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
+        radioStations.put("SleepRadio", "http://149.56.234.138:8169/;");
         radioStations.put("澳門電台", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
         radioStations.put("AiFM", "https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020.m3u8");
         radioStations.put("香港電台第一台", "http://stm.rthk.hk:80/radio1");
       ArrayAdapter<String> adapter = new ArrayAdapter<String>(
         this, android.R.layout.simple_spinner_item,
-        //new String[] { "澳門電台", "AiFM", "港台" }
+        //new String[] { "SleepRadio", "澳門電台", "AiFM", "港台" }
         new java.util.ArrayList<String>(radioStations.keySet())
       );
       spinner1.setAdapter(adapter);
