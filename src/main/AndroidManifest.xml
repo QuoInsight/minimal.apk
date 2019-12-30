@@ -2,28 +2,29 @@
 <!--
   # inspired by https://czak.pl/2016/01/13/minimal-android-project.html
   thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/AndroidManifest.xml
+
+  android:icon="@drawable/icon" ==> .\src\main\res\drawable-*dpi\icon.png
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
    xmlns:tools="http://schemas.android.com/tools"
    package="com.quoinsight.minimal"
 >
-    <application
-       android:label="QuoInsight☸Minimal"
-       tools:replace="android:icon"
-       android:icon="@drawable/icon"
+  <!--uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/-->
+  <application android:label="QuoInsight☸Minimal"
+     tools:replace="android:icon" android:icon="@drawable/icon"
+  >
+    <activity android:name="MainActivity" android:launchMode="singleInstance">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
+    <activity android:name="OtherActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.OtherActivity"
     >
-      <activity android:name="MainActivity" android:launchMode="singleInstance">
-        <intent-filter>
-          <action android:name="android.intent.action.MAIN" />
-          <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
-      </activity>
-      <activity android:name="SubActivity" android:launchMode="singleTop"
-         android:label="QuoInsight☸Minimal.SubActivity"
-      >
-        <intent-filter>
-          <category android:name="android.intent.category.DEFAULT" />
-        </intent-filter>
-      </activity>
-    </application>
+      <intent-filter>
+        <category android:name="android.intent.category.DEFAULT" />
+      </intent-filter>
+    </activity>
+  </application>
 </manifest>
