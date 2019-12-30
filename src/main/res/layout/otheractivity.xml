@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  R.layout.otheractivity ==> .\src\main\res\layout\otheractivity.xml
+  [ File-based resource names must contain only lowercase a-z, 0-9, or underscore ]
+
+  You need to specifiy the layout_width and layout_height of each element.
+  That is a must/required/mandatory for all views, no matter which layout you use!
+  Otherwise, it will throw error during runtime "Binary XML file line #??:
+  You must supply a layout_width attribute."
+
+  https://developer.android.com/reference/android/widget/LinearLayout.html
+
+  LinearLayout ==> android:layout_gravity="center_horizontal"
+  RelativeLayout ==> android:layout_centerHorizontal="true"
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent" android:layout_height="match_parent"
+  android:orientation="vertical" android:layout_gravity="center_horizontal"
+  tools:context=".OtherActivity"
+>
+  <TextView android:id="@+id/txt1"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+    android:text="Hello from OtherActivity!"
+  />
+
+  <TextView android:id="@+id/txt2"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+    android:text="Orientation:\n ??"
+  />
+
+  <Button android:id="@+id/button2"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+    android:text="Previous"
+  />
+
+  <Button android:id="@+id/button9"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+    android:text="Quit"
+  />
+
+  <TextView android:id="@+id/txt9"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+  />
+
+</LinearLayout>
