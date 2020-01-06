@@ -19,29 +19,321 @@ import android.view.View;
 
 public class OtherActivity extends android.app.Activity {
 
-  private Compass compass; // Compass.java
+  public void writeMessage(String tag, String msg, String...args) {  // varargs
+    Toast.makeText(OtherActivity.this, tag + ": " +  msg, Toast.LENGTH_LONG).show();  // .setDuration(int duration)
+    //android.util.Log.e(tag, msg);
+    return;
+  }
 
-  public float[] getOrientation() {
-    // https://stackoverflow.com/questions/7046608/getrotationmatrix-and-getorientation-tutorial
-    // https://github.com/iutinvg/compass/blob/master/app/src/main/java/com/sevencrayons/compass/Compass.java
+  public void msgBox(String title, String msg) {
+    android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder(this);
+    alrt.setTitle(title).setMessage(msg).setCancelable(false).setPositiveButton("OK", null).show();
+  }
+
+  public void launchUrl(String url) {
+    android.content.Intent intent = new android.content.Intent();
+      intent.setAction(android.content.Intent.ACTION_VIEW);
+      intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
+      intent.setData(android.net.Uri.parse(url));
+    startActivity(intent);
+  }
+
+  public java.util.List<String> getPackageList() {
+    // https://devofandroid.blogspot.com/2018/02/get-list-of-user-installed-apps-with.html
+    android.content.pm.PackageManager pkgMgr = this.getPackageManager();
+    java.util.List<String> pkgLst = new java.util.ArrayList<String>();
+    for (android.content.pm.ApplicationInfo appInfo
+      : pkgMgr.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
+    ) {
+      String pkgName = appInfo.packageName;
+      if ( pkgName.startsWith("com.coloros.")||pkgName.startsWith("com.oppo.") ) {
+        // skip Oppo apps/packages
+      } else if ( (appInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0 ) {
+        // skip system packages
+      } else {
+        String appName = appInfo.loadLabel(pkgMgr).toString().trim();
+        pkgLst.add( appName + " [" + pkgName + "]" );
+      }
+      //Log.d(TAG, "Installed package :" + appInfo.packageName);
+      //Log.d(TAG, "Source dir : " + appInfo.sourceDir);
+      //Log.d(TAG, "Launch Activity :" + pm.getLaunchIntentForPackage(appInfo.packageName)); 
+    }
+    java.util.Collections.sort(pkgLst, String.CASE_INSENSITIVE_ORDER);  // java.util.Collections.reverseOrder()
+    return pkgLst;
+  }
+
+  public void launchAppMgr() {
+    try {
+      startActivityForResult(new android.content.Intent(
+        android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS
+      ), 0);
+    } catch(Exception e) {
+      writeMessage("OtherActivity.launchAppMgr", e.getMessage());
+      return;
+    }
+  }
+
+  public void launchAppInfo(String pkgName) {
+    try {
+      android.content.Intent intent = new android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+      intent.setData(android.net.Uri.parse("package:" + pkgName));
+      startActivity(intent);
+    } catch(Exception e) {
+      writeMessage("OtherActivity.launchAppInfo", e.getMessage());
+      return;
+    }
+  }
+
+  public void launchApp(String pkgName) {
+    try {
+      android.content.Intent intent = this.getPackageManager().getLaunchIntentForPackage(pkgName);
+      startActivity(intent);
+    } catch(Exception e) {
+      writeMessage("OtherActivity.launchApp", "[" + pkgName + "] " + e.getMessage());
+      return;
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public boolean toggleFlashLight = true;
+
+  //////////////////////////////////////////////////////////////////////
+
+  private com.sevencrayons.compass.Compass compass;  // --> .\src\main\java\com\sevencrayons\compass\Compass.java
+
+  private android.hardware.SensorManager gSensorManager;
+  private static float lastAzimuthValue = -0.01f;
+  public boolean gLock = true;
+
+  // !! Do not use ReentrantLock() which will return immediately if the current thread already owns the lock !!
+  public final Object waitObj1 = new Object(); 
+  public void unregisterListenerOnTimeout(final long timeout) {
+    // final long p_timeout = timeout;
+    // if ( true ) return;
+
+    final android.os.Handler handler = new android.os.Handler();
+      handler.postDelayed(new Runnable(){@Override public void run(){ // !! must use this to avoid issue for UI thread !!
+        try {
+          gSensorManager.unregisterListener(setTextAndUnregisterOnSensorChanged);
+          msgBox("OtherActivity.unregisterListenerOnTimeout", "Done");
+        } catch(Exception e) { 
+          msgBox("OtherActivity.unregisterListenerOnTimeout", e.getMessage());
+        }
+      }}, timeout);
+    return;
 
     /*
-    android.hardware.SensorManager sensorManager
-      = (android.hardware.SensorManager) this.getSystemService(android.content.Context.SENSOR_SERVICE);
-      android.hardware.Sensor gsensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER);
-      android.hardware.Sensor msensor = sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD);
-      sensorManager.registerListener(this, gsensor, android.hardware.SensorManager.SENSOR_DELAY_GAME);
-      sensorManager.registerListener(this, msensor, android.hardware.SensorManager.SENSOR_DELAY_GAME);
+      !! runOnUiThread with waitObj1.wait() will block the UI thread !! 
+      //android.os.AsyncTask.execute(new Runnable(){@Override public void run(){ // !! may clash if use in UI thread !!
+      runOnUiThread(new Runnable(){@Override public void run(){ // !! may use this for UI thread, but waitObj1.wait() will block the UI thread !!
+        synchronized(waitObj1) { // must have this, else waitObj1.wait() will run into error: object not locked by thread before wait()
+          try {
+            waitObj1.wait(timeout);  // timeout − the maximum time to wait in milliseconds
+            gSensorManager.unregisterListener(setTextAndUnregisterOnSensorChanged);
+            writeMessage("OtherActivity.unregisterListenerOnTimeout", "Done");
+          } catch(Exception e) { 
+            msgBox("OtherActivity.unregisterListenerOnTimeout", e.getMessage());
+          }
+        }
+      }});
     */
 
-    float[] rotationMatrix = new float[16], 
-      accelVals = new float[3], magVals = new float[3],
-        baseOrientation = new float[4];
-    baseOrientation[0] = (float) 0;
-    if (android.hardware.SensorManager.getRotationMatrix(rotationMatrix, null, accelVals, magVals)) {
-      android.hardware.SensorManager.getOrientation(rotationMatrix, baseOrientation);
+    /*
+      // !! do not use the below for UI thread, this may clash the current UI thread !! 
+      (new Thread(){public void run(){
+        ...
+      }}).start();
+      (new Thread(new Runnable(){public void run(){
+        ...
+      }})).start();
+    */
+  }
+
+  private float getAzimuthValueFromSensorData(final android.hardware.SensorEvent event, float azimuthFix) {
+    // https://stackoverflow.com/questions/7046608/getrotationmatrix-and-getorientation-tutorial
+    // https://github.com/iutinvg/compass/blob/master/app/src/main/java/com/sevencrayons/compass/Compass.java
+    float azimuthValue = -1f;
+    try {
+      synchronized (this) {
+        final float alpha = 0.97f;
+        float[] rotationMatrix = new float[16], 
+          accelVals = new float[3], magVals = new float[3],
+            baseOrientation = new float[4];
+
+        if (event.sensor.getType() == android.hardware.Sensor.TYPE_ACCELEROMETER) {
+          accelVals[0] = alpha*accelVals[0] + (1-alpha)*event.values[0];
+          accelVals[1] = alpha*accelVals[1] + (1-alpha)*event.values[1];
+          accelVals[2] = alpha*accelVals[2] + (1-alpha)*event.values[2];
+        }
+        if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD) {
+          magVals[0] = alpha*magVals[0] + (1-alpha)*event.values[0];
+          magVals[1] = alpha*magVals[1] + (1-alpha)*event.values[1];
+          magVals[2] = alpha*magVals[2] + (1-alpha)*event.values[2];
+        }
+
+        if (gSensorManager.getRotationMatrix(rotationMatrix, null, accelVals, magVals)) {
+          gSensorManager.getOrientation(rotationMatrix, baseOrientation);
+          azimuthValue = (float) Math.toDegrees(baseOrientation[0]); // orientation
+          azimuthValue = (azimuthValue + azimuthFix + 360) % 360;
+          writeMessage("OtherActivity.getAzimuthValueFromSensorData", "done");
+        } else {
+          writeMessage("OtherActivity.getAzimuthValueFromSensorData", "getRotationMatrix() failed");
+        }
+      }
+    } catch(Exception e) {
+      writeMessage("OtherActivity.getAzimuthValueFromSensorData", e.getMessage());
     }
-    return baseOrientation;
+    return azimuthValue;
+  }
+
+  private android.hardware.SensorEventListener getDataOnSensorChanged
+    = new android.hardware.SensorEventListener() {
+        @Override public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) { }
+        @Override public void onSensorChanged(android.hardware.SensorEvent event) {
+          try {
+            lastAzimuthValue = getAzimuthValueFromSensorData(event, 0f);
+          } catch(Exception e) {
+            writeMessage("OtherActivity.getDataOnSensorChanged", e.getMessage());
+            return;
+          }
+        }
+      };
+
+  // below is not working correctly !
+  public float getAzimuth() {
+    int delayRate = android.hardware.SensorManager.SENSOR_DELAY_GAME; // == 20,000 microseconds
+    delayRate = 200 * 1000;
+      gSensorManager.registerListener(getDataOnSensorChanged, gSensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate);
+      gSensorManager.registerListener(getDataOnSensorChanged, gSensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate);
+    long startTime=System.currentTimeMillis(), timeOut=2000L; // 2 seconds
+    while (true) {
+      if (lastAzimuthValue >= 0) break;
+      if (System.currentTimeMillis()-startTime > timeOut) break;
+      // waitObj1 will only work with synchronize(waitObj1) or thread = new Thread() --> thread.start()
+      // waitObj1.wait(3000);  // timeout − the maximum time to wait in milliseconds
+      // msgBox("System.nanoTime(): afterWait", String.valueOf(System.nanoTime()));
+      try { Thread.sleep(1+((int)delayRate/1000)/10); } catch(Exception e) { 
+        msgBox("Thread.sleep()", e.getMessage());
+        break;
+      }
+    }
+    gSensorManager.unregisterListener(getDataOnSensorChanged);
+    return lastAzimuthValue;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  TextView gAzimuthTextView;
+
+  private android.hardware.SensorEventListener setTextAndUnregisterOnSensorChanged
+    = new android.hardware.SensorEventListener() {
+        @Override public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) { }
+        @Override public void onSensorChanged(android.hardware.SensorEvent event) {
+          try {
+            //if ( true ) return;
+            float azimuth = getAzimuthValueFromSensorData(event, 0f);
+            if ( azimuth >=0 ) {
+              gSensorManager.unregisterListener(this);
+              java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                "ss", java.util.Locale.getDefault()
+              );          
+              gAzimuthTextView.setText(android.text.Html.fromHtml( // CSS is not supported!
+                "Orientation# " + sdf.format(new java.util.Date()) + ":<br>"
+                   + "<font size='2em'>🧭" + String.valueOf(azimuth) + "°</font>"
+              ));
+            }
+          } catch(Exception e) {
+            writeMessage("OtherActivity.setTextAndUnregisterOnSensorChanged", e.getMessage());
+            return;
+          }
+        }
+      };
+
+  public boolean setTextOnSensorChanged(TextView textView, android.hardware.SensorManager sensorManager) {
+    try {
+      gAzimuthTextView = textView;
+      int delayRate = 20 * 1000; // SENSOR_DELAY_GAME == 20,000 microseconds
+      if (sensorManager.registerListener(
+        setTextAndUnregisterOnSensorChanged, sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate
+      )) {
+        if (sensorManager.registerListener(
+          setTextAndUnregisterOnSensorChanged, sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate
+        )) {
+          unregisterListenerOnTimeout(2000L);  // (long)(10*delayRate/1000);
+          return true;
+        } else {
+          writeMessage("OtherActivity.registerListener", "failed on TYPE_MAGNETIC_FIELD");
+          return false;
+        }
+      } else {
+        writeMessage("OtherActivity.registerListener", "failed on TYPE_ACCELEROMETER");
+        return false;
+      }
+    } catch(Exception e) {
+      writeMessage("OtherActivity.setTextOnSensorChanged", e.getMessage());
+      return false;
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public EditText makeEditTextSelectableReadOnly(EditText thisEditText) {
+    // https://medium.com/@anna.domashych/selectable-read-only-multiline-text-field-on-android-169c27c55408
+    thisEditText.setShowSoftInputOnFocus(false);  thisEditText.setPadding(10,10,10,10);  thisEditText.setBackgroundColor(android.graphics.Color.parseColor("#E8E8E8"));
+    thisEditText.setHorizontallyScrolling(true);  // android:scrollHorizontally="true" doesn't work
+    thisEditText.setCustomSelectionActionModeCallback(
+      // keep "Copy" option only and remove all other menu items
+      new android.view.ActionMode.Callback() {
+        @Override public boolean onPrepareActionMode(android.view.ActionMode mode, android.view.Menu menu) {
+          try {
+            android.view.MenuItem copyTxt = menu.findItem(android.R.id.copy);
+            android.view.MenuItem selectAll = menu.findItem(android.R.id.selectAll);
+            menu.clear();  menu.add(0, android.R.id.copy, 0, copyTxt.getTitle());
+            menu.add(0, android.R.id.selectAll, 0, selectAll.getTitle());
+          } catch (Exception e) {}
+          return true;
+        }
+        @Override public boolean onCreateActionMode(android.view.ActionMode mode, android.view.Menu menu) {return true; }
+        @Override public boolean onActionItemClicked(android.view.ActionMode mode, android.view.MenuItem item) { return false; }
+        @Override public void onDestroyActionMode(android.view.ActionMode mode) {}
+      }
+    );
+    thisEditText.setCustomInsertionActionModeCallback(
+      // completely block a menu which appears when a user taps on cursor
+      new android.view.ActionMode.Callback() {
+        @Override public boolean onCreateActionMode(android.view.ActionMode mode, android.view.Menu menu) { return false; }
+        @Override public boolean onPrepareActionMode(android.view.ActionMode mode, android.view.Menu menu) { return false; }
+        @Override public boolean onActionItemClicked(android.view.ActionMode mode, android.view.MenuItem item) { return false; }
+        @Override public void onDestroyActionMode(android.view.ActionMode mode) { }
+      }
+    );
+    return thisEditText;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  @Override public boolean onCreateOptionsMenu(android.view.Menu menu) {
+    super.onCreateOptionsMenu(menu); // ⋮OptionsMenu vs. ≡NavigationDrawer
+    android.view.MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.menu.menu, menu);  // [.\src\main\res\menu\menu.xml]
+    return true;
+  }
+  @Override public boolean onOptionsItemSelected(android.view.MenuItem item) {
+    switch (item.getItemId()) {
+      case R.id.main_menu_settings:
+        return true;
+      case R.id.main_menu_about:
+        launchUrl("https://sites.google.com/site/quoinsight/home/minimal-apk");
+        return true;
+      case R.id.main_menu_quit:
+        //this.finishAffinity();
+        finishAndRemoveTask();
+        return true;
+      default:
+        break;
+    }
+    return false;
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -49,12 +341,10 @@ public class OtherActivity extends android.app.Activity {
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     try {
+      gSensorManager = (android.hardware.SensorManager) this.getSystemService(android.content.Context.SENSOR_SERVICE); // this.getApplicationContext().
       setContentView(R.layout.otheractivity);  // --> .\src\main\res\layout\otheractivity.xml
     } catch(Exception e) {
-      Toast.makeText(OtherActivity.this, 
-        "OtherActivity.setContentView: " +  e.getMessage(),
-      Toast.LENGTH_LONG).show();  // .setDuration(int duration)
-      //android.util.Log.e("OtherActivity.setContentView", e.getMessage());
+      writeMessage("OtherActivity.setContentView", e.getMessage());
       return;
     }
 
@@ -65,97 +355,254 @@ public class OtherActivity extends android.app.Activity {
       );
       TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\otheractivity.xml
         txt1.setText("Hello from OtherActivity!\n[" + sdf.format(new java.util.Date()) + "]");
+        // avoid EditText from gaining focus at Activity startup 
+        txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
+
+      // ((EditText)findViewById(R.id.edit1)).setText( String.join("\n", getPackageList()) );
+      java.util.List<String> pkgLst = getPackageList();
+      makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit1)).setText(String.join("\n", pkgLst));
+
+      final Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
+        final java.util.Hashtable<String, String> appPackageNames = new java.util.Hashtable<String, String>();
+         /*
+          // https://stackoverflow.com/questions/9371942/dictionary-in-android-resources
+          String[] strPackageNames = getResources().getStringArray(R.array.otherpkgnames);  // --> .\src\main\res\values\strings.xml
+          for(String s : strPackageNames) {
+            String[] a = s.split(":");
+            appPackageNames.put(a[0], a[1]);
+          }
+         */
+          for(String s : pkgLst) {
+            String[] a = s.split(" \\[");
+            appPackageNames.put(a[0], a[1].substring(0, a[1].length()-1));
+          }
+        java.util.ArrayList<String> selectList = new java.util.ArrayList<String>(appPackageNames.keySet());
+          java.util.Collections.sort(selectList, String.CASE_INSENSITIVE_ORDER);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+          this, android.R.layout.simple_spinner_item, selectList
+          //new String[] { "SleepRadio", "澳門電台", "AiFM", "港台" }
+        );
+        spinner1.setAdapter(adapter);
+        //adapter.setDropDownViewResource(R.layout.xxx); // [spinner_textview_align]
+       /*
+        spinner1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+          @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            try {
+              // !! below is no good, use android:theme="@style/spinner1" in XML instead !!
+              float factor = view.getContext().getResources().getDisplayMetrics().density; // ==2.0 
+              //int w = ??.getPaint().measureText((String)parent.getItemAtPosition(position)) + 20;
+              int w = (int)(factor *(20 + ((String)parent.getItemAtPosition(position)).length()*12));
+              android.view.ViewGroup.LayoutParams p = view.getLayoutParams();
+              p.width = w;  view.setLayoutParams(p);
+            } catch(Exception e) {
+              writeMessage("OtherActivity.onItemSelected", e.getMessage());
+              return;
+            }
+          }
+          @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
+       */
+
+      findViewById(R.id.launchApp).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            try {
+              launchApp( appPackageNames.get(spinner1.getSelectedItem().toString()) );
+            } catch(Exception e) {
+              writeMessage("OtherActivity.launchApp", e.getMessage());
+              return;
+            }
+          }
+        }
+      );
+
+      findViewById(R.id.appInfo).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            try {
+              launchAppInfo( appPackageNames.get(spinner1.getSelectedItem().toString()) );
+            } catch(Exception e) {
+              writeMessage("OtherActivity.appInfo", e.getMessage());
+              return;
+            }
+          }
+        }
+      );
+
+      findViewById(R.id.appUrl).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            try {
+              launchUrl( "https://play.google.com/store/apps/details?id=" + appPackageNames.get(spinner1.getSelectedItem().toString()) );
+            } catch(Exception e) {
+              writeMessage("OtherActivity.appUrl", e.getMessage());
+              return;
+            }
+          }
+        }
+      );
+
+      findViewById(R.id.appMgr).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            try {
+              launchAppMgr();
+            } catch(Exception e) {
+              writeMessage("OtherActivity.launchAppMgr", e.getMessage());
+              return;
+            }
+          }
+        }
+      );
 
       TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
         txt2.setClickable(true);
         txt2.setOnClickListener(
           new View.OnClickListener() {
-            public void onClick(View v) {
-              java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
-                "ss", java.util.Locale.getDefault()
-              );          
-              ((TextView) v).setText(android.text.Html.fromHtml(
-                "Orientation# " + sdf.format(new java.util.Date()) + " :"
-                   + "<h2>" + String.valueOf((float)Math.toDegrees(getOrientation()[0])) + "°</h2>"
-              ));
+            @Override public void onClick(View v) {
+              try {
+                setTextOnSensorChanged((TextView) v, gSensorManager);
+              } catch(Exception e) {
+                writeMessage("OtherActivity.", e.getMessage());
+              }
             }
           }
         );
 
-      Button button2 = (Button) findViewById(R.id.button2);  // --> .\src\main\res\layout\otheractivity.xml
-        button2.setOnClickListener(
-          new View.OnClickListener() {
-            public void onClick(View v) {
-              startActivity(new android.content.Intent(v.getContext(), MainActivity.class));
+/*
+      try {
+        compass = new com.sevencrayons.compass.Compass(this);  // --> .\src\main\java\com\sevencrayons\compass\Compass.java
+        compass.setListener(new com.sevencrayons.compass.Compass.CompassListener() {
+          @Override public void onNewAzimuth(final float azimuth) {
+            // UI updates only in UI thread
+            // https://stackoverflow.com/q/11140285/444966
+            runOnUiThread(new Runnable() {
+              @Override public void run() {
+                try {
+                  java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                    "ss", java.util.Locale.getDefault()
+                  );
+                  TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
+                  txt2.setText(android.text.Html.fromHtml( // CSS is not supported!
+                    "#" + sdf.format(new java.util.Date()) + ":<br>"
+                       + "<font size='2em'>🧭" + String.valueOf(Math.round(azimuth)) + "°</font>"
+                  ));
+                } catch(Exception e) {
+                  writeMessage("OtherActivity.compass.run", e.getMessage());
+                  return;
+                }
+              }
+            });
+          }
+        });
+        //compass.start();
+      } catch(Exception e) {
+        writeMessage("OtherActivity.compass", e.getMessage());
+      }
+
+      TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
+        txt2.setClickable(true);
+        txt2.setOnTouchListener(
+          new View.OnTouchListener() {
+            // https://stackoverflow.com/questions/4804798/doubletap-in-android
+            private android.view.GestureDetector gestureDetector
+              = new android.view.GestureDetector(OtherActivity.this, new android.view.GestureDetector.SimpleOnGestureListener() {
+                  @Override public boolean onDoubleTap(android.view.MotionEvent event) {
+                    writeMessage("OtherActivity.gestureDetector", "onDoubleTap");
+                    try {
+                      compass.start();
+                    } catch(Exception e) {
+                      writeMessage("OtherActivity.onDoubleTap", e.getMessage());
+                    } 
+                    return super.onDoubleTap(event);
+                  }
+                });
+
+            @Override public boolean onTouch(View v, android.view.MotionEvent event) {
+              synchronized (this) {
+                try {
+                  compass.stop();  setTextOnSensorChanged((TextView) v, gSensorManager);
+                } catch(Exception e) {
+                  writeMessage("OtherActivity.onTouch", e.getMessage());
+                }
+
+                try {
+                  gestureDetector.onTouchEvent(event);
+                } catch(Exception e) {
+                  writeMessage("OtherActivity.gestureDetector", e.getMessage());
+                }
+              }
+              return true;
             }
           }
         );
 
-      Button button9 = (Button) findViewById(R.id.button9);  // --> .\src\main\res\layout\otheractivity.xml
-        button9.setOnClickListener(
-          new View.OnClickListener() {
-            public void onClick(View v) {
-              //this.finishAffinity();
-              finishAndRemoveTask();
+      findViewById(R.id.start_compass).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            try {
+              compass.start();
+            } catch(Exception e) {
+              writeMessage("OtherActivity.StartCompass", e.getMessage());
             }
           }
-        );
+        }
+      );
+
+*/
+
+      findViewById(R.id.flashlight).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            // AndroidManifest.xml:<uses-permission android:name="android.permission.FLASHLIGHT"/>
+            try {
+              android.hardware.camera2.CameraManager cameraManager
+                = (android.hardware.camera2.CameraManager) getSystemService(android.content.Context.CAMERA_SERVICE);
+              String cameraId = cameraManager.getCameraIdList()[0];
+              /*
+                if ( camera.getParameters().getFlashMode() == "FLASH_MODE_TORCH" ) {
+                  cameraManager.setTorchMode(cameraId, false);
+                } else {
+                  cameraManager.setTorchMode(cameraId, true);
+                }
+              */
+              cameraManager.setTorchMode(cameraId, toggleFlashLight); // 🔦
+              toggleFlashLight = ! toggleFlashLight;
+            } catch(Exception e) {
+              writeMessage("OtherActivity.flashlight", e.getMessage());
+              return;
+            }
+          }
+        }
+      );
+
+
+      findViewById(R.id.button2).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            startActivity(new android.content.Intent(v.getContext(), MainActivity.class));
+          }
+        }
+      );
+
+      findViewById(R.id.button9).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            //this.finishAffinity();
+            finishAndRemoveTask();
+          }
+        }
+      );
 
       TextView txt9 = (TextView) findViewById(R.id.txt9);  // --> .\src\main\res\layout\otheractivity.xml
         txt9.setLinksClickable(true);  // do not setAutoLinkMask !! txt9.setAutoLinkMask(android.text.util.Linkify.ALL);
         txt9.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
-        txt9.setText(android.text.Html.fromHtml(
-          " [ <A href='https://github.com/QuoInsight/minimal.apk'>src</A> ]"
-        ));
+        txt9.setText(android.text.Html.fromHtml(txt9.getText().toString()));
 
     } catch(Exception e) {
 
-      Toast.makeText(OtherActivity.this, 
-        "OtherActivity.findViewById: " +  e.getMessage(),
-      Toast.LENGTH_LONG).show();  // .setDuration(int duration)
-      //android.util.Log.e("OtherActivity.findViewById", e.getMessage());
+      writeMessage("OtherActivity.findViewById", e.getMessage());
       return;
-
-    }
-
-    try {
-      compass = new Compass(this);; // Compass.java
-
-      compass.setListener(new Compass.CompassListener() {
-        @Override public void onNewAzimuth(final float azimuth) {
-          // UI updates only in UI thread
-          // https://stackoverflow.com/q/11140285/444966
-          runOnUiThread(new Runnable() {
-            @Override public void run() {
-              try {
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
-                  "ss", java.util.Locale.getDefault()
-                );
-                TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
-                txt2.setText(android.text.Html.fromHtml(
-                  "azimuth# " + sdf.format(new java.util.Date()) + " :"
-                     + "<h2>" + String.valueOf(Math.round(azimuth)) + "°</h2>"
-                ));
-              } catch(Exception e) {
-                Toast.makeText(OtherActivity.this, 
-                  "OtherActivity.compass.run: " +  e.getMessage(),
-                Toast.LENGTH_LONG).show();  // .setDuration(int duration)
-                //android.util.Log.e("OtherActivity.compass.run", e.getMessage());
-                return;
-              }
-            }
-          });
-        }
-      });
-
-      compass.start();
-
-    } catch(Exception e) {
-
-      Toast.makeText(OtherActivity.this, 
-        "OtherActivity.compass: " +  e.getMessage(),
-      Toast.LENGTH_LONG).show();  // .setDuration(int duration)
-      android.util.Log.e("OtherActivity.compass", e.getMessage());
 
     }
 

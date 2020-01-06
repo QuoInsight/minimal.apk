@@ -59,13 +59,6 @@ public class MainActivity extends android.app.Activity {
     startActivity(intent);
   }
 
-  public void launchApp(String className) {
-    android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_MAIN);
-      intent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
-      intent.setPackage(className);
-    startActivity(intent);
-  }
-
   public int getBatteryLevel() {
     android.os.BatteryManager bm = (android.os.BatteryManager)getSystemService(BATTERY_SERVICE);
     int batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
@@ -74,29 +67,16 @@ public class MainActivity extends android.app.Activity {
 
   //////////////////////////////////////////////////////////////////////
 
-/*
+  // ⋮OptionsMenu vs. ≡NavigationDrawer
   private static final int NEW_MENU_ID=android.view.Menu.FIRST+1;
   @Override public boolean onCreateOptionsMenu(android.view.Menu menu) {
     super.onCreateOptionsMenu(menu);
-    menu.add(0, NEW_MENU_ID, 0, "New"); 
-    return true;
-  }
-*/
-
-  @Override public boolean onCreateOptionsMenu(android.view.Menu menu) {
-    super.onCreateOptionsMenu(menu);
-    android.view.MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.menu.menu, menu);  // [.\src\main\res\menu\menu.xml]
+    menu.add(0, 99, 0, "⏏ Quit"); 
     return true;
   }
   @Override public boolean onOptionsItemSelected(android.view.MenuItem item) {
     switch (item.getItemId()) {
-      case R.id.main_menu_settings:
-        return true;
-      case R.id.main_menu_about:
-        launchUrl("https://sites.google.com/site/quoinsight/home/minimal-apk");
-        return true;
-      case R.id.main_menu_quit:
+      case 99:
         quit();
         return true;
       default:
@@ -161,8 +141,8 @@ public class MainActivity extends android.app.Activity {
 
     TextView txt2 = new TextView(this);
       txt2.setGravity(Gravity.CENTER_HORIZONTAL);
-      txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 60);
-      txt2.setText("Battery Level:\n" + Integer.toString(getBatteryLevel()) + "%");
+      txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
+      txt2.setText("🔋" + Integer.toString(getBatteryLevel()) + "%");
       txt2.setClickable(true);
       txt2.setOnClickListener(
         new View.OnClickListener() {
@@ -172,15 +152,15 @@ public class MainActivity extends android.app.Activity {
             );          
             // TextView txt2 = (TextView) v; // findViewById(v.getId());
             ((TextView) v).setText(android.text.Html.fromHtml(
-              "<small><small><small><small>Battery Level# " + sdf.format(new java.util.Date()) + " :</small></small></small></small>"
-                 + "" + Integer.toString(getBatteryLevel()) + "%"
+              "<small><small><small><small># " + sdf.format(new java.util.Date()) + " :</small></small></small></small>"
+                 + "<br>🔋" + Integer.toString(getBatteryLevel()) + "%"
             ));
           }
         }
       );
 
     Button button2 = new Button(this);
-      button2.setText("Next");
+      button2.setText("⎘ Next");
       button2.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
@@ -190,15 +170,15 @@ public class MainActivity extends android.app.Activity {
       );
 
     Button button9 = new Button(this);
-      button9.setText("Quit");
+      button9.setText("⎊ Quit"); // ⏻ ≡  [🚪←🚶] 𓁆 𝍇去 𝌶逃
       button9.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
             Toast.makeText(
-              MainActivity.this, "Hellow World!", Toast.LENGTH_LONG
+              MainActivity.this, "Hello World!", Toast.LENGTH_LONG
             ).show();  // .setDuration(int duration)
 
-            try { Thread.sleep(3000); } catch(InterruptedException e) {}
+            //try { Thread.sleep(3000); } catch(InterruptedException e) {}
 
             quit();
           }
