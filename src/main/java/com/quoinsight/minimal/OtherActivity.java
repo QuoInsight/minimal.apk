@@ -17,8 +17,9 @@ import android.widget.LinearLayout;
 import android.view.Gravity;
 import android.view.View;
 
-public class OtherActivity extends android.app.Activity {
-
+public class OtherActivity extends android.app.Activity
+  // implements android.hardware.SensorEventListener // !! need this for it work correctly with SensorEvent !!
+{
   public void writeMessage(String tag, String msg, String...args) {  // varargs
     Toast.makeText(OtherActivity.this, tag + ": " +  msg, Toast.LENGTH_LONG).show();  // .setDuration(int duration)
     //android.util.Log.e(tag, msg);
@@ -100,181 +101,23 @@ public class OtherActivity extends android.app.Activity {
 
   //////////////////////////////////////////////////////////////////////
 
-  private com.sevencrayons.compass.Compass compass;  // --> .\src\main\java\com\sevencrayons\compass\Compass.java
+  // Important: To avoid the unnecessary usage of battery,
+  // register the listener in the onResume method and de-register on the onPause method.
 
-  private android.hardware.SensorManager gSensorManager;
-  private static float lastAzimuthValue = -0.01f;
-  public boolean gLock = true;
-
-  // !! Do not use ReentrantLock() which will return immediately if the current thread already owns the lock !!
-  public final Object waitObj1 = new Object(); 
-  public void unregisterListenerOnTimeout(final long timeout) {
-    // final long p_timeout = timeout;
-    // if ( true ) return;
-
-    final android.os.Handler handler = new android.os.Handler();
-      handler.postDelayed(new Runnable(){@Override public void run(){ // !! must use this to avoid issue for UI thread !!
-        try {
-          gSensorManager.unregisterListener(setTextAndUnregisterOnSensorChanged);
-          msgBox("OtherActivity.unregisterListenerOnTimeout", "Done");
-        } catch(Exception e) { 
-          msgBox("OtherActivity.unregisterListenerOnTimeout", e.getMessage());
-        }
-      }}, timeout);
-    return;
-
-    /*
-      !! runOnUiThread with waitObj1.wait() will block the UI thread !! 
-      //android.os.AsyncTask.execute(new Runnable(){@Override public void run(){ // !! may clash if use in UI thread !!
-      runOnUiThread(new Runnable(){@Override public void run(){ // !! may use this for UI thread, but waitObj1.wait() will block the UI thread !!
-        synchronized(waitObj1) { // must have this, else waitObj1.wait() will run into error: object not locked by thread before wait()
-          try {
-            waitObj1.wait(timeout);  // timeout − the maximum time to wait in milliseconds
-            gSensorManager.unregisterListener(setTextAndUnregisterOnSensorChanged);
-            writeMessage("OtherActivity.unregisterListenerOnTimeout", "Done");
-          } catch(Exception e) { 
-            msgBox("OtherActivity.unregisterListenerOnTimeout", e.getMessage());
-          }
-        }
-      }});
-    */
-
-    /*
-      // !! do not use the below for UI thread, this may clash the current UI thread !! 
-      (new Thread(){public void run(){
-        ...
-      }}).start();
-      (new Thread(new Runnable(){public void run(){
-        ...
-      }})).start();
-    */
+  @Override protected void onResume() {
+    super.onResume();
+    //if (gAzimuthTextView!=null) setTextOnSensorChanged(gAzimuthTextView, gSensorManager);
   }
-
-  private float getAzimuthValueFromSensorData(final android.hardware.SensorEvent event, float azimuthFix) {
-    // https://stackoverflow.com/questions/7046608/getrotationmatrix-and-getorientation-tutorial
-    // https://github.com/iutinvg/compass/blob/master/app/src/main/java/com/sevencrayons/compass/Compass.java
-    float azimuthValue = -1f;
-    try {
-      synchronized (this) {
-        final float alpha = 0.97f;
-        float[] rotationMatrix = new float[16], 
-          accelVals = new float[3], magVals = new float[3],
-            baseOrientation = new float[4];
-
-        if (event.sensor.getType() == android.hardware.Sensor.TYPE_ACCELEROMETER) {
-          accelVals[0] = alpha*accelVals[0] + (1-alpha)*event.values[0];
-          accelVals[1] = alpha*accelVals[1] + (1-alpha)*event.values[1];
-          accelVals[2] = alpha*accelVals[2] + (1-alpha)*event.values[2];
-        }
-        if (event.sensor.getType() == android.hardware.Sensor.TYPE_MAGNETIC_FIELD) {
-          magVals[0] = alpha*magVals[0] + (1-alpha)*event.values[0];
-          magVals[1] = alpha*magVals[1] + (1-alpha)*event.values[1];
-          magVals[2] = alpha*magVals[2] + (1-alpha)*event.values[2];
-        }
-
-        if (gSensorManager.getRotationMatrix(rotationMatrix, null, accelVals, magVals)) {
-          gSensorManager.getOrientation(rotationMatrix, baseOrientation);
-          azimuthValue = (float) Math.toDegrees(baseOrientation[0]); // orientation
-          azimuthValue = (azimuthValue + azimuthFix + 360) % 360;
-          writeMessage("OtherActivity.getAzimuthValueFromSensorData", "done");
-        } else {
-          writeMessage("OtherActivity.getAzimuthValueFromSensorData", "getRotationMatrix() failed");
-        }
-      }
-    } catch(Exception e) {
-      writeMessage("OtherActivity.getAzimuthValueFromSensorData", e.getMessage());
-    }
-    return azimuthValue;
-  }
-
-  private android.hardware.SensorEventListener getDataOnSensorChanged
-    = new android.hardware.SensorEventListener() {
-        @Override public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) { }
-        @Override public void onSensorChanged(android.hardware.SensorEvent event) {
-          try {
-            lastAzimuthValue = getAzimuthValueFromSensorData(event, 0f);
-          } catch(Exception e) {
-            writeMessage("OtherActivity.getDataOnSensorChanged", e.getMessage());
-            return;
-          }
-        }
-      };
-
-  // below is not working correctly !
-  public float getAzimuth() {
-    int delayRate = android.hardware.SensorManager.SENSOR_DELAY_GAME; // == 20,000 microseconds
-    delayRate = 200 * 1000;
-      gSensorManager.registerListener(getDataOnSensorChanged, gSensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate);
-      gSensorManager.registerListener(getDataOnSensorChanged, gSensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate);
-    long startTime=System.currentTimeMillis(), timeOut=2000L; // 2 seconds
-    while (true) {
-      if (lastAzimuthValue >= 0) break;
-      if (System.currentTimeMillis()-startTime > timeOut) break;
-      // waitObj1 will only work with synchronize(waitObj1) or thread = new Thread() --> thread.start()
-      // waitObj1.wait(3000);  // timeout − the maximum time to wait in milliseconds
-      // msgBox("System.nanoTime(): afterWait", String.valueOf(System.nanoTime()));
-      try { Thread.sleep(1+((int)delayRate/1000)/10); } catch(Exception e) { 
-        msgBox("Thread.sleep()", e.getMessage());
-        break;
-      }
-    }
-    gSensorManager.unregisterListener(getDataOnSensorChanged);
-    return lastAzimuthValue;
+ 
+  @Override protected void onPause() {
+    //unregisterListener(gSensorManager);  // gSensorManager.unregisterListener(this);
+    gSensorEventListener.stop();
+    super.onPause();
   }
 
   //////////////////////////////////////////////////////////////////////
 
-  TextView gAzimuthTextView;
-
-  private android.hardware.SensorEventListener setTextAndUnregisterOnSensorChanged
-    = new android.hardware.SensorEventListener() {
-        @Override public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) { }
-        @Override public void onSensorChanged(android.hardware.SensorEvent event) {
-          try {
-            //if ( true ) return;
-            float azimuth = getAzimuthValueFromSensorData(event, 0f);
-            if ( azimuth >=0 ) {
-              gSensorManager.unregisterListener(this);
-              java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
-                "ss", java.util.Locale.getDefault()
-              );          
-              gAzimuthTextView.setText(android.text.Html.fromHtml( // CSS is not supported!
-                "Orientation# " + sdf.format(new java.util.Date()) + ":<br>"
-                   + "<font size='2em'>🧭" + String.valueOf(azimuth) + "°</font>"
-              ));
-            }
-          } catch(Exception e) {
-            writeMessage("OtherActivity.setTextAndUnregisterOnSensorChanged", e.getMessage());
-            return;
-          }
-        }
-      };
-
-  public boolean setTextOnSensorChanged(TextView textView, android.hardware.SensorManager sensorManager) {
-    try {
-      gAzimuthTextView = textView;
-      int delayRate = 20 * 1000; // SENSOR_DELAY_GAME == 20,000 microseconds
-      if (sensorManager.registerListener(
-        setTextAndUnregisterOnSensorChanged, sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate
-      )) {
-        if (sensorManager.registerListener(
-          setTextAndUnregisterOnSensorChanged, sensorManager.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate
-        )) {
-          unregisterListenerOnTimeout(2000L);  // (long)(10*delayRate/1000);
-          return true;
-        } else {
-          writeMessage("OtherActivity.registerListener", "failed on TYPE_MAGNETIC_FIELD");
-          return false;
-        }
-      } else {
-        writeMessage("OtherActivity.registerListener", "failed on TYPE_ACCELEROMETER");
-        return false;
-      }
-    } catch(Exception e) {
-      writeMessage("OtherActivity.setTextOnSensorChanged", e.getMessage());
-      return false;
-    }
-  }
+  private mySensorEventListener gSensorEventListener;
 
   //////////////////////////////////////////////////////////////////////
 
@@ -341,7 +184,7 @@ public class OtherActivity extends android.app.Activity {
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     try {
-      gSensorManager = (android.hardware.SensorManager) this.getSystemService(android.content.Context.SENSOR_SERVICE); // this.getApplicationContext().
+      gSensorEventListener = new mySensorEventListener(this); // will run into error if this is executed before onCreate() 
       setContentView(R.layout.otheractivity);  // --> .\src\main\res\layout\otheractivity.xml
     } catch(Exception e) {
       writeMessage("OtherActivity.setContentView", e.getMessage());
@@ -350,11 +193,8 @@ public class OtherActivity extends android.app.Activity {
 
     try {
 
-      java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
-        "yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()
-      );
       TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\otheractivity.xml
-        txt1.setText("Hello from OtherActivity!\n[" + sdf.format(new java.util.Date()) + "]");
+        txt1.setText("Hello from OtherActivity!\n[" + MainActivity.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
         // avoid EditText from gaining focus at Activity startup 
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
@@ -461,44 +301,34 @@ public class OtherActivity extends android.app.Activity {
           new View.OnClickListener() {
             @Override public void onClick(View v) {
               try {
-                setTextOnSensorChanged((TextView) v, gSensorManager);
+                gSensorEventListener.setListenerAction(new mySensorEventListener.listenerAction() {
+                  //@Override public void OnMessage(String tag, String msg, String...args) {
+                  //  writeMessage(tag, msg, args);
+                  //}
+                  @Override public void OnAzimuthDataLoaded(final float azimuth) {
+                    runOnUiThread(new Runnable() { @Override public void run() {
+                      try {
+                        ((TextView) findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
+                          "#" + MainActivity.getDateStr("ss") + ":<br>"
+                             + "<font size='2em'>🧭" + String.valueOf(Math.round(azimuth)) + "°</font>"
+                        ));
+                        //gSensorEventListener.unregisterListener();
+                      } catch(Exception e) {
+                        writeMessage("OtherActivity.OnAzimuthDataLoaded", e.getMessage());
+                        return;
+                      }
+                    }});
+                }});
+                //gSensorEventListener.registerListener(500, 2000);
+                gSensorEventListener.start();
               } catch(Exception e) {
-                writeMessage("OtherActivity.", e.getMessage());
+                writeMessage("OtherActivity.gSensorEventListener#", e.getMessage());
               }
             }
           }
         );
 
 /*
-      try {
-        compass = new com.sevencrayons.compass.Compass(this);  // --> .\src\main\java\com\sevencrayons\compass\Compass.java
-        compass.setListener(new com.sevencrayons.compass.Compass.CompassListener() {
-          @Override public void onNewAzimuth(final float azimuth) {
-            // UI updates only in UI thread
-            // https://stackoverflow.com/q/11140285/444966
-            runOnUiThread(new Runnable() {
-              @Override public void run() {
-                try {
-                  java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
-                    "ss", java.util.Locale.getDefault()
-                  );
-                  TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
-                  txt2.setText(android.text.Html.fromHtml( // CSS is not supported!
-                    "#" + sdf.format(new java.util.Date()) + ":<br>"
-                       + "<font size='2em'>🧭" + String.valueOf(Math.round(azimuth)) + "°</font>"
-                  ));
-                } catch(Exception e) {
-                  writeMessage("OtherActivity.compass.run", e.getMessage());
-                  return;
-                }
-              }
-            });
-          }
-        });
-        //compass.start();
-      } catch(Exception e) {
-        writeMessage("OtherActivity.compass", e.getMessage());
-      }
 
       TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
         txt2.setClickable(true);
