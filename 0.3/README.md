@@ -1,0 +1,4 @@
+- added date string from ChineseCalendar
+- added second activity referencing XML resouce files
+- added options menu ⋮
+- added list of installed packages, flash light on/off, and sensor reading for orientation/direction/compass in second activity
