@@ -78,18 +78,33 @@ public class MainActivity extends android.app.Activity {
 
   //////////////////////////////////////////////////////////////////////
 
-  public void launchUrl(String url) {
+  static final public void launchUrl(android.content.Context parentContext, String url) {
     android.content.Intent intent = new android.content.Intent();
       intent.setAction(android.content.Intent.ACTION_VIEW);
       intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
       intent.setData(android.net.Uri.parse(url));
-    startActivity(intent);
+    parentContext.startActivity(intent);
   }
 
-  public int getBatteryLevel() {
-    android.os.BatteryManager bm = (android.os.BatteryManager)getSystemService(BATTERY_SERVICE);
-    int batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
+  static final public int getBatteryLevel(android.content.Context parentContext) {
+    android.os.BatteryManager battMgr
+      = (android.os.BatteryManager)
+          parentContext.getSystemService(BATTERY_SERVICE);
+    int batLevel = battMgr.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
     return batLevel;
+  }
+
+  static final public void enableTorchLigth(android.content.Context parentContext, boolean enabled) {
+    android.hardware.camera2.CameraManager camMgr
+      = (android.hardware.camera2.CameraManager)
+          parentContext.getSystemService(android.content.Context.CAMERA_SERVICE);
+    try {
+      String cameraId = camMgr.getCameraIdList()[0];
+      // camera.getParameters().getFlashMode()=="FLASH_MODE_TORCH" ?
+      camMgr.setTorchMode(cameraId, enabled); // 🔦
+    } catch(Exception e) {
+      android.util.Log.e("MainActivity.enableTorchLigth", e.getMessage());
+    }
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -156,7 +171,7 @@ public class MainActivity extends android.app.Activity {
       button1.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
-            launchUrl( radioStations.get(spinner1.getSelectedItem().toString()) );
+            launchUrl(v.getContext(), radioStations.get(spinner1.getSelectedItem().toString()));
           }
         }
       );
@@ -164,7 +179,7 @@ public class MainActivity extends android.app.Activity {
     TextView txt2 = new TextView(this);
       txt2.setGravity(Gravity.CENTER_HORIZONTAL);
       txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
-      txt2.setText("🔋" + Integer.toString(getBatteryLevel()) + "%");
+      txt2.setText("🔋" + Integer.toString(getBatteryLevel(this)) + "%");
       txt2.setClickable(true);
       txt2.setOnClickListener(
         new View.OnClickListener() {
@@ -172,15 +187,15 @@ public class MainActivity extends android.app.Activity {
             // TextView txt2 = (TextView) v; // findViewById(v.getId());
             ((TextView) v).setText(android.text.Html.fromHtml(
               "<small><small><small><small># " + getDateStr("ss") + " :</small></small></small></small>"
-                 + "<br>🔋" + Integer.toString(getBatteryLevel()) + "%"
+                 + "<br>🔋" + Integer.toString(getBatteryLevel(v.getContext())) + "%"
             ));
           }
         }
       );
 
-    Button button2 = new Button(this);
-      button2.setText("⎘ Next");
-      button2.setOnClickListener(
+    Button btnNext = new Button(this);
+      btnNext.setText("⎘ Next");
+      btnNext.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
             startActivity(new android.content.Intent(v.getContext(), OtherActivity.class));
@@ -245,7 +260,7 @@ public class MainActivity extends android.app.Activity {
           layout2.addView(spinner1, params);  layout2.addView(button1, params);
         layout.addView(layout2, params);
         layout.addView(txt2, params);
-        layout.addView(button2, params);
+        layout.addView(btnNext, params);
         layout.addView(button9, params);
         layout.addView(edit1, params);
         layout.addView(txt9, params);

@@ -31,14 +31,6 @@ public class OtherActivity extends android.app.Activity
     alrt.setTitle(title).setMessage(msg).setCancelable(false).setPositiveButton("OK", null).show();
   }
 
-  public void launchUrl(String url) {
-    android.content.Intent intent = new android.content.Intent();
-      intent.setAction(android.content.Intent.ACTION_VIEW);
-      intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
-      intent.setData(android.net.Uri.parse(url));
-    startActivity(intent);
-  }
-
   public java.util.List<String> getPackageList() {
     // https://devofandroid.blogspot.com/2018/02/get-list-of-user-installed-apps-with.html
     android.content.pm.PackageManager pkgMgr = this.getPackageManager();
@@ -106,18 +98,18 @@ public class OtherActivity extends android.app.Activity
 
   @Override protected void onResume() {
     super.onResume();
+    //gSensorListener.register(500, 2000);
     //if (gAzimuthTextView!=null) setTextOnSensorChanged(gAzimuthTextView, gSensorManager);
   }
  
   @Override protected void onPause() {
-    //unregisterListener(gSensorManager);  // gSensorManager.unregisterListener(this);
-    gSensorEventListener.stop();
+    if (gSensorListener!=null) gSensorListener.unregister();
     super.onPause();
   }
 
   //////////////////////////////////////////////////////////////////////
 
-  private mySensorEventListener gSensorEventListener;
+  private mySensorListener gSensorListener = null;
 
   //////////////////////////////////////////////////////////////////////
 
@@ -167,7 +159,7 @@ public class OtherActivity extends android.app.Activity
       case R.id.main_menu_settings:
         return true;
       case R.id.main_menu_about:
-        launchUrl("https://sites.google.com/site/quoinsight/home/minimal-apk");
+        MainActivity.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
         return true;
       case R.id.main_menu_quit:
         //this.finishAffinity();
@@ -184,7 +176,6 @@ public class OtherActivity extends android.app.Activity
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     try {
-      gSensorEventListener = new mySensorEventListener(this); // will run into error if this is executed before onCreate() 
       setContentView(R.layout.otheractivity);  // --> .\src\main\res\layout\otheractivity.xml
     } catch(Exception e) {
       writeMessage("OtherActivity.setContentView", e.getMessage());
@@ -273,7 +264,7 @@ public class OtherActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              launchUrl( "https://play.google.com/store/apps/details?id=" + appPackageNames.get(spinner1.getSelectedItem().toString()) );
+              MainActivity.launchUrl(v.getContext(), "https://play.google.com/store/apps/details?id=" + appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
               writeMessage("OtherActivity.appUrl", e.getMessage());
               return;
@@ -295,34 +286,41 @@ public class OtherActivity extends android.app.Activity
         }
       );
 
+      try {
+        gSensorListener = new mySensorListener(this); // will run into error if this is executed before onCreate() 
+        gSensorListener.setListenerAction(new mySensorListener.listenerAction() {
+          @Override public void OnMessage(String tag, String msg, String...args) {
+            writeMessage(tag, msg, args);
+          }
+          @Override public void OnAzimuthDataLoaded(final float azimuth) {
+            runOnUiThread(new Runnable() { @Override public void run() {
+              try {
+                ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
+                  "#" + MainActivity.getDateStr("ss") + ":<br>"
+                     + "<font size='2em'>🧭" + String.valueOf(Math.round(azimuth)) + "°</font>"
+                ));
+                //gSensorListener.unregister();
+              } catch(Exception e) {
+                writeMessage("OtherActivity.OnAzimuthDataLoaded", e.getMessage());
+                return;
+              }
+            }});
+        }});
+      } catch(Exception e) {
+        writeMessage("OtherActivity.mySensorListener", e.getMessage());
+      }
+
       TextView txt2 = (TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
         txt2.setClickable(true);
         txt2.setOnClickListener(
           new View.OnClickListener() {
             @Override public void onClick(View v) {
               try {
-                gSensorEventListener.setListenerAction(new mySensorEventListener.listenerAction() {
-                  //@Override public void OnMessage(String tag, String msg, String...args) {
-                  //  writeMessage(tag, msg, args);
-                  //}
-                  @Override public void OnAzimuthDataLoaded(final float azimuth) {
-                    runOnUiThread(new Runnable() { @Override public void run() {
-                      try {
-                        ((TextView) findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
-                          "#" + MainActivity.getDateStr("ss") + ":<br>"
-                             + "<font size='2em'>🧭" + String.valueOf(Math.round(azimuth)) + "°</font>"
-                        ));
-                        //gSensorEventListener.unregisterListener();
-                      } catch(Exception e) {
-                        writeMessage("OtherActivity.OnAzimuthDataLoaded", e.getMessage());
-                        return;
-                      }
-                    }});
-                }});
-                //gSensorEventListener.registerListener(500, 2000);
-                gSensorEventListener.start();
+                if ( gSensorListener.register(20, 2000) ) {
+                  writeMessage("OtherActivity.gSensorListener#", "registered");
+                }
               } catch(Exception e) {
-                writeMessage("OtherActivity.gSensorEventListener#", e.getMessage());
+                writeMessage("OtherActivity.gSensorListener#", e.getMessage());
               }
             }
           }
@@ -367,11 +365,13 @@ public class OtherActivity extends android.app.Activity
           }
         );
 
+*/
+
       findViewById(R.id.start_compass).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              compass.start();
+              gSensorListener.register(500, 60000);
             } catch(Exception e) {
               writeMessage("OtherActivity.StartCompass", e.getMessage());
             }
@@ -379,24 +379,11 @@ public class OtherActivity extends android.app.Activity
         }
       );
 
-*/
-
       findViewById(R.id.flashlight).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
         new View.OnClickListener() {
           public void onClick(View v) {
-            // AndroidManifest.xml:<uses-permission android:name="android.permission.FLASHLIGHT"/>
             try {
-              android.hardware.camera2.CameraManager cameraManager
-                = (android.hardware.camera2.CameraManager) getSystemService(android.content.Context.CAMERA_SERVICE);
-              String cameraId = cameraManager.getCameraIdList()[0];
-              /*
-                if ( camera.getParameters().getFlashMode() == "FLASH_MODE_TORCH" ) {
-                  cameraManager.setTorchMode(cameraId, false);
-                } else {
-                  cameraManager.setTorchMode(cameraId, true);
-                }
-              */
-              cameraManager.setTorchMode(cameraId, toggleFlashLight); // 🔦
+              MainActivity.enableTorchLigth(v.getContext(), toggleFlashLight);
               toggleFlashLight = ! toggleFlashLight;
             } catch(Exception e) {
               writeMessage("OtherActivity.flashlight", e.getMessage());
