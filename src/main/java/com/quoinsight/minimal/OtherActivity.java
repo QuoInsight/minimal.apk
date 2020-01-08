@@ -288,7 +288,7 @@ public class OtherActivity extends android.app.Activity
 
       try {
         gSensorListener = new mySensorListener(this); // will run into error if this is executed before onCreate() 
-        gSensorListener.setListenerAction(new mySensorListener.listenerAction() {
+        gSensorListener.setHandlers(new mySensorListener.handlers() {
           @Override public void OnMessage(String tag, String msg, String...args) {
             writeMessage(tag, msg, args);
           }
