@@ -16,7 +16,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent" android:layout_height="match_parent"
   android:fillViewport="true"
-  tools:context=".OtherActivity"
+  tools:context=".CompassActivity"
 >
   <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent"
@@ -26,54 +26,16 @@
       android:layout_width="wrap_content" android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
       android:gravity="center" android:textAlignment="center"
-      android:text="Hello from OtherActivity!"
+      android:text="Hello from CompassActivity!"
     />
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
-      android:layout_width="wrap_content" android:layout_height="wrap_content"
-      android:orientation="horizontal" android:gravity="center"
-      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
-    ><!-- do not use android:layout_width="match_parent" for above !-->
-      <Spinner android:id="@+id/spinner1"
-        android:layout_width="240dp" android:layout_height="wrap_content"
-        android:layout_gravity="left" android:gravity="left"
-        android:theme="@style/spinner1" 
-      /><!-- http://coding-thoughts.blogspot.com/2013/11/help-my-spinner-is-too-wide.html -->
-      <!-- @style/Spinner1 ==> .\src\main\res\style\styles.xml -->
-      <Button android:id="@+id/launchApp"
-        android:layout_width="30dp" android:layout_height="wrap_content"
-        android:text="▶" android:textAllCaps="false" android:padding="1dp"
-        android:tooltipText="Launch selected app..."
-      />
-      <Button android:id="@+id/appInfo"
-        android:layout_width="30dp" android:layout_height="wrap_content"
-        android:text="ⓘ" android:textAllCaps="false" android:padding="1dp"
-        android:tooltipText="Launch Android App Manager..."
-      />
-      <Button android:id="@+id/appUrl"
-        android:layout_width="30dp" android:layout_height="wrap_content"
-        android:text="🌐" android:textAllCaps="false" android:padding="1dp"
-        android:tooltipText="Browse Google Play Store..."
-      />
-      <Button android:id="@+id/appMgr"
-        android:layout_width="30dp" android:layout_height="wrap_content"
-        android:text="⚙" android:textAllCaps="false" android:padding="1dp"
-        android:tooltipText="Launch Android App Manager..."
-      />
-    </LinearLayout>
+    <!-- kisspng-north-compass-rose-royalty-free-5b0926efd8c070.0959021815273264478878.png -->
+    <ImageView android:id="@+id/img1"
+      android:layout_width="match_parent" android:layout_height="match_parent"
+      android:layout_gravity="top" android:layout_weight="1" android:padding="10dp"
+      android:src="@drawable/compass"
+    />
 
-    <TextView android:text="List of Installed Apps:" android:textSize="12sp"
-      android:gravity="center" android:textAlignment="center"
-      android:layout_width="wrap_content" android:layout_height="wrap_content"
-    />
-    <EditText android:id="@+id/edit1"
-      android:layout_width="match_parent" android:layout_height="wrap_content"
-      android:padding="3dp" android:background="@null"
-      android:inputType="textMultiLine|textNoSuggestions" android:scrollHorizontally="true"
-      android:lines="5" android:gravity="top|left"
-      android:fontFamily="monospace" android:textSize="12sp"
-    />
-   
     <TextView android:id="@+id/txt2"
       android:layout_width="wrap_content" android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
@@ -85,12 +47,6 @@
       android:layout_width="wrap_content" android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
       android:text="StartCompass" android:textAllCaps="false"
-    />
-
-    <Button android:id="@+id/flashlight"
-      android:layout_width="wrap_content" android:layout_height="wrap_content"
-      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
-      android:text="🔦 FlashLight" android:textAllCaps="false"
     />
 
     <Button android:id="@+id/btnPrev"
