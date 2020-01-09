@@ -1,0 +1,2 @@
+- clean up coding for sensor data processing and added graphical/image display for compass
+- added date time string with data from Chinese calendar 
