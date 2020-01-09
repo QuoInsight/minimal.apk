@@ -169,13 +169,17 @@ public class mySensorListener implements SensorEventListener {
            in order to remove the noises/data with value above the cutoff limit
           https://developer.android.com/guide/topics/sensors/sensors_motion
            alpha = tau/(tau+dT) [The code sample uses an alpha value of 0.8 for demonstration purposes]
-           [alpha==1-α], is this correct ?? it is different from what explained in wikipedia !!
+           !! in wikipedia α==1-alpha !!
           https://en.wikipedia.org/wiki/Low-pass_filter
            α = dT/(dT+RC) == 0..1
              dT == event delivery rate ( 20ms ==> 20/1000 == 0.02)
-             RC == time-constant, also called "tau" == 1/(2*pi*fc)
+             RC == time-constant, also called "tau" == 1/(2*𝜋*fc) ==> fc=50 ??!!
                    fc==cut off frequency; many people set tau=0.2 ??!!
+
           alpha=0 ==> no filter applies !
+          alpha=0.8 ==> the previous output weights for 80% of the new output, and the new input (event.values) weights for 20%
+                     ==> new value = (80% from old data) + (20% from new data)
+          https://stackoverflow.com/questions/35190839/type-accelerometer-remove-the-gravity-the-meaning-of-t-tdt/35199741
         */
         case android.hardware.Sensor.TYPE_ACCELEROMETER:
           gAccelVals[0] = (1-alpha)*event.values[0] + alpha*gAccelVals[0];

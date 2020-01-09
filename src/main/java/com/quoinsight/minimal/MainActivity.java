@@ -203,6 +203,17 @@ public class MainActivity extends android.app.Activity {
         }
       );
 
+    Button btnCompass = new Button(this);
+      btnCompass.setAllCaps(false);
+      btnCompass.setText("✳ Start Compass 🧭");
+      btnCompass.setOnClickListener(
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            startActivity(new android.content.Intent(v.getContext(), CompassActivity.class));
+          }
+        }
+      );
+
     Button button9 = new Button(this);
       button9.setText("⎊ Quit"); // ⏻ ≡  [🚪←🚶] 𓁆 𝍇去 𝌶逃
       button9.setOnClickListener(
@@ -260,6 +271,7 @@ public class MainActivity extends android.app.Activity {
           layout2.addView(spinner1, params);  layout2.addView(button1, params);
         layout.addView(layout2, params);
         layout.addView(txt2, params);
+        layout.addView(btnCompass, params);
         layout.addView(btnNext, params);
         layout.addView(button9, params);
         layout.addView(edit1, params);

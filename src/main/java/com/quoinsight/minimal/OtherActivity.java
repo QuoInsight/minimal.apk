@@ -297,7 +297,7 @@ public class OtherActivity extends android.app.Activity
               try {
                 ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
                   "#" + MainActivity.getDateStr("ss") + ":<br>"
-                     + "<font size='2em'>🧭" + String.valueOf(Math.round(azimuth)) + "°</font>"
+                     + "<font size='2em'>✳" + String.valueOf(Math.round(azimuth)) + "°</font>"
                 ));
                 //gSensorListener.unregister();
               } catch(Exception e) {
@@ -371,7 +371,8 @@ public class OtherActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              gSensorListener.register(500, 60000);
+              //gSensorListener.register(500, 30000);
+              startActivity(new android.content.Intent(v.getContext(), CompassActivity.class));
             } catch(Exception e) {
               writeMessage("OtherActivity.StartCompass", e.getMessage());
             }
@@ -394,7 +395,7 @@ public class OtherActivity extends android.app.Activity
       );
 
 
-      findViewById(R.id.button2).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
+      findViewById(R.id.btnPrev).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
         new View.OnClickListener() {
           public void onClick(View v) {
             startActivity(new android.content.Intent(v.getContext(), MainActivity.class));
