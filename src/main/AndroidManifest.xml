@@ -3,7 +3,7 @@
   # inspired by https://czak.pl/2016/01/13/minimal-android-project.html
   thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/AndroidManifest.xml
 
-  android:icon="@drawable/icon" ==> .\src\main\res\drawable-*dpi\icon.png
+  android:icon="@drawable/icon" ==> .\src\main\res\drawable[-*dpi]\icon.png
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
    xmlns:tools="http://schemas.android.com/tools"
