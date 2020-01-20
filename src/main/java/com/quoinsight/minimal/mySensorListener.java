@@ -5,6 +5,8 @@ package com.quoinsight.minimal;
 
   http://pages.iu.edu/~rwisman/c490/html/android-sensors.htm
   https://www.vogella.com/tutorials/AndroidSensor/article.html
+
+  https://stackoverflow.com/questions/11101146/listener-vs-handler-in-android
 */
 
 import android.content.Context;
@@ -18,7 +20,8 @@ public class mySensorListener implements SensorEventListener {
 
   public interface handlers {
     void OnMessage(String tag, String msg, String...args);
-    void OnAzimuthDataLoaded(float azimuth);
+    void OnOrientationDataLoaded(float[] returnVals);
+    void OnAccel2g(float gForce);
   }
 
   private handlers gHandlers = null;
@@ -125,7 +128,29 @@ public class mySensorListener implements SensorEventListener {
   }
 */
 
-  private float[] gAccelVals = new float[3], gMagVals = new float[3];
+  private float[] gAccelVals = {-1f,-1f,-1f}, gMagVals = {-1f,-1f,-1f};  // new float[3]
+  public final float gAccelAlpha = 0.8f, gMagAlpha = 0.8f;  // 0 ==> no filter applies !
+
+  private float[] getDeviceOrientation(
+    android.hardware.SensorManager sensorMgr, float[] accelVals, float[] magVals
+  ) {
+    // https://stackoverflow.com/questions/7046608/getrotationmatrix-and-getorientation-tutorial
+    float[] returnVals = new float[3];  returnVals[0] = -9f;  // range of values is -π to π
+    try {
+      synchronized (this) {
+        float[] rotationMatrix = new float[16];  // getRotationMatrix() returns either as a 3x3 or 4x4 row-major matrix depending on the length of the passed array
+        if (sensorMgr.getRotationMatrix(rotationMatrix, null, accelVals, magVals)) {
+          sensorMgr.getOrientation(rotationMatrix, returnVals);
+          return returnVals;
+        } else {
+          // getRotationMatrix() failed, perhaps accelVals/magVals not yet ready
+        }
+      }
+    } catch(Exception e) {
+      writeMessage("mySensorEventListener.getDeviceOrientation", e.getMessage());
+    }
+    return returnVals;
+  }
 
   private float getAzimuthValueFromSensorData(
     android.hardware.SensorManager sensorMgr,
@@ -135,17 +160,9 @@ public class mySensorListener implements SensorEventListener {
     // https://github.com/iutinvg/compass/blob/master/app/src/main/java/com/sevencrayons/compass/Compass.java
     float azimuthValue = -1f;
     try {
-      synchronized (this) {
-        float[] rotationMatrix = new float[16], baseOrientation = new float[4];
-
-        if (sensorMgr.getRotationMatrix(rotationMatrix, null, accelVals, magVals)) {
-          sensorMgr.getOrientation(rotationMatrix, baseOrientation);
-          azimuthValue = (float) Math.toDegrees(baseOrientation[0]); // orientation
-          azimuthValue = (azimuthValue + azimuthFix + 360) % 360;
-        } else {
-          // getRotationMatrix() failed, perhaps accelVals/magVals not yet ready
-        }
-      }
+      float[] orientation = getDeviceOrientation(sensorMgr, accelVals, magVals);
+      azimuthValue = (float) Math.toDegrees(orientation[0]);
+      azimuthValue = (azimuthValue + azimuthFix + 360) % 360;
     } catch(Exception e) {
       writeMessage("mySensorEventListener.getAzimuthValueFromSensorData", e.getMessage());
     }
@@ -155,7 +172,7 @@ public class mySensorListener implements SensorEventListener {
   @Override public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
   @Override public void onSensorChanged(SensorEvent event) {
-    final float alpha = 0f, azimuthFix = 0f;
+    float alpha = 0f;  float[] values = event.values;
     java.util.Date thisDataTimeStamp = new java.util.Date();
 
     // ignore/skip this to reduce the update frequency
@@ -181,23 +198,41 @@ public class mySensorListener implements SensorEventListener {
                      ==> new value = (80% from old data) + (20% from new data)
           https://stackoverflow.com/questions/35190839/type-accelerometer-remove-the-gravity-the-meaning-of-t-tdt/35199741
         */
+
         case android.hardware.Sensor.TYPE_ACCELEROMETER:
-          gAccelVals[0] = (1-alpha)*event.values[0] + alpha*gAccelVals[0];
-          gAccelVals[1] = (1-alpha)*event.values[1] + alpha*gAccelVals[1];
-          gAccelVals[2] = (1-alpha)*event.values[2] + alpha*gAccelVals[2];
+          /*
+            all values are in SI units (m/s^2) and measure contact forces
+            values[0,1,2] == force applied by the device on the x,y,z-axis
+          */
+          alpha = (gAccelVals[0] >= 0) ? gAccelAlpha : 0;
+          gAccelVals[0] = (1-alpha)*values[0] + alpha*gAccelVals[0];
+          gAccelVals[1] = (1-alpha)*values[1] + alpha*gAccelVals[1];
+          gAccelVals[2] = (1-alpha)*values[2] + alpha*gAccelVals[2];
+
+          float gForce = (values[0]*values[0] + values[1]*values[1] + values[2]*values[2])
+                       / (gSensorMgr.GRAVITY_EARTH * gSensorMgr.GRAVITY_EARTH);
+          if (gHandlers != null && gForce >= 2) gHandlers.OnAccel2g(gForce);
           break;
+
         case android.hardware.Sensor.TYPE_MAGNETIC_FIELD:
-          gMagVals[0] = (1-alpha)*event.values[0] + alpha*gMagVals[0];
-          gMagVals[1] = (1-alpha)*event.values[1] + alpha*gMagVals[1];
-          gMagVals[2] = (1-alpha)*event.values[2] + alpha*gMagVals[2];
+          /*
+            all values are in micro-Tesla (uT) and measure the ambient magnetic field
+            values[0,1,2] == the ambient magnetic field in the x,y,z-axis; note: z-axis is inverted.
+          */
+          alpha = (gMagVals[0] >= 0) ? gMagAlpha : 0;
+          gMagVals[0] = (1-alpha)*values[0] + alpha*gMagVals[0];
+          gMagVals[1] = (1-alpha)*values[1] + alpha*gMagVals[1];
+          gMagVals[2] = (1-alpha)*values[2] + alpha*gMagVals[2];
           break;
+
         default:
           return;
       }
-      float azimuth = getAzimuthValueFromSensorData(gSensorMgr, gAccelVals, gMagVals, azimuthFix);
-      if (azimuth >= 0) {
+
+      float[] orientationData = getDeviceOrientation(gSensorMgr, gAccelVals, gMagVals);
+      if (orientationData[0] > -3.141) {  // range of values is -π to π
         lastDataTimeStamp = thisDataTimeStamp;
-        if (gHandlers != null) gHandlers.OnAzimuthDataLoaded(azimuth);
+        if (gHandlers != null) gHandlers.OnOrientationDataLoaded(orientationData);
       }
     }
   }

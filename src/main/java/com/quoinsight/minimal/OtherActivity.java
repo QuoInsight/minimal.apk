@@ -5,23 +5,22 @@ package com.quoinsight.minimal;
 
 import android.widget.TextView;
 import android.widget.Button;
-import android.widget.Toast;  
+import android.widget.EditText;
 
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.AdapterView;
 
-import android.widget.EditText;
-
-import android.widget.LinearLayout;
-import android.view.Gravity;
 import android.view.View;
 
 public class OtherActivity extends android.app.Activity
   // implements android.hardware.SensorEventListener // !! need this for it work correctly with SensorEvent !!
 {
   public void writeMessage(String tag, String msg, String...args) {  // varargs
-    Toast.makeText(OtherActivity.this, tag + ": " +  msg, Toast.LENGTH_LONG).show();  // .setDuration(int duration)
+    android.widget.Toast.makeText(
+      OtherActivity.this, tag + ": " +  msg,
+        android.widget.Toast.LENGTH_LONG
+    ).show();  // .setDuration(int duration)
     //android.util.Log.e(tag, msg);
     return;
   }
@@ -29,6 +28,23 @@ public class OtherActivity extends android.app.Activity
   public void msgBox(String title, String msg) {
     android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder(this);
     alrt.setTitle(title).setMessage(msg).setCancelable(false).setPositiveButton("OK", null).show();
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public String getDeviceID() {
+    return android.provider.Settings.Secure.getString(
+      getContentResolver(), android.provider.Settings.Secure.ANDROID_ID
+    );
+  }
+
+  public String joinStringList(String sep, java.util.List<String> lst) {
+    String str = "";
+    if (lst.size() > 0) {
+      for (String s : lst) str = str + s + sep;
+      str = str.substring(0, str.length()-sep.length()); // remove the last separator
+    }
+    return str;
   }
 
   public java.util.List<String> getPackageList() {
@@ -54,6 +70,29 @@ public class OtherActivity extends android.app.Activity
     java.util.Collections.sort(pkgLst, String.CASE_INSENSITIVE_ORDER);  // java.util.Collections.reverseOrder()
     return pkgLst;
   }
+
+  public java.util.List<String> getSensorList() {
+    // http://pages.iu.edu/~rwisman/c490/html/android-sensors.htm
+    android.hardware.SensorManager sensorMgr = (android.hardware.SensorManager) this.getSystemService(android.content.Context.SENSOR_SERVICE);
+    java.util.List<String> sensorLst = new java.util.ArrayList<String>();
+
+    final String[] typeArr = new String[] {
+      "ACCELEROMETER", "MAGNETIC_FIELD", "ORIENTATION", "GYROSCOPE", "LIGHT", "PRESSURE", "TEMPERATURE", "PROXIMITY", "GRAVITY",
+      "LINEAR_ACCELERATION", "ROTATION_VECTOR", "RELATIVE_HUMIDITY", "AMBIENT_TEMPERATURE", "MAGNETIC_FIELD_UNCALIBRATED",
+      "GAME_ROTATION_VECTOR", "GYROSCOPE_UNCALIBRATED", "SIGNIFICANT_MOTION", "STEP_DETECTOR", "STEP_COUNTER",
+      "GEOMAGNETIC_ROTATION_VECTOR", "HEART_RATE", "#22", "#23", "#24", "#25", "#26", "#27", "POSE_6DOF", "STATIONARY_DETECT",
+      "MOTION_DETECT", "HEART_BEAT", "#32", "#33", "LOW_LATENCY_OFFBODY_DETECT", "ACCELEROMETER_UNCALIBRATED"
+    };
+    for (android.hardware.Sensor s : sensorMgr.getSensorList(android.hardware.Sensor.TYPE_ALL)) {
+      int t = s.getType();  String sensorType = (t>0 && t<=typeArr.length) ? typeArr[t-1] : ("#"+Integer.toString(t));
+      sensorLst.add(sensorType + ": " + s.getName());
+    }
+
+    java.util.Collections.sort(sensorLst, String.CASE_INSENSITIVE_ORDER);  // java.util.Collections.reverseOrder()
+    return sensorLst;
+  }
+
+  //////////////////////////////////////////////////////////////////////
 
   public void launchAppMgr() {
     try {
@@ -122,10 +161,12 @@ public class OtherActivity extends android.app.Activity
       new android.view.ActionMode.Callback() {
         @Override public boolean onPrepareActionMode(android.view.ActionMode mode, android.view.Menu menu) {
           try {
-            android.view.MenuItem copyTxt = menu.findItem(android.R.id.copy);
+            android.view.MenuItem copyText = menu.findItem(android.R.id.copy);
             android.view.MenuItem selectAll = menu.findItem(android.R.id.selectAll);
-            menu.clear();  menu.add(0, android.R.id.copy, 0, copyTxt.getTitle());
+            android.view.MenuItem shareText = menu.findItem(android.R.id.shareText);
+            menu.clear();  menu.add(0, android.R.id.copy, 0, copyText.getTitle());
             menu.add(0, android.R.id.selectAll, 0, selectAll.getTitle());
+            menu.add(0, android.R.id.shareText, 0, shareText.getTitle());
           } catch (Exception e) {}
           return true;
         }
@@ -158,6 +199,9 @@ public class OtherActivity extends android.app.Activity
     switch (item.getItemId()) {
       case R.id.main_menu_settings:
         return true;
+      case R.id.main_menu_appInfo:
+        launchAppInfo(getApplicationContext().getPackageName()); // "com.quoinsight.minimal"
+        return true;
       case R.id.main_menu_about:
         MainActivity.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
         return true;
@@ -185,13 +229,16 @@ public class OtherActivity extends android.app.Activity
     try {
 
       TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\otheractivity.xml
-        txt1.setText("Hello from OtherActivity!\n[" + MainActivity.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
+        txt1.setText("Hello " + getDeviceID() +  " from OtherActivity!\n[" + MainActivity.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
         // avoid EditText from gaining focus at Activity startup 
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
       // ((EditText)findViewById(R.id.edit1)).setText( String.join("\n", getPackageList()) );
+      // String.join is not support by some versions --> use our local function joinStringList() instead
       java.util.List<String> pkgLst = getPackageList();
-      makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit1)).setText(String.join("\n", pkgLst));
+      makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit1)).setText(joinStringList("\n", pkgLst));
+
+      makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit2)).setText(joinStringList("\n", getSensorList()));
 
       final Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
         final java.util.Hashtable<String, String> appPackageNames = new java.util.Hashtable<String, String>();
@@ -292,9 +339,11 @@ public class OtherActivity extends android.app.Activity
           @Override public void OnMessage(String tag, String msg, String...args) {
             writeMessage(tag, msg, args);
           }
-          @Override public void OnAzimuthDataLoaded(final float azimuth) {
+          @Override public void OnOrientationDataLoaded(final float[] orienationData) {
             runOnUiThread(new Runnable() { @Override public void run() {
               try {
+                float azimuth = (float) Math.toDegrees(orienationData[0]);
+                float azimuthFix = 0f;  azimuth = (azimuth + azimuthFix + 360) % 360;
                 ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
                   "#" + MainActivity.getDateStr("ss") + ":<br>"
                      + "<font size='2em'>✳" + String.valueOf(Math.round(azimuth)) + "°</font>"
@@ -305,7 +354,11 @@ public class OtherActivity extends android.app.Activity
                 return;
               }
             }});
-        }});
+          }
+          @Override public void OnAccel2g(final float gForce) {
+            writeMessage("OtherActivity.OnAccel2g", "device shaken at " + String.valueOf(Math.round(gForce)) + "g");
+          }
+        });
       } catch(Exception e) {
         writeMessage("OtherActivity.mySensorListener", e.getMessage());
       }
@@ -316,7 +369,7 @@ public class OtherActivity extends android.app.Activity
           new View.OnClickListener() {
             @Override public void onClick(View v) {
               try {
-                if ( gSensorListener.register(20, 2000) ) {
+                if ( gSensorListener.register(50, 2000) ) {
                   writeMessage("OtherActivity.gSensorListener#", "registered");
                 }
               } catch(Exception e) {
@@ -324,6 +377,38 @@ public class OtherActivity extends android.app.Activity
               }
             }
           }
+        );
+
+          java.util.Calendar calendar = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"));
+          /*
+            Calendar.getInstance();
+
+            Unless you are going to perform Date/Time related calculations, there is no point in instantiating Calendar with given TimeZone.
+            After calling Calendar's getTime() method, you will receive Date object, which is timezone-less either way (GMT based, actually).
+
+            //SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
+            //Date dateTime = sdf.parse("22-01-2015 10:20:56");
+            java.util.Date dateTime = new java.util.Date((new java.util.Date()).getTime()+8*60*60*1000);  
+            Calendar calendar = Calendar.getInstance();  calendar.setTime(dateTime);
+          */
+
+          // https://github.com/LocusEnergy/solar-calculations
+          com.locusenergy.solarcalculations.SolarCalculations solarCalc
+            = new com.locusenergy.solarcalculations.SolarCalculations(5.2960, 100.2752); // Penang International Airport
+          double solarAzimuth = solarCalc.calcSolarAzimuth(calendar); // timezone does not matter here
+            solarAzimuth = (solarAzimuth<180) ? solarAzimuth+180 : solarAzimuth-180; // convert south-based azimuth to north-based
+
+          // https://github.com/florianmski/SunCalc-Java
+          com.florianmski.suncalc.models.SunPosition sunPos
+            = com.florianmski.suncalc.SunCalc.getSunPosition(
+                java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")), // must specify timezone as UTC
+                  5.2960, 100.2752
+              );
+          double solarAzimuth2 = Math.toDegrees(sunPos.getAzimuth());
+
+        txt2.setText(
+          "#solar: " + String.valueOf(Math.round(solarAzimuth)) + "°Az✳"
+            + ".. " + String.valueOf(Math.round(solarAzimuth2)) + "°Az✳"
         );
 
 /*
