@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+  <!--
+    https://developer.android.com/guide/topics/resources/string-resource
+    @string/settings ==> .\src\main\res\values\strings.xml : <string name="settings">
+  -->
+
+  <string name="settings">Settings</string>
+
+  <string name="zh12b"
+  >子zǐ 丑chǒu 寅yín 卯mǎo 辰chén 巳sì 午wǔ 未wèi 申shēn 酉yǒu 戌xū 亥hài https://en.wikipedia.org/wiki/Sexagenary_cycle
+  </string>
+
+  <string-array name="otherpkgnames">
+    <!--https://stackoverflow.com/questions/9371942/dictionary-in-android-resources-->
+    <item>WebView:com.google.android.webview</item>
+    <item>QuoInsight:com.quoinsight.minimal</item>
+    <item>BarcodeScanner:com.google.zxing.client.android</item>
+    <item>otherapp:com.otherapp.package</item>
+  </string-array>
+
+</resources>
