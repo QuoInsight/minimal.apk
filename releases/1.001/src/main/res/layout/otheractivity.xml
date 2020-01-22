@@ -86,23 +86,11 @@
       android:fontFamily="monospace" android:textSize="12sp"
     />
 
-    <TextView android:id="@+id/txt2"
+    <TextView
       android:layout_width="wrap_content" android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
       android:gravity="center" android:textAlignment="center"
-      android:text="🧭 Orientation ✳:\n ??"
-    />
-
-    <Button android:id="@+id/start_compass"
-      android:layout_width="wrap_content" android:layout_height="wrap_content"
-      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
-      android:text="StartCompass" android:textAllCaps="false"
-    />
-
-    <Button android:id="@+id/flashlight"
-      android:layout_width="wrap_content" android:layout_height="wrap_content"
-      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
-      android:text="🔦 FlashLight" android:textAllCaps="false"
+      android:text=" "
     />
 
     <Button android:id="@+id/btnPrev"

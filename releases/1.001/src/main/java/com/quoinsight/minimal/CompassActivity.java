@@ -28,7 +28,11 @@ public class CompassActivity extends android.app.Activity
 
   //////////////////////////////////////////////////////////////////////
 
-  public float[] getCurrentSolarPosition(double latitue, double longitude) {
+  public double[] gObsrvLoc = {5.2960, 100.2752}; // Penang International Airport
+  public float[] gSolarPos, gLunarPos;
+
+  public float[] getCurrentSolarPosition(double[] obsrvLoc) {
+    double latitue=obsrvLoc[0], longitude=obsrvLoc[1];
     double azimuth=0, altitude=0;  // "#sun@0°Az✳/0°Alt△"
 
     java.util.Calendar calendar = java.util.Calendar.getInstance();
@@ -69,7 +73,8 @@ public class CompassActivity extends android.app.Activity
     return new float[] {(float)azimuth, (float)altitude};
   }
 
-  public float[] getCurrentLunarPosition(double latitue, double longitude) {
+  public float[] getCurrentLunarPosition(double[] obsrvLoc) {
+    double latitue=obsrvLoc[0], longitude=obsrvLoc[1];
     double azimuth=0, altitude=0;  // "#moon@0°Az✳/0°Alt△"
 
     // https://github.com/florianmski/SunCalc-Java
@@ -174,6 +179,25 @@ public class CompassActivity extends android.app.Activity
     canvas.drawBitmap(bmp, 0/*left*/, 0/*top*/, null);
     //img.invalidate(); img1.draw(canvas); // this does not seem to change img1
     img.setImageBitmap(bmp1); // this works correctly, and capture the changes
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public void reloadCompassImg(android.widget.ImageView img, android.widget.TextView txt) {
+    gSolarPos = getCurrentSolarPosition(gObsrvLoc); // Penang International Airport
+    gLunarPos = getCurrentLunarPosition(gObsrvLoc); // Penang International Airport
+
+    txt.setText( "Hello from CompassActivity!\n[" + MainActivity.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
+      + "\nlocation@" + String.valueOf(gObsrvLoc[0]) + "," + String.valueOf(gObsrvLoc[1])
+      + "\n#sun@" + String.valueOf(Math.round(gSolarPos[0])) + "°Az✳"
+        + "/" + String.valueOf(Math.round(gSolarPos[1])) + "°Alt△"
+      + "\n#moon@" + String.valueOf(Math.round(gLunarPos[0])) + "°Az✳"
+        + "/" + String.valueOf(Math.round(gLunarPos[1])) + "°Alt△"
+    );
+
+    img.setImageResource(R.drawable.compass);
+    drawMarkersOnCompassImg(img, gSolarPos, gLunarPos);
+    //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -297,26 +321,15 @@ public class CompassActivity extends android.app.Activity
           android.view.ViewGroup.LayoutParams p = img1.getLayoutParams();
           p.height=h; p.width=w; img1.setLayoutParams(p);
 
-          float[] solarPos = getCurrentSolarPosition(5.2960, 100.2752); // Penang International Airport
-          float[] lunarPos = getCurrentLunarPosition(5.2960, 100.2752); // Penang International Airport
-          txt1.setText( txt1.getText().toString()
-            + "\n#sun@" + String.valueOf(Math.round(solarPos[0])) + "°Az✳"
-              + "/" + String.valueOf(Math.round(solarPos[1])) + "°Alt△"
-            + "\n#moon@" + String.valueOf(Math.round(lunarPos[0])) + "°Az✳"
-              + "/" + String.valueOf(Math.round(lunarPos[1])) + "°Alt△"
-          );
-          drawMarkersOnCompassImg(img1, solarPos, lunarPos);
-
-          //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
+          reloadCompassImg(img1, txt1);
 
           //img1.requestLayout(); //just redraw, not needed as setImageBitmap is done above
         img1.setOnClickListener(
           new View.OnClickListener() {
             @Override public void onClick(View v) {
               try {
-                if ( gSensorListener.register(50, 2000) ) {
-                  writeMessage("CompassActivity.gSensorListener#", "registered");
-                }
+                reloadCompassImg((android.widget.ImageView)v, (android.widget.TextView)findViewById(R.id.txt1));
+                if ( gSensorListener.register(50, 2000) ) writeMessage("CompassActivity.gSensorListener#", "registered");
               } catch(Exception e) {
                 writeMessage("CompassActivity.gSensorListener#", e.getMessage());
               }

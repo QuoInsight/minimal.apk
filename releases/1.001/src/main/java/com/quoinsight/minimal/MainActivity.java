@@ -22,6 +22,8 @@ import android.view.View;
 
 public class MainActivity extends android.app.Activity {
 
+  public boolean toggleFlashLight = true;
+
   static final public String getChineseDateStr() {
     final String[] dayArr = new String[] { "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十", "十一", "十二", "十三", "十四",
       "十五", "十六", "十七", "十八", "十九", "二十", "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十", "卅一"
@@ -79,8 +81,22 @@ public class MainActivity extends android.app.Activity {
 
   //////////////////////////////////////////////////////////////////////
 
-  public void quit() {
-    android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder(this);
+  static final public void writeMessage(android.content.Context parentContext, String tag, String msg, String...args) {  // varargs
+    android.widget.Toast.makeText(
+      parentContext, tag + ": " +  msg,
+        android.widget.Toast.LENGTH_LONG
+    ).show();  // .setDuration(int duration)
+    //android.util.Log.e(tag, msg);
+    return;
+  }
+
+  static final public void msgBox(android.content.Context parentContext, String title, String msg) {
+    android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder(parentContext);
+    alrt.setTitle(title).setMessage(msg).setCancelable(false).setPositiveButton("OK", null).show();
+  }
+
+  static final public void quit(final android.app.Activity parentActivity) {
+    android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder((android.content.Context)parentActivity);
     alrt.setMessage("Are you sure?").setPositiveButton("Yes", new android.content.DialogInterface.OnClickListener() {
       @Override public void onClick(android.content.DialogInterface dialog, int which) {
         /*
@@ -91,9 +107,9 @@ public class MainActivity extends android.app.Activity {
         }
         */
 
-        //this.finishAffinity();
+        //parentActivity.finishAffinity();
         if (android.os.Build.VERSION.SDK_INT >= 21)
-          finishAndRemoveTask(); else finish();
+          parentActivity.finishAndRemoveTask(); else parentActivity.finish();
         /*
           https://stackoverflow.com/questions/22166282/close-application-and-remove-from-recent-apps
           Note: this won't address the availability of "force stop" in the application info.
@@ -117,11 +133,12 @@ public class MainActivity extends android.app.Activity {
   }
 
   static final public int getBatteryLevel(android.content.Context parentContext) {
-    android.os.BatteryManager battMgr
-      = (android.os.BatteryManager)
-          parentContext.getSystemService(BATTERY_SERVICE);
-    int batLevel = battMgr.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
-    return batLevel;
+    try {
+      android.os.BatteryManager battMgr
+        = (android.os.BatteryManager) parentContext.getSystemService(BATTERY_SERVICE);
+      return battMgr.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);
+    } catch(Exception e) {}
+    return -1;
   }
 
   static final public void enableTorchLigth(android.content.Context parentContext, boolean enabled) {
@@ -149,7 +166,7 @@ public class MainActivity extends android.app.Activity {
   @Override public boolean onOptionsItemSelected(android.view.MenuItem item) {
     switch (item.getItemId()) {
       case 99:
-        quit();
+        quit(this);
         return true;
       default:
         break;
@@ -245,6 +262,23 @@ public class MainActivity extends android.app.Activity {
         }
       );
 
+    Button btnTorch = new Button(this);
+      btnTorch.setAllCaps(false);
+      btnTorch.setText("🔦 FlashLight");
+      btnTorch.setOnClickListener(
+        new View.OnClickListener() {
+          public void onClick(View v) {
+            try {
+              enableTorchLigth(v.getContext(), toggleFlashLight);
+              toggleFlashLight = ! toggleFlashLight;
+            } catch(Exception e) {
+              writeMessage(MainActivity.this, "MainActivity.flashlight", e.getMessage());
+              return;
+            }
+          }
+        }
+      );
+
     Button button9 = new Button(this);
       button9.setText("⎊ Quit"); // ⏻ ≡  [🚪←🚶] 𓁆 𝍇去 𝌶逃
       button9.setOnClickListener(
@@ -256,7 +290,7 @@ public class MainActivity extends android.app.Activity {
 
             //try { Thread.sleep(3000); } catch(InterruptedException e) {}
 
-            quit();
+            quit(MainActivity.this);
           }
         }
       );
@@ -303,6 +337,7 @@ public class MainActivity extends android.app.Activity {
         layout.addView(layout2, params);
         layout.addView(txt2, params);
         layout.addView(btnCompass, params);
+        layout.addView(btnTorch, params);
         layout.addView(btnNext, params);
         layout.addView(button9, params);
         layout.addView(edit1, params);
