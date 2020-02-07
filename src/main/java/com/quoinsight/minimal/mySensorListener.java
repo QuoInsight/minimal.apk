@@ -129,7 +129,7 @@ public class mySensorListener implements SensorEventListener {
 */
 
   private float[] gAccelVals = {-1f,-1f,-1f}, gMagVals = {-1f,-1f,-1f};  // new float[3]
-  public final float gAccelAlpha = 0.8f, gMagAlpha = 0.8f;  // 0 ==> no filter applies !
+  public final float gAccelAlpha = 0.8f, gMagAlpha = 0f;  // 0 ==> no filter applies !
 
   private float[] getDeviceOrientation(
     android.hardware.SensorManager sensorMgr, float[] accelVals, float[] magVals
@@ -192,6 +192,11 @@ public class mySensorListener implements SensorEventListener {
              dT == event delivery rate ( 20ms ==> 20/1000 == 0.02)
              RC == time-constant, also called "tau" == 1/(2*𝜋*fc) ==> fc=50 ??!!
                    fc==cut off frequency; many people set tau=0.2 ??!!
+
+          https://developer.android.com/guide/topics/sensors/sensors_position#sensors-pos-orient
+            You don't usually need to perform any data processing or filtering
+            of the device's raw orientation angles other than translating the
+            sensor's coordinate system to your application's frame of reference.
 
           alpha=0 ==> no filter applies !
           alpha=0.8 ==> the previous output weights for 80% of the new output, and the new input (event.values) weights for 20%

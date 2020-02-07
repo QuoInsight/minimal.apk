@@ -28,81 +28,18 @@ public class CompassActivity extends android.app.Activity
 
   //////////////////////////////////////////////////////////////////////
 
-  public float[] getCurrentSolarPosition(double latitue, double longitude) {
-    double azimuth=0, altitude=0;  // "#sun@0°Az✳/0°Alt△"
+  public float gMagneticCorrection = 0f;  // obsrvLoc: latitude, longitude, elevation (metres above above sea level)
+  public float[] gObsrvLoc = {5.2960f, 100.2752f, 3f};  // Penang International Airport
 
-    java.util.Calendar calendar = java.util.Calendar.getInstance();
-    /*
-      Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"));
-
-      Unless you are going to perform Date/Time related calculations, there is no point in instantiating Calendar with given TimeZone.
-      After calling Calendar's getTime() method, you will receive Date object, which is timezone-less either way (GMT based, actually).
-
-      //SimpleDateFormat sdf = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");  Date dateTime = sdf.parse("22-01-2015 10:20:56");
-      //java.util.Date dateTime = new java.util.Date((new java.util.Date()).getTime()+8*60*60*1000);  
-      //Calendar calendar = Calendar.getInstance();  calendar.setTime(dateTime);
-      calendar.add(Calendar.HOUR_OF_DAY, 8);
-    */
-
-    // https://github.com/LocusEnergy/solar-calculations
-    com.locusenergy.solarcalculations.SolarCalculations solarCalc
-      = new com.locusenergy.solarcalculations.SolarCalculations(latitue, longitude);
-    azimuth = solarCalc.calcSolarAzimuth(calendar); // timezone does not matter here !
-      azimuth = (azimuth<180) ? azimuth+180 : azimuth-180; // convert south-based azimuth to north-based
-    altitude = 90-solarCalc.calcSolarZenith(calendar); // elevation|altitude
-
-    /*
-      ** javax.annotation NOT COMPATIBLE WITH ANDROID !? https://github.com/shred/commons-suncalc
-    */
-
-    /*
-      // https://github.com/florianmski/SunCalc-Java
-      com.florianmski.suncalc.models.SunPosition sunPos
-        = com.florianmski.suncalc.SunCalc.getSunPosition(
-            java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")), // must specify timezone as UTC
-              latitue, longitude
-          );
-      azimuth = Math.toDegrees(sunPos.getAzimuth());
-      altitude = Math.toDegrees(sunPos.getAltitude());
-    */
-
-    return new float[] {(float)azimuth, (float)altitude};
-  }
-
-  public float[] getCurrentLunarPosition(double latitue, double longitude) {
-    double azimuth=0, altitude=0;  // "#moon@0°Az✳/0°Alt△"
-
-    // https://github.com/florianmski/SunCalc-Java
-    com.florianmski.suncalc.models.MoonPosition lunarPos
-      = com.florianmski.suncalc.SunCalc.getMoonPosition(
-          java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")), // must specify timezone as UTC
-            latitue, longitude
-        );
-    azimuth = Math.toDegrees(lunarPos.getAzimuth());
-    altitude = Math.toDegrees(lunarPos.getAltitude());
-
-    return new float[] {(float)azimuth, (float)altitude};
+  public float getGeomagnecticFieldCorrection(float[] obsrvLoc, long epochTime) {
+    // android.hardware.GeomagneticField
+    // getMagneticCorrection | MagneticDeclinationCalculator
+    // https://stackoverflow.com/questions/36844914/getting-correct-direction-from-android-magnetic-sensor
+    android.hardware.GeomagneticField geomagneticField = new android.hardware.GeomagneticField(obsrvLoc[0], obsrvLoc[1], obsrvLoc[2], epochTime);
+    return geomagneticField.getDeclination();  // https://developer.android.com/reference/android/hardware/GeomagneticField.html
   }
 
   //////////////////////////////////////////////////////////////////////
-
-  public static float px2dp(android.util.DisplayMetrics displayMetrics, float px) {
-    return (float)android.util.TypedValue.applyDimension(
-      android.util.TypedValue.COMPLEX_UNIT_PX, px, displayMetrics
-    );
-  }
-
-  public static float dp2px(android.util.DisplayMetrics displayMetrics, float dp) {
-    return (float)android.util.TypedValue.applyDimension(
-      android.util.TypedValue.COMPLEX_UNIT_DIP, dp, displayMetrics
-    );
-  }
-
-  public float[] getVwSzDimensionPx(android.view.View v) {
-    android.util.DisplayMetrics m = v.getContext().getResources().getDisplayMetrics();
-    android.view.ViewGroup.LayoutParams p = v.getLayoutParams();
-    return new float[] {dp2px(m, p.width), dp2px(m, p.height)};
-  }
 
   public double[] getCoordinates(double radian, double radius, double x0, double y0) {
     // http://mathcentral.uregina.ca/QQ/database/QQ.09.06/h/tim1.html
@@ -114,8 +51,8 @@ public class CompassActivity extends android.app.Activity
   public double[] getCoordinatesN0(double azimuth, double radius, double x0, double y0) {
     // convert north-based clockwise bearing to east-based anticlockwise
     // 360-((azimuth<90) ? azimuth+270 : azimuth-90)
-    double azimuthE0 = (azimuth>90) ? 450-azimuth : 90-azimuth;
-    return getCoordinates(azimuthE0*(Math.PI/180), radius, x0, y0);
+    double azimuthE0 = (azimuth>90) ? 450.0-azimuth : 90.0-azimuth;
+    return getCoordinates(azimuthE0*(Math.PI/180.0), radius, x0, y0);
   }
 
   public float[] getCanvasCoordinates(float azimuth, float radius, float x0, float y0) {
@@ -123,7 +60,7 @@ public class CompassActivity extends android.app.Activity
     return new float[] {(float)coordinates[0], -(float)coordinates[1]}; // inverse y-axis
   }
 
-  public void drawMarkersOnCompassImg(android.widget.ImageView img, float[] solarPos, float[] lunarPos) {
+  public void drawMarkersOnCompassImg(android.widget.ImageView img, float[] solarPos, float[] lunarPos, float[] venusPos) {
     android.graphics.drawable.Drawable drawable = img.getDrawable();
     android.util.DisplayMetrics displayMetrics = img.getContext().getResources().getDisplayMetrics();
 
@@ -142,14 +79,21 @@ public class CompassActivity extends android.app.Activity
       use pixels as UOM for drawing objects on the Canvas in android !
     */
 
-    float[] coordinates = getCanvasCoordinates(solarPos[0], radius*(1-Math.abs(solarPos[1])/90), x0, y0);
-    paint.setColor(android.graphics.Color.RED);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
-    paint.setTextSize(40);  canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50, coordinates[1]+50, paint);
+    float[] coordinates;
+    if ( solarPos[1] > -10 ) {
+      coordinates = getCanvasCoordinates(solarPos[0], radius*(1-Math.abs(solarPos[1])/90), x0, y0);
+      paint.setColor(android.graphics.Color.RED);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
+      paint.setTextSize(40);  canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50, coordinates[1]+50, paint);
+    }
 
-    coordinates = getCanvasCoordinates(lunarPos[0], radius*(1-Math.abs(lunarPos[1])/90), x0, y0);
-    paint.setColor(android.graphics.Color.YELLOW);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
+    if ( venusPos[1] > 0 ) {
+      coordinates = getCanvasCoordinates(venusPos[0], radius*(1-Math.abs(venusPos[1])/90), x0, y0);
+      paint.setColor(android.graphics.Color.parseColor("#FFA500"));  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
+    }
 
     if ( lunarPos[1] > 0 ) {
+      coordinates = getCanvasCoordinates(lunarPos[0], radius*(1-Math.abs(lunarPos[1])/90), x0, y0);
+      paint.setColor(android.graphics.Color.YELLOW);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
       paint.setStyle(android.graphics.Paint.Style.STROKE);  paint.setStrokeWidth(mkrSz/2);
       paint.setColor(android.graphics.Color.BLUE);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
     }
@@ -174,6 +118,33 @@ public class CompassActivity extends android.app.Activity
     canvas.drawBitmap(bmp, 0/*left*/, 0/*top*/, null);
     //img.invalidate(); img1.draw(canvas); // this does not seem to change img1
     img.setImageBitmap(bmp1); // this works correctly, and capture the changes
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public void reloadCompassImg(android.widget.ImageView img, android.widget.TextView txt) {
+    celestialEphemeris ephem = new celestialEphemeris(gObsrvLoc);
+    float[] solarPos = ephem.getCurrentSolarPosition();
+    float[] lunarPos = ephem.getCurrentLunarPosition();
+    float[] venusPos = ephem.getCurrentVenusPosition();
+
+    String summaryCaption = "Hello from CompassActivity!\n[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
+      + "\nlocation@" + String.valueOf(gObsrvLoc[0]) + "," + String.valueOf(gObsrvLoc[1]) + "△" + String.valueOf(gObsrvLoc[2]);
+      // summaryCaption  += " offset=" + String.valueOf(gMagneticCorrection);
+      if (solarPos[1] > -10) summaryCaption
+        += "\n#sun@" + String.valueOf(Math.round(solarPos[0])) + "°Az✳"
+          + "/" + String.valueOf(Math.round(solarPos[1])) + "°Alt△";
+      if (lunarPos[1] > 0) summaryCaption
+        += "\n#moon@" + String.valueOf(Math.round(lunarPos[0])) + "°Az✳"
+          + "/" + String.valueOf(Math.round(lunarPos[1])) + "°Alt△";
+      if (venusPos[1] > 0) summaryCaption
+        += "\n#venus@" + String.valueOf(Math.round(venusPos[0])) + "°Az✳"
+          + "/" + String.valueOf(Math.round(venusPos[1])) + "°Alt△";
+    txt.setText( summaryCaption );
+
+    img.setImageResource(R.drawable.compass);
+    drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos);
+    //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -209,7 +180,7 @@ public class CompassActivity extends android.app.Activity
       case R.id.main_menu_settings:
         return true;
       case R.id.main_menu_about:
-        MainActivity.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
+        sysUtils.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
         return true;
       case R.id.main_menu_quit:
         //this.finishAffinity();
@@ -237,11 +208,12 @@ public class CompassActivity extends android.app.Activity
     try {
 
       TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\compassactivity.xml
-        txt1.setText("Hello from CompassActivity!\n[" + MainActivity.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
+        txt1.setText("Hello from CompassActivity!\n[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
         // avoid EditText from gaining focus at Activity startup 
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
       try {
+        gMagneticCorrection = getGeomagnecticFieldCorrection(gObsrvLoc, (new java.util.Date()).getTime());
         gSensorListener = new mySensorListener(this); // will run into error if this is executed before onCreate() 
         gSensorListener.setHandlers(new mySensorListener.handlers() {
           @Override public void OnMessage(String tag, String msg, String...args) {
@@ -251,11 +223,12 @@ public class CompassActivity extends android.app.Activity
             runOnUiThread(new Runnable() { @Override public void run() {
               try {
                 float azimuth = (float)Math.toDegrees(orienationData[0]);
-                float azimuthFix = 0f;  azimuth = (azimuth + azimuthFix + 360) % 360;
+                float azimuthFix = gMagneticCorrection;
+                azimuth = (azimuth + azimuthFix + 360) % 360;
 
                 //gSensorListener.unregister();
                 ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
-                  "#" + MainActivity.getDateStr("ss") + ":<br>"
+                  "#" + commonUtils.getDateStr("ss") + ":<br>"
                      + "<font size='2em'>✳" + String.valueOf(Math.round(azimuth)) + "°</font>"
                 ));
 
@@ -297,26 +270,15 @@ public class CompassActivity extends android.app.Activity
           android.view.ViewGroup.LayoutParams p = img1.getLayoutParams();
           p.height=h; p.width=w; img1.setLayoutParams(p);
 
-          float[] solarPos = getCurrentSolarPosition(5.2960, 100.2752); // Penang International Airport
-          float[] lunarPos = getCurrentLunarPosition(5.2960, 100.2752); // Penang International Airport
-          txt1.setText( txt1.getText().toString()
-            + "\n#sun@" + String.valueOf(Math.round(solarPos[0])) + "°Az✳"
-              + "/" + String.valueOf(Math.round(solarPos[1])) + "°Alt△"
-            + "\n#moon@" + String.valueOf(Math.round(lunarPos[0])) + "°Az✳"
-              + "/" + String.valueOf(Math.round(lunarPos[1])) + "°Alt△"
-          );
-          drawMarkersOnCompassImg(img1, solarPos, lunarPos);
-
-          //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
+          reloadCompassImg(img1, txt1);
 
           //img1.requestLayout(); //just redraw, not needed as setImageBitmap is done above
         img1.setOnClickListener(
           new View.OnClickListener() {
             @Override public void onClick(View v) {
               try {
-                if ( gSensorListener.register(50, 2000) ) {
-                  writeMessage("CompassActivity.gSensorListener#", "registered");
-                }
+                reloadCompassImg((android.widget.ImageView)v, (android.widget.TextView)findViewById(R.id.txt1));
+                if ( gSensorListener.register(50, 2000) ) writeMessage("CompassActivity.gSensorListener#", "registered");
               } catch(Exception e) {
                 writeMessage("CompassActivity.gSensorListener#", e.getMessage());
               }
