@@ -76,10 +76,10 @@ public class MainActivity extends android.app.Activity {
     super.onCreate(savedInstanceState);
 
     TextView txt1 = new TextView(this);
-      txt1.setGravity(Gravity.CENTER_HORIZONTAL);  // txt1.setText("Hello world!\n[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
+      txt1.setGravity(Gravity.CENTER_HORIZONTAL);  // txt1.setText("Hello world!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
       txt1.setText(android.text.Html.fromHtml(
-        "Hello world!<br><small><small>[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]</small></small>"
-          + "<br><font size='1.75em'>" + commonUtils.getChineseDateStr() + "</font>"
+        "Hello world!<br><small><small>[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]</small></small>"
+          + "<br><font size='1.75em'>" + commonUtil.getChineseDateStr() + "</font>"
       )); // Hello world\n[2020-01-09 十二月十五⁄30巳时 09:06:21] --> Hello world\n[2020-01-09 09:06:21]\n十二月十五⁄30巳时
 
     final Spinner spinner1 = new Spinner(this);
@@ -115,7 +115,7 @@ public class MainActivity extends android.app.Activity {
       button1.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
-            sysUtils.launchUrl(v.getContext(), radioStations.get(spinner1.getSelectedItem().toString()));
+            sysUtil.launchUrl(v.getContext(), radioStations.get(spinner1.getSelectedItem().toString()));
           }
         }
       );
@@ -123,15 +123,15 @@ public class MainActivity extends android.app.Activity {
     TextView txt2 = new TextView(this);
       txt2.setGravity(Gravity.CENTER_HORIZONTAL);
       txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
-      txt2.setText("🔋" + Integer.toString(sysUtils.getBatteryLevel(this)) + "%");
+      txt2.setText("🔋" + Integer.toString(sysUtil.getBatteryLevel(this)) + "%");
       txt2.setClickable(true);
       txt2.setOnClickListener(
         new View.OnClickListener() {
           public void onClick(View v) {
             // TextView txt2 = (TextView) v; // findViewById(v.getId());
             ((TextView) v).setText(android.text.Html.fromHtml(
-              "<small><small><small><small># " + commonUtils.getDateStr("ss") + " :</small></small></small></small>"
-                 + "<br>🔋" + Integer.toString(sysUtils.getBatteryLevel(v.getContext())) + "%"
+              "<small><small><small><small># " + commonUtil.getDateStr("ss") + " :</small></small></small></small>"
+                 + "<br>🔋" + Integer.toString(sysUtil.getBatteryLevel(v.getContext())) + "%"
             ));
           }
         }
@@ -165,7 +165,7 @@ public class MainActivity extends android.app.Activity {
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              sysUtils.enableTorchLigth(v.getContext(), toggleFlashLight);
+              sysUtil.enableTorchLigth(v.getContext(), toggleFlashLight);
               toggleFlashLight = ! toggleFlashLight;
             } catch(Exception e) {
               commonGui.writeMessage(MainActivity.this, "MainActivity.flashlight", e.getMessage());

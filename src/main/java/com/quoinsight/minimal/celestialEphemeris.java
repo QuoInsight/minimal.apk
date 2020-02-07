@@ -19,15 +19,23 @@ public class celestialEphemeris {
   //////////////////////////////////////////////////////////////////////
 
   public celestialEphemeris(float[] obsrvLoc) {
+    // !! JD0.0 is 01-JAN-4713BC at Noon !!
+    // !! astronomical day starting at 12:00 noon vs civil day starting at 00:00 midnight !!
     double d = java.time.Instant.now().toEpochMilli()
-      - java.time.Instant.parse("2000-01-01T00:00:00.00Z").toEpochMilli();
+      - java.time.Instant.parse("2000-01-01T12:00:00.00Z").toEpochMilli();
           d = d / (24*60*60000);
     this.gDaysSince2000 = d;
+
     this.gObsrvLoc = obsrvLoc;
 
-    this.gLocalSiderealTime = Math.toRadians( (280.16 + 360.9856235*d) + obsrvLoc[1] );
+    this.gEcl = Math.toRadians(23.439281); // stardroid/units/HeliocentricCoordinates.java | OBLIQUITY
+    // this.gEcl = Math.toRadians(23.4397); // florianmski/suncalc/utils/Constants.java | EARTH_OBLIQUITY
+    // this.gEcl = Math.toRadians(23.4393 - (3.563E-7)*d); // stjarnhimlen.se
+
+    this.gLocalSiderealTime = Math.toRadians( (280.461 + 360.98564737*d) + gObsrvLoc[1] ); // stardroid/util/TimeUtil.java
+    // this.gLocalSiderealTime = Math.toRadians( (280.16 + 360.9856235*d) + obsrvLoc[1] ); // florianmski/suncalc/utils/PositionUtils.java
+
     this.gEarthXYZ = getEarthHeliocentricXYZ(d);
-    this.gEcl = Math.toRadians(23.4393 - (3.563E-7)*d);
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -46,7 +54,7 @@ public class celestialEphemeris {
 
   // stardroid/units/HeliocentricCoordinates.java | CalculateEquatorialCoordinates
   public static double[] helioToGeocentricXYZ(double ecl, double[] hCoords) {
-    double xh=hCoords[0], yh=hCoords[0], zh=hCoords[0];
+    double xh=hCoords[0], yh=hCoords[1], zh=hCoords[2];
     double y = yh*Math.cos(ecl) - zh*Math.sin(ecl);
     double z = zh*Math.cos(ecl) + yh*Math.sin(ecl);
     // Geocentric-Rectangular Equatorial Coordinates
@@ -54,16 +62,17 @@ public class celestialEphemeris {
   }
 
   // stardroid/units/RaDec.java | calculateRaDecDist
-  public static double[] xyzToRaDec(double x, double y, double z) {
-    // Rectangular Coordinates: X,Y,Z
-    double rightAscension = mod2PI(Math.atan2(y, x));
-    double declination = Math.atan(z / Math.sqrt(x*x + y*y));
+  double[] xyzToRaDec(double[] xyz) {
+    // input == [Rectangular Coordinates] == X,Y,Z
+    // output == [Spherical Coordinates] == RA,DEC
+    double rightAscension = Math.atan2(xyz[1], xyz[0]);
+    double declination = Math.atan2(xyz[2], Math.sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1])); 
+    // declination ==?? Math.asin(xyz[2]);
     /*
       print("RA: " + rightAscension + ", DEC: " + declination);
       print("RightAscension: " + mod360(Math.toDegrees(rightAscension))/15.0 + " hrs");
       print("Declination: " + Math.toDegrees(declination) + "°");
     */
-    // Spherical Coordinates: RA,DEC
     return new double[] {rightAscension, declination};
   }
 
@@ -163,62 +172,53 @@ public class celestialEphemeris {
     double w = Math.toRadians(102.93768193 + 0.32327364*jc);  // perihelion
     double o = 0.0;                                           // ascendingNode
     double l = mod2PI(Math.toRadians(100.46457166 + 35999.37244981*jc));  // meanLongitude
-    // stardroid/util/Geometry.java | mod2pi
-    return getHeliocentricXYZ(a, l, e, w, o, i);
     // double distance, double meanLongitude, double eccentricity, double perihelion, double ascendingNode, double inclination
+    return getHeliocentricXYZ(a, l, e, w, o, i);
   }
 
-  public static double[] getLunarXYZ(double d) {
-    // [ephemeris - 天文曆表] Orbital elements of Moon 
-    double N = Math.toRadians(125.1228 - 0.0529538083 * d);  // longitude of the ascending node
-    double i = Math.toRadians(5.1454);                       // inclination to the ecliptic (plane of the Earth's orbit)
-    double w = Math.toRadians(318.0634 + 0.1643573223 * d);  // argument of perihelion
-    double M = Math.toRadians(115.3654 + 13.0649929509 * d); // mean anomaly
-    double e = 0.054900;                                     // eccentricity (0=circle, 0-1=ellipse, 1=parabola)
-
-    double E = getEccentriAnomaly(M, e);                     // eccentric anomaly
-    double xv = Math.cos(E) - e;                             // == r * Math.cos(v)
-    double yv = Math.sqrt(1.0 - e*e) * Math.sin(E);          // == r * Math.sin(v) 
-
-    double v = Math.atan2(yv, xv);       // true anomaly (angle between position and perihelion)
-    double r = Math.sqrt(xv*xv + yv*yv); // current distance/range from earth in AU/AstronomicalUnits; e.g. 0.98
-    double objLongitude = v + w;         // true longitude
-
-    // position in 3-dimensional space; moon==>geocentric (Earth-centered); planets==>heliocentric (Sun-centered)
-    double xh = r * ( Math.cos(N) * Math.cos(objLongitude) - Math.sin(N) * Math.sin(objLongitude) * Math.cos(i) );
-    double yh = r * ( Math.sin(N) * Math.cos(objLongitude) + Math.cos(N) * Math.sin(objLongitude) * Math.cos(i) );
-    double zh = r * ( Math.sin(objLongitude) * Math.sin(i) );
-
-    // ecliptic spherical geocentric coordinates
-    // double lonecl = Math.atan2( yh, xh );
-    // double latecl = Math.atan2( zh, Math.sqrt(xh*xh+yh*yh) );
-
-    return new double[] {xh,yh,zh};
+  double[] getMoonHeliocentricLLD(double daysSince2000) {
+    // stardroid/provider/ephemeris/Planet.java | calculateLunarGeocentricLocation
+    /**
+     * Calculate the geocentric right ascension and declination of the moon using
+     * an approximation as described on page D22 of the 2008 Astronomical Almanac
+     * All of the variables in this method use the same names as those described
+     * in the text: lambda = Ecliptic longitude (degrees) beta = Ecliptic latitude
+     * (degrees) pi = horizontal parallax (degrees) r = distance (Earth radii)
+     *
+     * NOTE: The text does not give a specific time period where the approximation
+     * is valid, but it should be valid through at least 2009.
+     */
+    double jc = daysSince2000 / 36525.0;                   // TimeUtil.julianCenturies(date)
+    double lambda = 218.32 + 481267.881*jc + 6.29
+                  * Math.sin(Math.toRadians(135.0 + 477198.87*jc)) - 1.27
+                  * Math.sin(Math.toRadians(259.3 - 413335.36*jc)) + 0.66
+                  * Math.sin(Math.toRadians(235.7 + 890534.22*jc)) + 0.21
+                  * Math.sin(Math.toRadians(269.9 + 954397.74*jc)) - 0.19
+                  * Math.sin(Math.toRadians(357.5 + 35999.05*jc)) - 0.11
+                  * Math.sin(Math.toRadians(186.5 + 966404.03*jc));
+    double beta = 5.13 * Math.sin(Math.toRadians(93.3 + 483202.02*jc)) + 0.28
+                * Math.sin(Math.toRadians(228.2 + 960400.89*jc)) - 0.28
+                * Math.sin(Math.toRadians(318.3 + 6003.15*jc)) - 0.17
+                * Math.sin(Math.toRadians(217.6 - 407332.21*jc));
+    double pi = 0.9508 + 0.0518 * Math.cos(Math.toRadians(135.0 + 477198.87*jc))
+              + 0.0095 * Math.cos(Math.toRadians(259.3 - 413335.36*jc))
+              + 0.0078 * Math.cos(Math.toRadians(235.7 + 890534.22*jc))
+              + 0.0028 * Math.cos(Math.toRadians(269.9 + 954397.74*jc));
+    double r = 1.0 / Math.sin(Math.toRadians(pi));
+    return new double[] {Math.toRadians(lambda), Math.toRadians(beta), r};
   }
 
-  public static double[] getVenusHeliocentricXYZ(double d) {
-    // [ephemeris - 天文曆表] Orbital elements of Venus 
-    double a = 0.723330;                                    // semi-major axis, or mean distance from Sun (unit in AU)
-    double e = 0.006773 - (1.302E-9) * d;                   // eccentricity (0=circle, 0-1=ellipse, 1=parabola)
-    double i = Math.toRadians(3.3946 + (2.75E-8) * d);      // inclination to the ecliptic (plane of the Earth's orbit)
-    double w = Math.toRadians(54.8910 + (1.38374E-5) * d);  // argument of perihelion
-    double N = Math.toRadians(76.6799 + (2.46590E-5) * d);  // longitude of the ascending node
-    double M = Math.toRadians(48.0052 + 1.6021302244 * d);  // mean anomaly (0 at perihelion; increases uniformly with time)
-
-    double E = getEccentriAnomaly(M, e);                    // eccentric anomaly
-    double xv = Math.cos(E) - e;                            // == r * Math.cos(v)
-    double yv = Math.sqrt(1.0 - e*e) * Math.sin(E);         // == r * Math.sin(v) 
-
-    double v = Math.atan2(yv, xv);       // true anomaly (angle between position and perihelion)
-    double r = Math.sqrt(xv*xv + yv*yv); // current distance/range from earth in AU/AstronomicalUnits; e.g. 0.98
-    double objLongitude = v + w;         // true longitude
-
-    // position in 3-dimensional space; moon==>geocentric (Earth-centered); planets==>heliocentric (Sun-centered)
-    double xh = r * ( Math.cos(N) * Math.cos(objLongitude) - Math.sin(N) * Math.sin(objLongitude) * Math.cos(i) );
-    double yh = r * ( Math.sin(N) * Math.cos(objLongitude) + Math.cos(N) * Math.sin(objLongitude) * Math.cos(i) );
-    double zh = r * ( Math.sin(objLongitude) * Math.sin(i) );
-
-    return new double[] {xh, yh, zh};
+  public static double[] getVenusHeliocentricXYZ(double daysSince2000) {
+    // stardroid/provider/ephemeris/Planet.java
+    double jc = daysSince2000 / 36525.0;                      // TimeUtil.julianCenturies(date)
+    double a = 0.72333566 + 0.00000390*jc;                    // distance
+    double e = 0.00677672 - 0.00004107*jc;                    // eccentricity
+    double i = Math.toRadians(3.39467605 - 0.00078890*jc);    // inclination
+    double w = Math.toRadians(131.60246718 + 0.00268329*jc);  // perihelion
+    double o = Math.toRadians(76.67984255 - 0.27769418*jc);   // ascendingNode
+    double l = mod2PI(Math.toRadians(181.97909950 + 58517.81538729*jc));  // meanLongitude
+    // double distance, double meanLongitude, double eccentricity, double perihelion, double ascendingNode, double inclination
+    return getHeliocentricXYZ(a, l, e, w, o, i);
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -229,17 +229,21 @@ public class celestialEphemeris {
     double[] eCoords = helioToGeocentricXYZ(this.gEcl, hCoords);
     
     return getAzimuthalCoordinates(  // "#sun@0°Az✳/0°Alt△"
-      xyzToRaDec(eCoords[0], eCoords[1], eCoords[2]),
-        this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
+      xyzToRaDec(eCoords), this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
     );
   }
 
   public float[] getCurrentLunarPosition() {
-    double[] eCoords = getLunarXYZ(this.gDaysSince2000);
+    double[] mCoords = getMoonHeliocentricLLD(this.gDaysSince2000);
+    double lambda=mCoords[0], beta=mCoords[1], r=mCoords[2];
+
+    // get Geocentric XYZ | stardroid/provider/ephemeris/Planet.java | calculateLunarGeocentricLocation
+    double l = Math.cos(beta) * Math.cos(lambda);
+    double m = 0.9175*Math.cos(beta)*Math.sin(lambda) - 0.3978*Math.sin(beta);
+    double n = 0.3978*Math.cos(beta)*Math.sin(lambda) + 0.9175*Math.sin(beta);
 
     return getAzimuthalCoordinates(  // "#moon@0°Az✳/0°Alt△"
-      xyzToRaDec(eCoords[0], eCoords[1], eCoords[2]),
-        this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
+      xyzToRaDec(new double[] {l, m, n}), this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
     );
   }
 
@@ -249,8 +253,7 @@ public class celestialEphemeris {
     double[] eCoords = helioToGeocentricXYZ(this.gEcl, hCoords);
 
     return getAzimuthalCoordinates(  // "#venus@0°Az✳/0°Alt△"
-      xyzToRaDec(eCoords[0], eCoords[1], eCoords[2]),
-        this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
+      xyzToRaDec(eCoords), this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
     );
   }
 

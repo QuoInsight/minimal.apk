@@ -128,7 +128,7 @@ public class CompassActivity extends android.app.Activity
     float[] lunarPos = ephem.getCurrentLunarPosition();
     float[] venusPos = ephem.getCurrentVenusPosition();
 
-    String summaryCaption = "Hello from CompassActivity!\n[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
+    String summaryCaption = "Hello from CompassActivity!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
       + "\nlocation@" + String.valueOf(gObsrvLoc[0]) + "," + String.valueOf(gObsrvLoc[1]) + "△" + String.valueOf(gObsrvLoc[2]);
       // summaryCaption  += " offset=" + String.valueOf(gMagneticCorrection);
       if (solarPos[1] > -10) summaryCaption
@@ -180,7 +180,7 @@ public class CompassActivity extends android.app.Activity
       case R.id.main_menu_settings:
         return true;
       case R.id.main_menu_about:
-        sysUtils.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
+        sysUtil.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
         return true;
       case R.id.main_menu_quit:
         //this.finishAffinity();
@@ -208,7 +208,7 @@ public class CompassActivity extends android.app.Activity
     try {
 
       TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\compassactivity.xml
-        txt1.setText("Hello from CompassActivity!\n[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
+        txt1.setText("Hello from CompassActivity!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
         // avoid EditText from gaining focus at Activity startup 
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
@@ -228,7 +228,7 @@ public class CompassActivity extends android.app.Activity
 
                 //gSensorListener.unregister();
                 ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
-                  "#" + commonUtils.getDateStr("ss") + ":<br>"
+                  "#" + commonUtil.getDateStr("ss") + ":<br>"
                      + "<font size='2em'>✳" + String.valueOf(Math.round(azimuth)) + "°</font>"
                 ));
 

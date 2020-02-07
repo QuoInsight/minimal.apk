@@ -30,10 +30,10 @@ public class OtherActivity extends android.app.Activity
       case R.id.main_menu_settings:
         return true;
       case R.id.main_menu_appInfo:
-        sysUtils.launchAppInfo(this, getApplicationContext().getPackageName()); // "com.quoinsight.minimal"
+        sysUtil.launchAppInfo(this, getApplicationContext().getPackageName()); // "com.quoinsight.minimal"
         return true;
       case R.id.main_menu_about:
-        sysUtils.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
+        sysUtil.launchUrl(this, "https://sites.google.com/site/quoinsight/home/minimal-apk");
         return true;
       case R.id.main_menu_quit:
         //this.finishAffinity();
@@ -59,16 +59,16 @@ public class OtherActivity extends android.app.Activity
     try {
 
       TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\otheractivity.xml
-        txt1.setText("Hello " + sysUtils.getDeviceID(this) +  " from OtherActivity!\n[" + commonUtils.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
+        txt1.setText("Hello " + sysUtil.getDeviceID(this) +  " from OtherActivity!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
         // avoid EditText from gaining focus at Activity startup 
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
-      // ((EditText)findViewById(R.id.edit1)).setText( String.join("\n", sysUtils.getPackageList(this)) );
+      // ((EditText)findViewById(R.id.edit1)).setText( String.join("\n", sysUtil.getPackageList(this)) );
       // String.join() is not support by some versions --> use our local function joinStringList() instead
-      java.util.List<String> pkgLst = sysUtils.getPackageList(this);
-      commonGui.makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit1)).setText(commonUtils.joinStringList("\n", pkgLst));
+      java.util.List<String> pkgLst = sysUtil.getPackageList(this);
+      commonGui.makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit1)).setText(commonUtil.joinStringList("\n", pkgLst));
 
-      commonGui.makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit2)).setText(commonUtils.joinStringList("\n", sysUtils.getSensorList(this)));
+      commonGui.makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit2)).setText(commonUtil.joinStringList("\n", sysUtil.getSensorList(this)));
 
       final Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
         final java.util.Hashtable<String, String> appPackageNames = new java.util.Hashtable<String, String>();
@@ -115,7 +115,7 @@ public class OtherActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              sysUtils.launchApp(OtherActivity.this, appPackageNames.get(spinner1.getSelectedItem().toString()));
+              sysUtil.launchApp(OtherActivity.this, appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
               commonGui.writeMessage(OtherActivity.this, "OtherActivity.launchApp", e.getMessage());
               return;
@@ -128,7 +128,7 @@ public class OtherActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              sysUtils.launchAppInfo(OtherActivity.this, appPackageNames.get(spinner1.getSelectedItem().toString()));
+              sysUtil.launchAppInfo(OtherActivity.this, appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
               commonGui.writeMessage(OtherActivity.this, "OtherActivity.appInfo", e.getMessage());
               return;
@@ -141,7 +141,7 @@ public class OtherActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              sysUtils.launchUrl(v.getContext(), "https://play.google.com/store/apps/details?id=" + appPackageNames.get(spinner1.getSelectedItem().toString()));
+              sysUtil.launchUrl(v.getContext(), "https://play.google.com/store/apps/details?id=" + appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
               commonGui.writeMessage(OtherActivity.this, "OtherActivity.appUrl", e.getMessage());
               return;
@@ -154,7 +154,7 @@ public class OtherActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              sysUtils.launchAppMgr(OtherActivity.this);
+              sysUtil.launchAppMgr(OtherActivity.this);
             } catch(Exception e) {
               commonGui.writeMessage(OtherActivity.this, "OtherActivity.launchAppMgr", e.getMessage());
               return;
