@@ -47,7 +47,7 @@ public class celestialEphemeris {
   }
 
   public static double mod360(double d) {
-    return (d+360)%360;
+    return (d+360.0) % 360.0;
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -178,6 +178,7 @@ public class celestialEphemeris {
 
   double[] getMoonHeliocentricLLD(double daysSince2000) {
     // stardroid/provider/ephemeris/Planet.java | calculateLunarGeocentricLocation
+    // https://books.google.com.my/books?id=HWVNAQAAMAAJ&pg=SL4-PA22
     /**
      * Calculate the geocentric right ascension and declination of the moon using
      * an approximation as described on page D22 of the 2008 Astronomical Almanac
@@ -188,7 +189,7 @@ public class celestialEphemeris {
      * NOTE: The text does not give a specific time period where the approximation
      * is valid, but it should be valid through at least 2009.
      */
-    double jc = daysSince2000 / 36525.0;                   // TimeUtil.julianCenturies(date)
+    double jc = daysSince2000 / 36525.0;  // TimeUtil.julianCenturies(date)
     double lambda = 218.32 + 481267.881*jc + 6.29
                   * Math.sin(Math.toRadians(135.0 + 477198.87*jc)) - 1.27
                   * Math.sin(Math.toRadians(259.3 - 413335.36*jc)) + 0.66
@@ -254,6 +255,13 @@ public class celestialEphemeris {
 
     return getAzimuthalCoordinates(  // "#venus@0°Az✳/0°Alt△"
       xyzToRaDec(eCoords), this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
+    );
+  }
+
+  float[] getCurrentSiriusPosition() {
+    return getAzimuthalCoordinates(  // "#sirius@0°Az✳/0°Alt△"
+      new double[] {Math.toRadians(101.287), Math.toRadians(-16.716)},
+      this.gLocalSiderealTime, Math.toRadians(this.gObsrvLoc[0])
     );
   }
 

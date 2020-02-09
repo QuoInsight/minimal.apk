@@ -60,7 +60,7 @@ public class CompassActivity extends android.app.Activity
     return new float[] {(float)coordinates[0], -(float)coordinates[1]}; // inverse y-axis
   }
 
-  public void drawMarkersOnCompassImg(android.widget.ImageView img, float[] solarPos, float[] lunarPos, float[] venusPos) {
+  public void drawMarkersOnCompassImg(android.widget.ImageView img, float[] solarPos, float[] lunarPos, float[] venusPos, float[] siriusPos) {
     android.graphics.drawable.Drawable drawable = img.getDrawable();
     android.util.DisplayMetrics displayMetrics = img.getContext().getResources().getDisplayMetrics();
 
@@ -98,6 +98,11 @@ public class CompassActivity extends android.app.Activity
       paint.setColor(android.graphics.Color.BLUE);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
     }
 
+    if ( siriusPos[1] > 0 ) {
+      coordinates = getCanvasCoordinates(siriusPos[0], radius*(1-Math.abs(siriusPos[1])/90), x0, y0);
+      paint.setColor(android.graphics.Color.parseColor("#FFA500"));  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
+    }
+
     //img.invalidate(); img1.draw(canvas); // this does not seem to change img1
     img.setImageBitmap(bmp1); // this works correctly, and capture the changes
   }
@@ -127,10 +132,12 @@ public class CompassActivity extends android.app.Activity
     float[] solarPos = ephem.getCurrentSolarPosition();
     float[] lunarPos = ephem.getCurrentLunarPosition();
     float[] venusPos = ephem.getCurrentVenusPosition();
+    float[] siriusPos = ephem.getCurrentSiriusPosition();
 
-    String summaryCaption = "Hello from CompassActivity!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
+    String summaryCaption = "[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
       + "\nlocation@" + String.valueOf(gObsrvLoc[0]) + "," + String.valueOf(gObsrvLoc[1]) + "△" + String.valueOf(gObsrvLoc[2]);
-      // summaryCaption  += " offset=" + String.valueOf(gMagneticCorrection);
+      if (Math.abs(gMagneticCorrection) > 1) summaryCaption
+        += " offset=" + String.valueOf(gMagneticCorrection);
       if (solarPos[1] > -10) summaryCaption
         += "\n#sun@" + String.valueOf(Math.round(solarPos[0])) + "°Az✳"
           + "/" + String.valueOf(Math.round(solarPos[1])) + "°Alt△";
@@ -140,10 +147,13 @@ public class CompassActivity extends android.app.Activity
       if (venusPos[1] > 0) summaryCaption
         += "\n#venus@" + String.valueOf(Math.round(venusPos[0])) + "°Az✳"
           + "/" + String.valueOf(Math.round(venusPos[1])) + "°Alt△";
+      if (siriusPos[1] > 0) summaryCaption
+        += "\n#sirius@" + String.valueOf(Math.round(siriusPos[0])) + "°Az✳"
+          + "/" + String.valueOf(Math.round(siriusPos[1])) + "°Alt△";
     txt.setText( summaryCaption );
 
     img.setImageResource(R.drawable.compass);
-    drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos);
+    drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos, siriusPos);
     //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
   }
 
@@ -154,7 +164,7 @@ public class CompassActivity extends android.app.Activity
 
   @Override protected void onResume() {
     super.onResume();
-    //gSensorListener.register(50, 2000);
+    //gSensorListener.register(gSensorType, 50, 2000);
     //if (gAzimuthTextView!=null) setTextOnSensorChanged(gAzimuthTextView, gSensorManager);
   }
  
@@ -165,6 +175,7 @@ public class CompassActivity extends android.app.Activity
 
   //////////////////////////////////////////////////////////////////////
 
+  public String gSensorType = "ORIENTATION";  // ACCELEROMAGNETIC
   private mySensorListener gSensorListener = null;
 
   //////////////////////////////////////////////////////////////////////
@@ -194,6 +205,29 @@ public class CompassActivity extends android.app.Activity
 
   //////////////////////////////////////////////////////////////////////
 
+  public void onSensorTypeRadioButtonClicked(android.view.View v) {
+      android.widget.RadioButton radioButton = (android.widget.RadioButton) v;
+      if ( radioButton.isChecked() ) {
+        gSensorType = radioButton.getText().toString().toUpperCase();
+        writeMessage("CompassActivity.onSensorTypeRadioButtonClicked", gSensorType);
+
+        android.content.SharedPreferences sharedPref
+          = ((android.app.Activity)v.getContext()).getPreferences(android.content.Context.MODE_PRIVATE);
+           android.content.SharedPreferences.Editor prefEditor = sharedPref.edit();
+             prefEditor.putString("sensorTypes", gSensorType);
+               prefEditor.apply(); // commit();
+
+        try {
+          reloadCompassImg((android.widget.ImageView)findViewById(R.id.img1), (android.widget.TextView)findViewById(R.id.txt1));
+          if ( gSensorListener.register(gSensorType, 50, 2000) ) writeMessage("CompassActivity.gSensorListener#", "registered");
+        } catch(Exception e) {
+          writeMessage("CompassActivity.gSensorListener#", e.getMessage());
+        }
+      }
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     try {
@@ -219,22 +253,22 @@ public class CompassActivity extends android.app.Activity
           @Override public void OnMessage(String tag, String msg, String...args) {
             writeMessage(tag, msg, args);
           }
-          @Override public void OnOrientationDataLoaded(final float[] orienationData) {
+          @Override public void OnOrientationDataLoaded(final float[] orientationData) {
             runOnUiThread(new Runnable() { @Override public void run() {
               try {
-                float azimuth = (float)Math.toDegrees(orienationData[0]);
-                float azimuthFix = gMagneticCorrection;
-                azimuth = (azimuth + azimuthFix + 360) % 360;
-
                 //gSensorListener.unregister();
-                ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml( // CSS is not supported!
-                  "#" + commonUtil.getDateStr("ss") + ":<br>"
-                     + "<font size='2em'>✳" + String.valueOf(Math.round(azimuth)) + "°</font>"
-                ));
+                float azimuth = (float)Math.toDegrees(orientationData[0]);
+                float azimuthFix = gMagneticCorrection;
+                azimuth = (azimuth + azimuthFix + 360.0f) % 360.0f;
+                String captionHtml = String.valueOf(Math.round(azimuth));
+                  if (azimuth > 180) captionHtml += "° / " + String.valueOf(Math.round(azimuth-360));
+                    captionHtml = "#" + commonUtil.getDateStr("ss") + ":<br>"
+                      + "<font size='2em'>✳" + captionHtml + "°</font>";
+                ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml(captionHtml)); // CSS is not supported!
 
                 android.widget.ImageView img1 = (android.widget.ImageView)findViewById(R.id.img1);
                  img1.setVisibility(android.view.View.GONE);  img1.requestLayout(); // redraw
-                   img1.setRotation(360-azimuth);  // img1.setRotationX(360-(float)Math.toDegrees(orienationData[1]));  img1.setRotationY(360-(float)Math.toDegrees(orienationData[2]));
+                   img1.setRotation(360-azimuth);  // img1.setRotationX(360-(float)Math.toDegrees(orientationData[1]));  img1.setRotationY(360-(float)Math.toDegrees(orientationData[2]));
                  img1.setVisibility(android.view.View.VISIBLE);  img1.requestLayout(); // redraw
 
                 /*
@@ -278,7 +312,7 @@ public class CompassActivity extends android.app.Activity
             @Override public void onClick(View v) {
               try {
                 reloadCompassImg((android.widget.ImageView)v, (android.widget.TextView)findViewById(R.id.txt1));
-                if ( gSensorListener.register(50, 2000) ) writeMessage("CompassActivity.gSensorListener#", "registered");
+                if ( gSensorListener.register(gSensorType, 50, 2000) ) writeMessage("CompassActivity.gSensorListener#", "registered");
               } catch(Exception e) {
                 writeMessage("CompassActivity.gSensorListener#", e.getMessage());
               }
@@ -292,7 +326,7 @@ public class CompassActivity extends android.app.Activity
           new View.OnClickListener() {
             @Override public void onClick(View v) {
               try {
-                if ( gSensorListener.register(50, 2000) ) {
+                if ( gSensorListener.register(gSensorType, 50, 2000) ) {
                   writeMessage("CompassActivity.gSensorListener#", "registered");
                 }
               } catch(Exception e) {
@@ -347,7 +381,7 @@ public class CompassActivity extends android.app.Activity
         new View.OnClickListener() {
           public void onClick(View v) {
             try {
-              gSensorListener.register(300, 30000);
+              gSensorListener.register(gSensorType, 300, 30000);
             } catch(Exception e) {
               writeMessage("CompassActivity.StartCompass", e.getMessage());
             }
@@ -357,10 +391,23 @@ public class CompassActivity extends android.app.Activity
 
       // start compass directly from onCreate
       try {
-        gSensorListener.register(300, 30000);
+        gSensorListener.register(gSensorType, 300, 30000);
       } catch(Exception e) {
         writeMessage("CompassActivity.StartCompass", e.getMessage());
       }
+
+      android.content.SharedPreferences sharedPref
+        = ((android.app.Activity)this).getPreferences(android.content.Context.MODE_PRIVATE);
+         gSensorType = sharedPref.getString("sensorTypes", gSensorType);
+      android.widget.RadioGroup radioGroup // --> .\src\main\res\layout\compassactivity.xml
+        = (android.widget.RadioGroup) findViewById(R.id.radioSensorType);
+          for (int i=0;i<radioGroup.getChildCount();i++) {
+            android.view.View v = radioGroup.getChildAt(i);
+            if (v instanceof android.widget.RadioButton) {
+              android.widget.RadioButton r = (android.widget.RadioButton) v;
+              r.setChecked( r.getText().toString().toUpperCase().equals(gSensorType) );
+            }
+          }
 
       findViewById(R.id.btnPrev).setOnClickListener( // --> .\src\main\res\layout\compassactivity.xml
         new View.OnClickListener() {

@@ -41,9 +41,10 @@ public class mySensorListener implements SensorEventListener {
   }
 
   public java.util.Date lastDataTimeStamp = new java.util.Date();
-
+  public String gSensorTypes = "ORIENTATION";  // ACCELEROMAGNETIC
   public int gTimeInterval = 500; // milliseconds
-  public boolean register(final int timeInterval, final long timeout) {
+  
+  public boolean register(final String sensorTypes, final int timeInterval, final long timeout) {
     try { unregister(); } catch(Exception e) {}
 
     gTimeInterval = timeInterval;  int delayRate = timeInterval * 1000;
@@ -52,18 +53,27 @@ public class mySensorListener implements SensorEventListener {
     //gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), delayRate);
     //gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), delayRate);
 
-    if (gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate)) {
-      if (gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate)) {
-        unregisterOnTimeout(timeout);  // (long)(10*delay);
-        return true;
-      } else {
-        writeMessage("mySensorEventListener.register", "failed on TYPE_MAGNETIC_FIELD");
+    if ( gSensorTypes.contains("ORIENTATION") ) {  // deprecated
+      if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ORIENTATION), delayRate)) {
+        writeMessage("mySensorEventListener.register", "failed on TYPE_ORIENTATION");
         return false;
       }
-    } else {
-      writeMessage("mySensorEventListener.register", "failed on TYPE_ACCELEROMETER");
-      return false;
     }
+
+    if ( gSensorTypes.contains("ACCELEROMAGNETIC") ) {
+      if (gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate)) {
+        if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate)) {
+          writeMessage("mySensorEventListener.register", "failed on TYPE_MAGNETIC_FIELD");
+          return false;
+        }
+      } else {
+        writeMessage("mySensorEventListener.register", "failed on TYPE_ACCELEROMETER");
+        return false;
+      }
+    }
+
+    unregisterOnTimeout(timeout);  // (long)(10*delay);
+    return true;
   }
 
   public void unregister() {
@@ -172,7 +182,7 @@ public class mySensorListener implements SensorEventListener {
   @Override public void onAccuracyChanged(Sensor sensor, int accuracy) { }
 
   @Override public void onSensorChanged(SensorEvent event) {
-    float alpha = 0f;  float[] values = event.values;
+    float alpha = 0f;  float[] values = event.values.clone();
     java.util.Date thisDataTimeStamp = new java.util.Date();
 
     // ignore/skip this to reduce the update frequency
@@ -228,6 +238,17 @@ public class mySensorListener implements SensorEventListener {
           gMagVals[0] = (1-alpha)*values[0] + alpha*gMagVals[0];
           gMagVals[1] = (1-alpha)*values[1] + alpha*gMagVals[1];
           gMagVals[2] = (1-alpha)*values[2] + alpha*gMagVals[2];
+          break;
+
+        case android.hardware.Sensor.TYPE_ORIENTATION:
+          // deprecated: all values are angles in degrees instead of radians!
+          if (gHandlers != null) {
+            // converts the values toRadian for compatibility with output from the newer SensorManager.getOrientation()
+            values[0] = (float)Math.toRadians((double)values[0]); // azimuth: 0° to 359°
+            values[1] = (float)Math.toRadians((double)values[1]); // pitch (翘起): -180° (straight up) to 180° (upside/head down)
+            values[2] = (float)Math.toRadians((double)values[2]); // roll (侧翻): -90° (facing left) to 90° (right)
+            gHandlers.OnOrientationDataLoaded(values);
+          }
           break;
 
         default:
