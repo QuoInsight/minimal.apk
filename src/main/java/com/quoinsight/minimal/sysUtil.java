@@ -97,7 +97,7 @@ public class sysUtil {
         android.provider.Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS
       ), 0);
     } catch(Exception e) {
-      commonGui.writeMessage((android.content.Context)parentActivity, "OtherActivity.launchAppMgr", e.getMessage());
+      commonGui.writeMessage((android.content.Context)parentActivity, "sysUtil.launchAppMgr", e.getMessage());
       return;
     }
   }
@@ -108,7 +108,7 @@ public class sysUtil {
       intent.setData(android.net.Uri.parse("package:" + pkgName));
       parentContext.startActivity(intent);
     } catch(Exception e) {
-      commonGui.writeMessage(parentContext, "OtherActivity.launchAppInfo", e.getMessage());
+      commonGui.writeMessage(parentContext, "sysUtil.launchAppInfo", e.getMessage());
       return;
     }
   }
@@ -118,8 +118,78 @@ public class sysUtil {
       android.content.Intent intent = parentContext.getPackageManager().getLaunchIntentForPackage(pkgName);
       parentContext.startActivity(intent);
     } catch(Exception e) {
-      commonGui.writeMessage(parentContext, "OtherActivity.launchApp", "[" + pkgName + "] " + e.getMessage());
+      commonGui.writeMessage(parentContext, "sysUtil.launchApp", "[" + pkgName + "] " + e.getMessage());
       return;
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  /*
+
+    https://developer.android.com/guide/topics/location/strategies.html
+    gps –> (GPS, AGPS) Requires the permission android.permission.ACCESS_FINE_LOCATION.
+    network –> (AGPS, CellID, WiFi MACID) Requires either of the permissions android.permission.ACCESS_COARSE_LOCATION or android.permission.ACCESS_FINE_LOCATION.
+    passive –> (CellID, WiFi MACID) Requires the permission android.permission.ACCESS_FINE_LOCATION, although if the GPS is not enabled this provider might only return coarse fixes.
+
+    #  Settings -> Location & security and enable flag "Use wireless networks"
+    #  in "My Location" group.
+
+    android.location.LocationListener locListener
+     = new android.location.LocationListener() {
+      @Override public void onLocationChanged(android.location.Location location) {
+        updateLocation(location);
+      }
+      @Override public void onProviderEnabled(String provider) { }
+      @Override public void onProviderDisabled(String provider) { }
+      @Override public void onStatusChanged(String provider, int status, android.os.Bundle extras) { } // deprecated !!
+    };
+
+    locMgr.requestLocationUpdates(prvdr, 2000, 10, locListener);
+    locMgr.removeUpdates(locListener);
+  */
+
+  static final public android.location.Location getLastKnownLocation(
+    android.content.Context parentContext, String prvdr
+  ) {
+    try {
+     /* // adding android.support.v4 will increase the apk size by 500k !
+      if (
+        android.support.v4.app.ActivityCompat.checkSelfPermission(
+          parentContext, android.Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+      ) {
+        commonGui.writeMessage(parentContext, "sysUtil.getLastKnownLocation", "PERMISSION_GRANTED");
+      } else {
+        commonGui.writeMessage(parentContext, "sysUtil.getLastKnownLocation", "requestPermissions");
+        // below will be work without specifying it first in AndroidManifest.xml ??
+        android.support.v4.app.ActivityCompat.requestPermissions(
+          (android.app.Activity)parentContext,
+          new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+          1
+        );
+        //return (android.location.Location)null;
+      }
+     */
+
+      // https://github.com/MiCode/Compass/blob/master/src/net/micode/compass/CompassActivity.java
+      android.location.LocationManager locMgr
+        = (android.location.LocationManager) parentContext.getSystemService(parentContext.LOCATION_SERVICE);
+      if (prvdr==null || prvdr.length()==0 ) {
+        android.location.Criteria criteria = new android.location.Criteria();
+        criteria.setAccuracy(android.location.Criteria.ACCURACY_COARSE);
+        criteria.setPowerRequirement(android.location.Criteria.POWER_LOW);
+        criteria.setCostAllowed(false);
+        criteria.setBearingRequired(false);
+        criteria.setAltitudeRequired(false);
+        // LocationProvider provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
+        prvdr = locMgr.getBestProvider(criteria, true); // "network" | "gps"
+        commonGui.writeMessage(parentContext, "sysUtil.getBestProvider", prvdr);
+      }
+      return locMgr.getLastKnownLocation(prvdr);
+    } catch(Exception e) {
+      commonGui.writeMessage(parentContext, "sysUtil.getLastKnownLocation", e.getMessage());
+      return (android.location.Location)null;
     }
   }
 

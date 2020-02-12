@@ -28,6 +28,11 @@ public class CompassActivity extends android.app.Activity
 
   //////////////////////////////////////////////////////////////////////
 
+  private android.location.LocationManager gLocMgr;
+  public String gLocPrvdr = "";  // LocationManager.GPS_PROVIDER=="gps" | LocationManager.NETWORK_PROVIDER=="network"
+
+  //////////////////////////////////////////////////////////////////////
+
   public float gMagneticCorrection = 0f;  // obsrvLoc: latitude, longitude, elevation (metres above above sea level)
   public float[] gObsrvLoc = {5.2960f, 100.2752f, 3f};  // Penang International Airport
 
@@ -107,55 +112,72 @@ public class CompassActivity extends android.app.Activity
     img.setImageBitmap(bmp1); // this works correctly, and capture the changes
   }
 
-  public void overlayImgVw(android.widget.ImageView img, android.graphics.Bitmap bmp) {
-    android.graphics.drawable.Drawable drawable = img.getDrawable();
-    android.util.DisplayMetrics displayMetrics = img.getContext().getResources().getDisplayMetrics();
-    // bmp = android.graphics.BitmapFactory.decodeResource(getResources(), R.drawable.img1);
-
-    android.graphics.Bitmap
-      bmp0 = ((android.graphics.drawable.BitmapDrawable)drawable).getBitmap(),
-      bmp1 = bmp0.copy(android.graphics.Bitmap.Config.ARGB_8888, true); // Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-    android.graphics.Canvas
-      canvas = new android.graphics.Canvas(bmp1);
-    android.graphics.Paint
-      paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
-
-    canvas.drawBitmap(bmp, 0/*left*/, 0/*top*/, null);
-    //img.invalidate(); img1.draw(canvas); // this does not seem to change img1
-    img.setImageBitmap(bmp1); // this works correctly, and capture the changes
-  }
-
   //////////////////////////////////////////////////////////////////////
 
   public void reloadCompassImg(android.widget.ImageView img, android.widget.TextView txt) {
-    celestialEphemeris ephem = new celestialEphemeris(gObsrvLoc);
-    float[] solarPos = ephem.getCurrentSolarPosition();
-    float[] lunarPos = ephem.getCurrentLunarPosition();
-    float[] venusPos = ephem.getCurrentVenusPosition();
-    float[] siriusPos = ephem.getCurrentSiriusPosition();
 
-    String summaryCaption = "[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
-      + "\nlocation@" + String.valueOf(gObsrvLoc[0]) + "," + String.valueOf(gObsrvLoc[1]) + "△" + String.valueOf(gObsrvLoc[2]);
+    celestialEphemeris ephem = new celestialEphemeris(gObsrvLoc);
+      float[] solarPos = ephem.getCurrentSolarPosition();
+      float[] lunarPos = ephem.getCurrentLunarPosition();
+      float[] venusPos = ephem.getCurrentVenusPosition();
+      float[] siriusPos = ephem.getCurrentSiriusPosition();
+
+    String summaryCaption = "location@"
+        + String.valueOf(gObsrvLoc[0])
+          + "," + String.valueOf(gObsrvLoc[1])
+            + "△" + String.valueOf(gObsrvLoc[2]);
       if (Math.abs(gMagneticCorrection) > 1) summaryCaption
         += " offset=" + String.valueOf(gMagneticCorrection);
       if (solarPos[1] > -10) summaryCaption
-        += "\n#sun@" + String.valueOf(Math.round(solarPos[0])) + "°Az✳"
+        += "<br>#sun@" + String.valueOf(Math.round(solarPos[0])) + "°Az✳"
           + "/" + String.valueOf(Math.round(solarPos[1])) + "°Alt△";
       if (lunarPos[1] > 0) summaryCaption
-        += "\n#moon@" + String.valueOf(Math.round(lunarPos[0])) + "°Az✳"
+        += "<br>#moon@" + String.valueOf(Math.round(lunarPos[0])) + "°Az✳"
           + "/" + String.valueOf(Math.round(lunarPos[1])) + "°Alt△";
       if (venusPos[1] > 0) summaryCaption
-        += "\n#venus@" + String.valueOf(Math.round(venusPos[0])) + "°Az✳"
+        += "<br>#venus@" + String.valueOf(Math.round(venusPos[0])) + "°Az✳"
           + "/" + String.valueOf(Math.round(venusPos[1])) + "°Alt△";
       if (siriusPos[1] > 0) summaryCaption
-        += "\n#sirius@" + String.valueOf(Math.round(siriusPos[0])) + "°Az✳"
+        += "<br>#sirius@" + String.valueOf(Math.round(siriusPos[0])) + "°Az✳"
           + "/" + String.valueOf(Math.round(siriusPos[1])) + "°Alt△";
-    txt.setText( summaryCaption );
+      summaryCaption = "[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]"
+        + "<br><small>" + summaryCaption + "</small>";
+
+    txt.setText( android.text.Html.fromHtml(summaryCaption) ); // CSS is not supported!
 
     img.setImageResource(R.drawable.compass);
     drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos, siriusPos);
     //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
   }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public void updateObsrvLoc(android.location.Location loc) {
+    if (loc!=null) {
+      String gLocPrvdr = CompassActivity.this.gLocPrvdr;
+      float[] gObsrvLoc = CompassActivity.this.gObsrvLoc;
+      gObsrvLoc[0]=(float)loc.getLatitude();  gObsrvLoc[1]=(float)loc.getLongitude();  gObsrvLoc[2]=(float)loc.getAltitude();
+      // loc.getBearing() ==> Bearing is the horizontal direction of travel of this device, and is not related to the device orientation.
+      writeMessage("updateObsrvLoc", gLocPrvdr + "@" + String.valueOf(gObsrvLoc[0])
+        + "," + String.valueOf(gObsrvLoc[1]) + "△" + String.valueOf(gObsrvLoc[2])
+      );
+    }
+  }
+
+  private android.location.LocationListener locListener
+     = new android.location.LocationListener() {
+      @Override public void onLocationChanged(android.location.Location loc) {
+        updateObsrvLoc(loc);
+      }
+      @Override public void onProviderEnabled(String provider) { }
+      @Override public void onProviderDisabled(String provider) { }
+      @Override public void onStatusChanged(String provider, int status, android.os.Bundle extras) { } // deprecated !!
+    };
+
+  //////////////////////////////////////////////////////////////////////
+
+  public String gSensorType = "ORIENTATION";  // ACCELEROMAGNETIC
+  private mySensorListener gSensorListener = null;
 
   //////////////////////////////////////////////////////////////////////
 
@@ -169,14 +191,40 @@ public class CompassActivity extends android.app.Activity
   }
  
   @Override protected void onPause() {
+    try { gLocMgr.removeUpdates(locListener); } catch(Exception e) {} 
     if (gSensorListener!=null) gSensorListener.unregister();
     super.onPause();
   }
 
   //////////////////////////////////////////////////////////////////////
 
-  public String gSensorType = "ORIENTATION";  // ACCELEROMAGNETIC
-  private mySensorListener gSensorListener = null;
+/*
+  private android.hardware.SensorEventListener gSensorListener1
+   = new android.hardware.SensorEventListener() {
+    @Override public void onSensorChanged(android.hardware.SensorEvent event) {
+      float[] values = event.values.clone();
+      synchronized (this) {
+        switch ( event.sensor.getType() ) {
+          case android.hardware.Sensor.TYPE_ORIENTATION:
+            // deprecated: all values are angles in degrees instead of radians!
+            if (gHandlers != null) {
+              // converts the values toRadian for compatibility with output from the newer SensorManager.getOrientation()
+              values[0] = (float)Math.toRadians((double)values[0]); // azimuth: 0° to 359°
+              values[1] = (float)Math.toRadians((double)values[1]); // pitch (翘起): -180° (straight up) to 180° (upside/head down)
+              values[2] = (float)Math.toRadians((double)values[2]); // roll (侧翻): -90° (facing left) to 90° (right)
+              // OnOrientationDataLoaded(values);
+            }
+            break;
+          default:
+            return;
+        }
+      }
+    }
+    @Override public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) { }
+  }
+
+  mSensorManager.registerListener(gSensorListener1, mOrientationSensor, SensorManager.SENSOR_DELAY_GAME);
+*/
 
   //////////////////////////////////////////////////////////////////////
 
@@ -205,10 +253,32 @@ public class CompassActivity extends android.app.Activity
 
   //////////////////////////////////////////////////////////////////////
 
+  public void onLocPrvdrRadioButtonClicked(android.view.View v) {
+    android.widget.RadioButton radioButton = (android.widget.RadioButton) v;
+    if ( radioButton.isChecked() ) {
+      gLocPrvdr = radioButton.getText().toString().toLowerCase();
+      writeMessage("CompassActivity.onLocPrvdrRadioButtonClicked", gLocPrvdr);
+
+      try {
+        try { gLocMgr.removeUpdates(locListener); } catch(Exception e) {}
+        if ( gLocPrvdr.equals("coarse") ) {
+          android.location.Location loc = sysUtil.getLastKnownLocation(v.getContext(), null);
+          if (loc!=null) updateObsrvLoc(loc);
+        } else {
+          gLocMgr.requestLocationUpdates(gLocPrvdr, 5000, 50, locListener);
+        }
+      } catch(Exception e) {
+        writeMessage("CompassActivity.requestLocationUpdates", e.getMessage());
+        return;
+      }
+
+    }
+  }
+
   public void onSensorTypeRadioButtonClicked(android.view.View v) {
       android.widget.RadioButton radioButton = (android.widget.RadioButton) v;
       if ( radioButton.isChecked() ) {
-        gSensorType = radioButton.getText().toString().toUpperCase();
+        gSensorType = radioButton.getText().toString().toLowerCase();
         writeMessage("CompassActivity.onSensorTypeRadioButtonClicked", gSensorType);
 
         android.content.SharedPreferences sharedPref
@@ -247,6 +317,8 @@ public class CompassActivity extends android.app.Activity
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
       try {
+        gLocMgr = (android.location.LocationManager) this.getSystemService(this.LOCATION_SERVICE);
+
         gMagneticCorrection = getGeomagnecticFieldCorrection(gObsrvLoc, (new java.util.Date()).getTime());
         gSensorListener = new mySensorListener(this); // will run into error if this is executed before onCreate() 
         gSensorListener.setHandlers(new mySensorListener.handlers() {
@@ -262,7 +334,7 @@ public class CompassActivity extends android.app.Activity
                 azimuth = (azimuth + azimuthFix + 360.0f) % 360.0f;
                 String captionHtml = String.valueOf(Math.round(azimuth));
                   if (azimuth > 180) captionHtml += "° / " + String.valueOf(Math.round(azimuth-360));
-                    captionHtml = "#" + commonUtil.getDateStr("ss") + ":<br>"
+                    captionHtml = "#" + commonUtil.getDateStr("ss") + ": "
                       + "<font size='2em'>✳" + captionHtml + "°</font>";
                 ((TextView)findViewById(R.id.txt2)).setText(android.text.Html.fromHtml(captionHtml)); // CSS is not supported!
 

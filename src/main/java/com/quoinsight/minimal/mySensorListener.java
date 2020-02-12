@@ -41,7 +41,7 @@ public class mySensorListener implements SensorEventListener {
   }
 
   public java.util.Date lastDataTimeStamp = new java.util.Date();
-  public String gSensorTypes = "ORIENTATION";  // ACCELEROMAGNETIC
+  public String gSensorTypes = "orient";  // orient==ORIENTATION | acclMgnt==ACCELERO_MAGNETIC
   public int gTimeInterval = 500; // milliseconds
   
   public boolean register(final String sensorTypes, final int timeInterval, final long timeout) {
@@ -53,14 +53,14 @@ public class mySensorListener implements SensorEventListener {
     //gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), delayRate);
     //gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), delayRate);
 
-    if ( gSensorTypes.contains("ORIENTATION") ) {  // deprecated
+    if ( gSensorTypes.contains("orient") ) {  // deprecated
       if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ORIENTATION), delayRate)) {
         writeMessage("mySensorEventListener.register", "failed on TYPE_ORIENTATION");
         return false;
       }
     }
 
-    if ( gSensorTypes.contains("ACCELEROMAGNETIC") ) {
+    if ( gSensorTypes.contains("acclmgnt") ) {
       if (gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate)) {
         if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate)) {
           writeMessage("mySensorEventListener.register", "failed on TYPE_MAGNETIC_FIELD");

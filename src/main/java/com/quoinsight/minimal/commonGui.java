@@ -80,6 +80,24 @@ public class commonGui {
     return new float[] {dp2px(m, p.width), dp2px(m, p.height)};
   }
 
+  public void overlayImgVw(android.widget.ImageView img, android.graphics.Bitmap bmp) {
+    android.graphics.drawable.Drawable drawable = img.getDrawable();
+    android.util.DisplayMetrics displayMetrics = img.getContext().getResources().getDisplayMetrics();
+    // bmp = android.graphics.BitmapFactory.decodeResource(getResources(), R.drawable.img1);
+
+    android.graphics.Bitmap
+      bmp0 = ((android.graphics.drawable.BitmapDrawable)drawable).getBitmap(),
+      bmp1 = bmp0.copy(android.graphics.Bitmap.Config.ARGB_8888, true); // Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    android.graphics.Canvas
+      canvas = new android.graphics.Canvas(bmp1);
+    android.graphics.Paint
+      paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+
+    canvas.drawBitmap(bmp, 0/*left*/, 0/*top*/, null);
+    //img.invalidate(); img.draw(canvas); // this does not seem to change img
+    img.setImageBitmap(bmp1); // this works correctly, and capture the changes
+  }
+
   //////////////////////////////////////////////////////////////////////
 
 }
