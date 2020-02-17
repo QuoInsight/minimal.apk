@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  R.layout.otheractivity ==> .\src\main\res\layout\otheractivity.xml
+  [ File-based resource names must contain only lowercase a-z, 0-9, or underscore ]
+
+  You need to specifiy the layout_width and layout_height of each element.
+  That is a must/required/mandatory for all views, no matter which layout you use!
+  Otherwise, it will throw error during runtime "Binary XML file line #??:
+  You must supply a layout_width attribute."
+
+  https://developer.android.com/reference/android/widget/LinearLayout.html
+
+  LinearLayout ==> android:layout_gravity="center_horizontal"
+  RelativeLayout ==> android:layout_centerHorizontal="true"
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent" android:layout_height="match_parent"
+  android:fillViewport="true"
+  tools:context=".CompassActivity"
+>
+  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:layout_gravity="center_horizontal"
+  >
+    <TextView android:id="@+id/txt1"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:gravity="center" android:textAlignment="center"
+      android:text="Hello from CompassActivity!" android:textSize="14dp"
+    />
+
+    <!--
+      kisspng-north-compass-rose-royalty-free-5b0926efd8c070.0959021815273264478878.png
+      minor ticks == 2° : 22.5 | 45 | 67.5 | 90
+     -->
+    <ImageView android:id="@+id/img1"
+      android:layout_width="match_parent" android:layout_height="match_parent"
+      android:layout_gravity="top" android:layout_weight="1" android:padding="10dp"
+      android:src="@drawable/compass"
+    />
+
+    <TextView android:id="@+id/txt2"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:gravity="center" android:textAlignment="center"
+      android:text="🧭 Orientation ✳:\n ??"
+    />
+
+    <Button android:id="@+id/start_compass"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:text="StartCompass" android:textAllCaps="false"
+    />
+
+    <RadioGroup android:id="@+id/radioLocPrvdr" xmlns:android="http://schemas.android.com/apk/res/android"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:orientation="horizontal" android:gravity="center" 
+      android:scaleX="0.5" android:scaleY="0.5"
+    >
+      <TextView
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="locPrvdr: "
+      />
+      <RadioButton android:id="@+id/radioLocPrvdrCoarse" android:checked="true"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="coarse" android:onClick="onLocPrvdrRadioButtonClicked"
+      />
+      <RadioButton android:id="@+id/radioLocPrvdrGps"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="gps" android:onClick="onLocPrvdrRadioButtonClicked"
+      />
+      <RadioButton android:id="@+id/radioLocPrvdrNetwork"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="network" android:onClick="onLocPrvdrRadioButtonClicked"
+      />
+    </RadioGroup>
+
+    <RadioGroup android:id="@+id/radioSensorType" xmlns:android="http://schemas.android.com/apk/res/android"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:orientation="horizontal" android:gravity="center" 
+      android:scaleX="0.5" android:scaleY="0.5"
+    >
+      <TextView
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="snsrTyp: "
+      />
+      <RadioButton android:id="@+id/radioSensorTypeOrientation" android:checked="true"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="orient" android:onClick="onSensorTypeRadioButtonClicked"
+      />
+      <RadioButton android:id="@+id/radioSensorTypeAcceleroMagnetic"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="acclMgnt" android:onClick="onSensorTypeRadioButtonClicked"
+      />
+      <RadioButton android:id="@+id/radioSensorTypeGPS" android:enabled="false"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="gps" android:onClick="onSensorTypeRadioButtonClicked"
+      />
+    </RadioGroup>
+
+    <Button android:id="@+id/btnPrev"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:text="⎗ Previous"
+    />
+
+    <Button android:id="@+id/button9"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:text="⏏ Quit"
+    />
+
+    <TextView
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:gravity="center" android:textAlignment="center"
+      android:textStyle="italic" android:textSize="14dp"
+      android:text="Note: sun &amp; moon positions shown above are defaulted to a fix location for Penang Int'l Airport. you may enable GPS manually and use the above locPrvdr options to fetch your current location instead."
+    />
+
+    <TextView android:id="@+id/txt9"
+      android:layout_width="wrap_content" android:layout_height="wrap_content"
+      android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
+      android:gravity="center" android:textAlignment="center"
+      android:text="[ &lt;A href='https://github.com/QuoInsight/minimal.apk'&gt;src&lt;/A&gt; ]"
+    />
+  </LinearLayout>
+</ScrollView>

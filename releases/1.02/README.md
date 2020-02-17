@@ -1,0 +1,2 @@
+- refactored the source codes in general
+- added sun/moon/venus/sirius positions, options for loaction provider & sensor type, and sensor accuracy info in Compass activity

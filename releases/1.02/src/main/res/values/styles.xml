@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="spinner1">
+    <item name="android:spinnerItemStyle">@style/spinner1_item</item>
+  </style>
+  <style name="spinner1_item">
+    <item name="android:gravity">left</item>
+  </style>
+</resources>
