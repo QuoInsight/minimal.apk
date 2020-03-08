@@ -38,6 +38,16 @@ public class mySensorListener implements SensorEventListener {
   private SensorManager gSensorMgr = null;
   public mySensorListener(android.content.Context parentContext) {
     gSensorMgr = (SensorManager) parentContext.getSystemService(Context.SENSOR_SERVICE);
+
+    gSensorAccuracy.put( "sensorTypeLookup#" + String.valueOf(android.hardware.Sensor.TYPE_ACCELEROMETER), "ACCELEROMETER" );
+    gSensorAccuracy.put( "sensorTypeLookup#" + String.valueOf(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), "MAGNETIC_FIELD" );
+    gSensorAccuracy.put( "sensorTypeLookup#" + String.valueOf(android.hardware.Sensor.TYPE_ORIENTATION), "ORIENTATION" );
+    gSensorAccuracy.put( "sensorTypeLookup#" + String.valueOf(android.hardware.Sensor.TYPE_ACCELEROMETER), "ACCELEROMETER" );
+
+    gSensorAccuracy.put( "accuracyTypeLookup#" + String.valueOf(android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW), "LOW" );
+    gSensorAccuracy.put( "accuracyTypeLookup#" + String.valueOf(android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM), "MEDIUM" );
+    gSensorAccuracy.put( "accuracyTypeLookup#" + String.valueOf(android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_HIGH), "HIGH" );
+    gSensorAccuracy.put( "accuracyTypeLookup#" + String.valueOf(android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE), "UNRELIABLE" );
   }
 
   public java.util.Date lastDataTimeStamp = new java.util.Date();
@@ -47,6 +57,7 @@ public class mySensorListener implements SensorEventListener {
   public boolean register(final String sensorTypes, final int timeInterval, final long timeout) {
     try { unregister(); } catch(Exception e) {}
 
+    int sensorType = -1;
     gTimeInterval = timeInterval;  int delayRate = timeInterval * 1000;
     // delayRate = SensorManager.SENSOR_DELAY_GAME; // == 20,000 microseconds
 
@@ -54,15 +65,21 @@ public class mySensorListener implements SensorEventListener {
     //gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), delayRate);
 
     if ( gSensorTypes.contains("orient") ) {  // deprecated
-      if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ORIENTATION), delayRate)) {
+      sensorType = android.hardware.Sensor.TYPE_ORIENTATION;
+      gSensorAccuracy.remove(String.valueOf(sensorType));
+      if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(sensorType), delayRate)) {
         writeMessage("mySensorEventListener.register", "failed on TYPE_ORIENTATION");
         return false;
       }
     }
 
     if ( gSensorTypes.contains("acclmgnt") ) {
-      if (gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER), delayRate)) {
-        if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD), delayRate)) {
+      sensorType = android.hardware.Sensor.TYPE_ACCELEROMETER;
+      gSensorAccuracy.remove(String.valueOf(sensorType));
+      if (gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(sensorType), delayRate)) {
+        sensorType = android.hardware.Sensor.TYPE_MAGNETIC_FIELD;
+        gSensorAccuracy.remove(String.valueOf(sensorType));
+        if (! gSensorMgr.registerListener(this, gSensorMgr.getDefaultSensor(sensorType), delayRate)) {
           writeMessage("mySensorEventListener.register", "failed on TYPE_MAGNETIC_FIELD");
           return false;
         }
@@ -72,7 +89,7 @@ public class mySensorListener implements SensorEventListener {
       }
     }
 
-    unregisterOnTimeout(timeout);  // (long)(10*delay);
+    if (timeout > 0) unregisterOnTimeout(timeout);  // (long)(10*delay);
     return true;
   }
 
@@ -83,8 +100,7 @@ public class mySensorListener implements SensorEventListener {
   // !! Do not use ReentrantLock() which will return immediately if the current thread already owns the lock !!
   //public final Object waitObj1 = new Object(); 
   public void unregisterOnTimeout(final long timeout) {
-    // final long p_timeout = timeout;
-    // if ( true ) return;
+    if (timeout <= 0) return;
     final android.os.Handler handler = new android.os.Handler();
       handler.postDelayed(new Runnable(){@Override public void run(){ // !! must use this to avoid issue for UI thread !!
         try {
@@ -138,6 +154,7 @@ public class mySensorListener implements SensorEventListener {
   }
 */
 
+  static java.util.Hashtable<String, String> gSensorAccuracy = new java.util.Hashtable<String, String>();
   private float[] gAccelVals = {-1f,-1f,-1f}, gMagVals = {-1f,-1f,-1f};  // new float[3]
   public final float gAccelAlpha = 0.8f, gMagAlpha = 0f;  // 0 ==> no filter applies !
 
@@ -179,17 +196,50 @@ public class mySensorListener implements SensorEventListener {
     return azimuthValue;
   }
 
-  @Override public void onAccuracyChanged(Sensor sensor, int accuracy) { }
+  @Override public void onAccuracyChanged(android.hardware.Sensor sensor, int accuracy) {
+    String sensorTypeId = String.valueOf(sensor.getType());
+    String accuracyTypeId = String.valueOf(accuracy);
+
+    gSensorAccuracy.put( sensorTypeId, accuracyTypeId );
+
+    /*
+      String sensorType = "?";  switch ( sensor.getType() ) {
+        case android.hardware.Sensor.TYPE_ACCELEROMETER: sensorType = "ACCELEROMETER"; break;
+        case android.hardware.Sensor.TYPE_MAGNETIC_FIELD: sensorType = "MAGNETIC_FIELD"; break;
+        case android.hardware.Sensor.TYPE_ORIENTATION: sensorType = "ORIENTATION"; break;
+      }
+      String accuracyType = "?";  switch ( accuracy ) {
+        case android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW: accuracyType = "LOW"; break;
+        case android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM: accuracyType = "MEDIUM"; break;
+        case android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_HIGH: accuracyType = "HIGH"; break;
+        case android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE: accuracyType = "UNRELIABLE"; break;
+      }
+    */
+
+    String sensorType = gSensorAccuracy.get( "sensorTypeLookup#" + sensorTypeId );
+      if (sensorType==null) sensorType = sensorTypeId;
+    String accuracyType = gSensorAccuracy.get( "accuracyTypeLookup#" + accuracyTypeId );
+      if (accuracyType==null) accuracyType = accuracyTypeId;
+    gSensorAccuracy.put(sensorType, accuracyType);
+
+    writeMessage("mySensorEventListener.onAccuracyChanged", sensorType+":"+accuracyType);
+  }
 
   @Override public void onSensorChanged(SensorEvent event) {
+    int sensorType = event.sensor.getType();
     float alpha = 0f;  float[] values = event.values.clone();
     java.util.Date thisDataTimeStamp = new java.util.Date();
 
     // ignore/skip this to reduce the update frequency
     // if ( thisDataTimeStamp.getTime() - lastDataTimeStamp.getTime() < gTimeInterval ) return;
 
+    if (! gSensorAccuracy.containsKey(String.valueOf(sensorType))) {
+      // https://stackoverflow.com/a/60256265/2940478
+      onAccuracyChanged(event.sensor, event.accuracy);
+    }
+
     synchronized (this) {
-      switch ( event.sensor.getType() ) {
+      switch ( sensorType ) {
         /*
           https://www.built.io/blog/applying-low-pass-filter-to-android-sensor-s-readings
            applying low-pass/high-cut filter with a simple filter constant (alpha)
@@ -231,7 +281,7 @@ public class mySensorListener implements SensorEventListener {
 
         case android.hardware.Sensor.TYPE_MAGNETIC_FIELD:
           /*
-            all values are in micro-Tesla (uT) and measure the ambient magnetic field
+            all values are in micro-Tesla (µT) and measure the ambient magnetic field
             values[0,1,2] == the ambient magnetic field in the x,y,z-axis; note: z-axis is inverted.
           */
           alpha = (gMagVals[0] >= 0) ? gMagAlpha : 0;

@@ -20,6 +20,59 @@ public class commonGui {
 
   //////////////////////////////////////////////////////////////////////
 
+  // commonGui.createNotificationChannel(MainActivity.this, "QuoInsight", "QuoInsight", "QuoInsight.Minimal");
+
+  public static void createNotificationChannel(
+    android.content.Context parentContext, String channelID, String name, String description
+  ) {
+    // https://developer.android.com/training/notify-user/build-notification
+    // Create the NotificationChannel, but only on API 26+ because
+    // the NotificationChannel class is new and not in the support library
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      android.app.NotificationChannel ntfnChannel
+       = new android.app.NotificationChannel(
+           channelID, name, android.app.NotificationManager.IMPORTANCE_HIGH
+         );
+      ntfnChannel.setDescription(description);  ntfnChannel.setSound(null, null);
+      ntfnChannel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PRIVATE);
+      // Register the channel with the system; you can't change the importance or other notification behaviors after this
+      android.app.NotificationManager ntfnManager
+       = parentContext.getSystemService(android.app.NotificationManager.class);
+      ntfnManager.createNotificationChannel(ntfnChannel);
+    }
+  }
+
+  public static android.support.v4.app.NotificationCompat.Builder createNotificationBuilder(
+    android.content.Context parentContext, String channelID, String name, String description
+  ) {
+    createNotificationChannel(parentContext, channelID, name, description);
+    android.support.v4.app.NotificationCompat.Builder ntfnBuilder
+     = new android.support.v4.app.NotificationCompat.Builder(parentContext, channelID);
+    return ntfnBuilder;
+  }
+
+  public static void submitNotification(
+    android.content.Context parentContext,
+    android.support.v4.app.NotificationCompat.Builder ntfnBuilder,
+    int ntfnID
+  ) {
+    // notificationId is a unique int for each notification that you must define
+    // android.app.Notification ntfn = ntfnBuilder.build();
+    android.support.v4.app.NotificationManagerCompat ntfnManager
+     = android.support.v4.app.NotificationManagerCompat.from(parentContext);
+    ntfnManager.notify(ntfnID, ntfnBuilder.build());
+  }
+
+  public static void cancelNotification(android.content.Context parentContext, int ntfnID) {
+    // notificationId is a unique int for each notification that you must define
+    // android.app.NotificationManager
+    android.support.v4.app.NotificationManagerCompat ntfnManager
+     = android.support.v4.app.NotificationManagerCompat.from(parentContext);
+    ntfnManager.cancel(ntfnID);
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   static final public android.widget.EditText makeEditTextSelectableReadOnly(android.widget.EditText edtxt) {
     // https://medium.com/@anna.domashych/selectable-read-only-multiline-text-field-on-android-169c27c55408
     edtxt.setShowSoftInputOnFocus(false);  edtxt.setPadding(10,10,10,10);  edtxt.setBackgroundColor(android.graphics.Color.parseColor("#E8E8E8"));
@@ -62,25 +115,44 @@ public class commonGui {
 
   //////////////////////////////////////////////////////////////////////
 
+  public static android.util.DisplayMetrics getDefaultDisplayMetrics(android.app.Activity parentActivity) {
+    android.util.DisplayMetrics displayMetrics = new android.util.DisplayMetrics();
+    parentActivity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+    return displayMetrics;
+  }
+
+  public static android.util.DisplayMetrics getResourceDisplayMetrics(android.content.Context parentContext) {
+    return parentContext.getResources().getDisplayMetrics();
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   public static float px2dp(android.util.DisplayMetrics displayMetrics, float px) {
-    return (float)android.util.TypedValue.applyDimension(
-      android.util.TypedValue.COMPLEX_UNIT_PX, px, displayMetrics
-    );
+    return (px / displayMetrics.density);
+    /*
+      TypedValue.applyDimension converts an unpacked complex data value holding a dimension
+       to its final floating point value", i.e., the return value is always in px.
+      ! Below will be incorrect and will just return the same value !
+      return (float)android.util.TypedValue.applyDimension(
+        android.util.TypedValue.COMPLEX_UNIT_PX, px, displayMetrics
+      );
+    */
   }
 
   public static float dp2px(android.util.DisplayMetrics displayMetrics, float dp) {
-    return (float)android.util.TypedValue.applyDimension(
-      android.util.TypedValue.COMPLEX_UNIT_DIP, dp, displayMetrics
-    );
+    return (dp * displayMetrics.density);
+    //return (float)android.util.TypedValue.applyDimension(
+    //  android.util.TypedValue.COMPLEX_UNIT_DIP, dp, displayMetrics
+    //);
   }
 
-  public float[] getVwSzDimensionPx(android.view.View v) {
-    android.util.DisplayMetrics m = v.getContext().getResources().getDisplayMetrics();
+  public static float[] getVwSzDimensionPx(android.view.View v) {
+    android.util.DisplayMetrics m = getResourceDisplayMetrics(v.getContext());
     android.view.ViewGroup.LayoutParams p = v.getLayoutParams();
     return new float[] {dp2px(m, p.width), dp2px(m, p.height)};
   }
 
-  public void overlayImgVw(android.widget.ImageView img, android.graphics.Bitmap bmp) {
+  public static void overlayImgVw(android.widget.ImageView img, android.graphics.Bitmap bmp) {
     android.graphics.drawable.Drawable drawable = img.getDrawable();
     android.util.DisplayMetrics displayMetrics = img.getContext().getResources().getDisplayMetrics();
     // bmp = android.graphics.BitmapFactory.decodeResource(getResources(), R.drawable.img1);
@@ -96,6 +168,20 @@ public class commonGui {
     canvas.drawBitmap(bmp, 0/*left*/, 0/*top*/, null);
     //img.invalidate(); img.draw(canvas); // this does not seem to change img
     img.setImageBitmap(bmp1); // this works correctly, and capture the changes
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public static void canvasDrawLine(android.graphics.Canvas canvas, float az, float x0, float y0) {
+    double radius = (x0+y0)/2.0, radian = (az>90) ? Math.toRadians(450.0-az) : Math.toRadians(90.0-az);
+    float x = (float)(radius*Math.cos(radian)), y = (float)(radius*Math.sin(radian));
+
+    android.graphics.Paint paint
+     = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+      paint.setColor(android.graphics.Color.RED);  paint.setStrokeWidth(5);
+
+    canvas.drawLine(x0-x, y0+y, x0+x, y0-y, paint); // inverse y-axis
+    return;
   }
 
   //////////////////////////////////////////////////////////////////////

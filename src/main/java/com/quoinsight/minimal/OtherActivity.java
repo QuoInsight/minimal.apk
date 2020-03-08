@@ -3,16 +3,6 @@ package com.quoinsight.minimal;
   # thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/java/com/quoinsight/minimal/OtherActivity.java
 */
 
-import android.widget.TextView;
-import android.widget.Button;
-import android.widget.EditText;
-
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
-import android.widget.AdapterView;
-
-import android.view.View;
-
 public class OtherActivity extends android.app.Activity
   // implements android.hardware.SensorEventListener // !! need this for it work correctly with SensorEvent !!
 {
@@ -58,19 +48,23 @@ public class OtherActivity extends android.app.Activity
 
     try {
 
-      TextView txt1 = (TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\otheractivity.xml
+      android.widget.TextView txt1 = (android.widget.TextView) findViewById(R.id.txt1);  // --> .\src\main\res\layout\otheractivity.xml
         txt1.setText("Hello " + sysUtil.getDeviceID(this) +  " from OtherActivity!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
         // avoid EditText from gaining focus at Activity startup 
         txt1.setFocusable(true);  txt1.setFocusableInTouchMode(true);  txt1.requestFocus();
 
-      // ((EditText)findViewById(R.id.edit1)).setText( String.join("\n", sysUtil.getPackageList(this)) );
+      // ((android.widget.EditText)findViewById(R.id.edit1)).setText( String.join("\n", sysUtil.getPackageList(this)) );
       // String.join() is not support by some versions --> use our local function joinStringList() instead
       java.util.List<String> pkgLst = sysUtil.getPackageList(this);
-      commonGui.makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit1)).setText(commonUtil.joinStringList("\n", pkgLst));
+      commonGui.makeEditTextSelectableReadOnly(
+        (android.widget.EditText)findViewById(R.id.edit1)
+      ).setText(commonUtil.joinStringList("\n", pkgLst));
 
-      commonGui.makeEditTextSelectableReadOnly((EditText)findViewById(R.id.edit2)).setText(commonUtil.joinStringList("\n", sysUtil.getSensorList(this)));
+      commonGui.makeEditTextSelectableReadOnly(
+        (android.widget.EditText)findViewById(R.id.edit2)
+      ).setText(commonUtil.joinStringList("\n", sysUtil.getSensorList(this)));
 
-      final Spinner spinner1 = (Spinner) findViewById(R.id.spinner1);
+      final android.widget.Spinner spinner1 = (android.widget.Spinner) findViewById(R.id.spinner1);
         final java.util.Hashtable<String, String> appPackageNames = new java.util.Hashtable<String, String>();
          /*
           // https://stackoverflow.com/questions/9371942/dictionary-in-android-resources
@@ -86,15 +80,15 @@ public class OtherActivity extends android.app.Activity
           }
         java.util.ArrayList<String> selectList = new java.util.ArrayList<String>(appPackageNames.keySet());
           java.util.Collections.sort(selectList, String.CASE_INSENSITIVE_ORDER);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(
           this, android.R.layout.simple_spinner_item, selectList
           //new String[] { "SleepRadio", "澳門電台", "AiFM", "港台" }
         );
         spinner1.setAdapter(adapter);
         //adapter.setDropDownViewResource(R.layout.xxx); // [spinner_textview_align]
        /*
-        spinner1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-          @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        spinner1.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+          @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
             try {
               // !! below is no good, use android:theme="@style/spinner1" in XML instead !!
               float factor = view.getContext().getResources().getDisplayMetrics().density; // ==2.0 
@@ -107,13 +101,13 @@ public class OtherActivity extends android.app.Activity
               return;
             }
           }
-          @Override public void onNothingSelected(AdapterView<?> parent) { }
+          @Override public void onNothingSelected(android.widget.AdapterView<?> parent) { }
         });
        */
 
       findViewById(R.id.launchApp).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
-        new View.OnClickListener() {
-          public void onClick(View v) {
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
             try {
               sysUtil.launchApp(OtherActivity.this, appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
@@ -125,8 +119,8 @@ public class OtherActivity extends android.app.Activity
       );
 
       findViewById(R.id.appInfo).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
-        new View.OnClickListener() {
-          public void onClick(View v) {
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
             try {
               sysUtil.launchAppInfo(OtherActivity.this, appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
@@ -138,8 +132,8 @@ public class OtherActivity extends android.app.Activity
       );
 
       findViewById(R.id.appUrl).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
-        new View.OnClickListener() {
-          public void onClick(View v) {
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
             try {
               sysUtil.launchUrl(v.getContext(), "https://play.google.com/store/apps/details?id=" + appPackageNames.get(spinner1.getSelectedItem().toString()));
             } catch(Exception e) {
@@ -151,8 +145,8 @@ public class OtherActivity extends android.app.Activity
       );
 
       findViewById(R.id.appMgr).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
-        new View.OnClickListener() {
-          public void onClick(View v) {
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
             try {
               sysUtil.launchAppMgr(OtherActivity.this);
             } catch(Exception e) {
@@ -163,24 +157,50 @@ public class OtherActivity extends android.app.Activity
         }
       );
 
+      android.widget.TextView txt2 = (android.widget.TextView) findViewById(R.id.txt2);  // --> .\src\main\res\layout\otheractivity.xml
+        String otherInfo = "<br>Build.VERSION.SDK_INT: " + String.valueOf(android.os.Build.VERSION.SDK_INT);
+
+        android.util.DisplayMetrics displayMetrics = commonGui.getDefaultDisplayMetrics(this);
+        otherInfo += "<br>defaultDispMetrics: " + String.valueOf(displayMetrics.widthPixels) + "x" + String.valueOf(displayMetrics.heightPixels);
+
+        displayMetrics = commonGui.getResourceDisplayMetrics( this ); // ((android.view.View)txt1).getContext()
+        otherInfo += "<br>resourceDispMetrics: " + String.valueOf(displayMetrics.widthPixels) + "x" + String.valueOf(displayMetrics.heightPixels)
+          + "<br>1dp=" + String.valueOf(commonGui.dp2px(displayMetrics, 1)) + "px<br>";
+
+        txt2.setText( android.text.Html.fromHtml(otherInfo) ); // CSS is not supported!
+        txt2.setClickable(true);  txt2.setOnClickListener(
+          new android.view.View.OnClickListener() {
+            public void onClick(android.view.View v) {
+              android.widget.TextView txt = (android.widget.TextView) v;
+
+              float[] widthHeight = commonGui.getVwSzDimensionPx(v);
+              String otherInfo = "<br>getVwSzDimensionPx(v): " + String.valueOf(widthHeight[0]) + "x" + String.valueOf(widthHeight[1]);
+              otherInfo += "<br>v.getMeasuredSize: " + String.valueOf(v.getMeasuredWidth()) + "x" + String.valueOf(v.getMeasuredHeight());
+
+              txt.setText( android.text.Html.fromHtml(otherInfo) ); // CSS is not supported!
+            }
+          }
+        );
+
+
       findViewById(R.id.btnPrev).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
-        new View.OnClickListener() {
-          public void onClick(View v) {
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
             startActivity(new android.content.Intent(v.getContext(), MainActivity.class));
           }
         }
       );
 
       findViewById(R.id.button9).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
-        new View.OnClickListener() {
-          public void onClick(View v) {
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
             //this.finishAffinity();
             finishAndRemoveTask();
           }
         }
       );
 
-      TextView txt9 = (TextView) findViewById(R.id.txt9);  // --> .\src\main\res\layout\otheractivity.xml
+      android.widget.TextView txt9 = (android.widget.TextView) findViewById(R.id.txt9);  // --> .\src\main\res\layout\otheractivity.xml
         txt9.setLinksClickable(true);  // do not setAutoLinkMask !! txt9.setAutoLinkMask(android.text.util.Linkify.ALL);
         txt9.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         txt9.setText(android.text.Html.fromHtml(txt9.getText().toString()));

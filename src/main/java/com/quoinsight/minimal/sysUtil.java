@@ -125,6 +125,24 @@ public class sysUtil {
 
   //////////////////////////////////////////////////////////////////////
 
+  public static android.app.PendingIntent getPendingActivity(
+    android.content.Context parentContext, Class<?> targetClass
+  ) {
+    return android.app.PendingIntent.getActivity(
+      parentContext, 0, new android.content.Intent(parentContext, targetClass), 0
+    );
+  }
+
+  public static android.app.PendingIntent getPendingService(
+    android.content.Context parentContext, Class<?> targetClass, String actionString, int requestCode
+  ) {
+    android.content.Intent intent = new android.content.Intent(parentContext, targetClass);
+    intent.setAction(actionString);
+    return android.app.PendingIntent.getService(parentContext, requestCode, intent, 0);
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   /*
 
     https://developer.android.com/guide/topics/location/strategies.html
