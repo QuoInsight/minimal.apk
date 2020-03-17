@@ -4,6 +4,7 @@
   thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/AndroidManifest.xml
 
   android:icon="@drawable/icon" ==> .\src\main\res\drawable[-*dpi]\icon.png
+    - the icon should not be larger than 192x192 px !! else it may clash during installation
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
    xmlns:tools="http://schemas.android.com/tools"
@@ -65,9 +66,28 @@
     Dangerous Permissions [PROTECTION_DANGEROUS] https://developer.android.com/guide/topics/permissions/overview#dangerous_permissions
   -->
 
+  <uses-permission android:name="android.permission.INTERNET" /><!--for MediaPlayer streaming-->
+  <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><!--do not mix this with ACCESS_FINE_LOCATION, no need to add permission.INTERNET explicitly-->
+  <!--uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><!-x-must have this to enable LocationManager.GPS_PROVIDER-->
+
+  <uses-sdk tools:overrideLibrary="com.google.android.exoplayer2.ext.mediasession, com.quoinsight.lib"/>
+
   <application android:label="QuoInsight☸Minimal"
-     tools:replace="android:icon" android:icon="@drawable/icon"
+    tools:replace="android:icon" android:icon="@drawable/icon"
+    android:usesCleartextTraffic="true"
   >
+    <meta-data tools:replace="android:value"
+       android:name="android.support.VERSION"
+       android:value="25.4.0"
+    />
+    <service android:name="myAudioService">
+      <intent-filter>
+        <action android:name="com.quoinsight.minimal.myAudioServicePlayAction" />
+        <action android:name="com.quoinsight.minimal.myAudioServiceStopAction" />
+      </intent-filter>
+    </service>
     <activity android:name="MainActivity" android:launchMode="singleInstance">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
@@ -80,6 +100,10 @@
     </activity>
     <activity android:name="CompassActivity" android:launchMode="singleTop"
        android:label="QuoInsight☸Minimal.CompassActivity"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="CompassCfgActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.CompassConfiguration"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>
   </application>
