@@ -22,6 +22,12 @@ public class mySensorListener implements SensorEventListener {
     void OnMessage(String tag, String msg, String...args);
     void OnOrientationDataLoaded(float[] returnVals);
     void OnAccel2g(float gForce);
+    /*
+      // default methods are not supported in -source 1.7 !
+      default void OnMessage(String tag, String msg, String...args) {}
+      default void OnOrientationDataLoaded(float[] returnVals) {}
+      default void OnAccel2g(float gForce) {}
+    */
   }
 
   private handlers gHandlers = null;

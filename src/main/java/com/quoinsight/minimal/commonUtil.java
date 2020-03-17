@@ -73,4 +73,156 @@ public class commonUtil {
 
   //////////////////////////////////////////////////////////////////////
 
+  public static String wget(String s_url) {
+    String responseText = "";
+    try {
+      java.net.URL url = new java.net.URL(s_url);
+      java.net.HttpURLConnection urlConnection
+        = (java.net.HttpURLConnection) url.openConnection();
+      try {
+        // !! below will throw exception if running in Android without AsyncTask !!
+        java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
+        byte[] contents = new byte[1024];  int bytesRead = 0;
+        while((bytesRead = in.read(contents)) != -1) { 
+          responseText += new String(contents, 0, bytesRead);              
+        }
+      } catch (Exception e) {
+        responseText = "ERROR: " + e.getMessage() + " \n " + responseText;
+      } finally {
+        urlConnection.disconnect();
+      }
+    } catch (Exception e) {
+      responseText = "ERROR: " + e.getMessage() + " \n " + responseText;
+    }
+    return responseText;
+  }
+
+  /*
+    <application android:label="QuoInsight☸Minimal"
+      android:usesCleartextTraffic="true" >> need this to support http://
+ 
+    https://stackoverflow.com/questions/32153991/urlconnection-connect-works-only-in-asynctask-android
+    !! Network communications must be done in seprate Thread in android !!
+  */
+
+  public static java.util.List wgets(String s_url) {
+    java.util.List lines = new java.util.ArrayList();
+    int respCode = -1;  String dbgInf = "";
+
+    java.net.URL url = null;
+    java.net.HttpURLConnection urlConn = null;
+    try {
+      dbgInf += "#0";
+      url = new java.net.URL(s_url);
+      dbgInf += "#1";
+      urlConn = (java.net.HttpURLConnection) url.openConnection();
+    } catch (Exception e) {
+      lines.add(0, "ERROR: " + dbgInf + " " + e.getMessage() + "; url=" + s_url);
+      return lines;
+    }
+    dbgInf += "#2";
+
+    java.io.InputStream in;
+    try {
+      urlConn.setRequestMethod("GET");
+      urlConn.setConnectTimeout(3000); urlConn.setReadTimeout(5000);
+      urlConn.setUseCaches(false); urlConn.setAllowUserInteraction(false);
+      urlConn.setDoInput(true); //default
+      dbgInf += "#3";
+      // !! below will throw exception if running in Android without AsyncTask !!
+      respCode = urlConn.getResponseCode();
+      dbgInf += "#HTTP" + String.valueOf(respCode);
+      in = urlConn.getInputStream();
+      dbgInf += "#4";
+      if (respCode != java.net.HttpURLConnection.HTTP_OK) {
+        lines.add(0, "ERROR: HTTP " + String.valueOf(respCode) + "; " + dbgInf + "; url=" + urlConn.getURL());
+        return lines;
+      }
+    } catch (Exception e) {
+      lines.add(0, "ERROR: " + dbgInf + " " + e.getMessage() + "; url=" + urlConn.getURL());
+      return lines;
+    }
+
+    dbgInf += "#6";
+    try {
+      java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(
+        new java.io.BufferedInputStream(in), java.nio.charset.StandardCharsets.UTF_8
+      ));
+      dbgInf += "#8";
+      String line=null;  while ((line=r.readLine())!=null) lines.add(line);
+      dbgInf += "#9";
+    } catch (java.io.IOException e) {
+      lines.add(0, "IO-ERROR: " + e.getMessage() + "; " + dbgInf + " url=" + urlConn.getURL());
+    } catch (Exception e) {
+      lines.add(0, "ERROR: " + e.getMessage() + "; " + dbgInf + " src=" + urlConn.getURL());
+    } finally {
+      urlConn.disconnect();
+    }
+
+    return lines;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public static String getRootUrl(String s_url) {
+    int p = s_url.indexOf("://");  p = s_url.indexOf("/", p+3);
+    // --** never include the first "/" **-- //
+    return ( p > 0) ? s_url.substring(0, p) : s_url;
+  }
+
+  public static String getBaseUrl(String s_url) {
+    String url = s_url.substring(0, s_url.lastIndexOf("/")+1);
+    // --** always ends with "/" **-- //
+    return (url.endsWith("://")) ? s_url + "/" : url;
+  }
+
+  public static String getNextUrl(String s_url) {
+    String url = s_url.trim();
+    java.util.regex.Pattern re = java.util.regex.Pattern.compile("^(.*)(\\D)(\\d+?)(\\.\\S+)$");
+    java.util.regex.Matcher m = re.matcher(url);
+    if ( m.find() ) {
+      String thisSeq = m.group(3);
+      int nextValue = 1 + Integer.parseInt(m.group(3));
+      String nextSeq = String.format("%0"+String.valueOf(thisSeq.length())+"d", new Object[]{new Integer(nextValue)});
+      url = m.group(1) + m.group(2) + nextSeq + m.group(4);
+    }
+    return url;
+  }
+
+  public static boolean urlEndsWithM3u(String s_url) {
+    String url = s_url.trim().toLowerCase();
+    return url.endsWith(".m3u")||url.endsWith(".m3u8");
+  }
+
+  public static String getMediaUrl(String s_url) {
+    String url = s_url;
+    if ( urlEndsWithM3u(url) ) {
+      java.util.List lines = wgets(url);
+      String firstLine = null;
+      for (int i=0; i<lines.size(); i++) {
+        // System.out.println(lines.get(i));
+        String thisLine = lines.get(i).toString().trim();
+        if ( thisLine==null || thisLine.length()==0 || thisLine.equals("null") ) {
+          continue;
+        } else if (firstLine==null) {
+          firstLine = thisLine;
+          if ( !firstLine.equals("#EXTM3U") ) {
+            //System.out.println("invalid m3u8");
+            url += "#invalid m3u8 [" + thisLine + "]";
+            break;
+          }
+        } else if ( !thisLine.startsWith("#") ) {
+          //System.out.println("OK");
+          url = getBaseUrl(s_url) + thisLine;
+          if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
+            url = getMediaUrl(url);
+          break;
+        }
+      }
+    }
+    return url;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
 }
