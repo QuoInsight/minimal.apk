@@ -176,15 +176,23 @@ public class commonUtil {
     return (url.endsWith("://")) ? s_url + "/" : url;
   }
 
+  public static String getNextSeq(String thisSeq) {
+    int nextValue = 1 + Integer.parseInt(thisSeq);
+    return String.format("%0"+String.valueOf(thisSeq.length())+"d", new Object[]{new Integer(nextValue)});
+  }
+
   public static String getNextUrl(String s_url) {
     String url = s_url.trim();
     java.util.regex.Pattern re = java.util.regex.Pattern.compile("^(.*)(\\D)(\\d+?)(\\.\\S+)$");
     java.util.regex.Matcher m = re.matcher(url);
     if ( m.find() ) {
-      String thisSeq = m.group(3);
-      int nextValue = 1 + Integer.parseInt(m.group(3));
-      String nextSeq = String.format("%0"+String.valueOf(thisSeq.length())+"d", new Object[]{new Integer(nextValue)});
-      url = m.group(1) + m.group(2) + nextSeq + m.group(4);
+      url = m.group(1) + m.group(2) + getNextSeq(m.group(3)) + m.group(4);
+    } else {
+      re = java.util.regex.Pattern.compile("^(.*)(\\D)(\\d{4,}?)(\\D+?)(\\S+)$");
+      m = re.matcher(url);
+      if ( m.find() ) {
+        url = m.group(1) + m.group(2) + getNextSeq(m.group(3)) + m.group(4) + m.group(5);
+      }
     }
     return url;
   }
@@ -213,7 +221,9 @@ public class commonUtil {
           }
         } else if ( !thisLine.startsWith("#") ) {
           //System.out.println("OK");
-          url = getBaseUrl(s_url) + thisLine;
+          url = thisLine;
+          if ( ! ( url.startsWith("http://")||url.startsWith("https://") ) )
+            url = getBaseUrl(s_url) + url;
           if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
             url = getMediaUrl(url);
           break;

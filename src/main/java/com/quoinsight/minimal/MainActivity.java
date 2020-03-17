@@ -69,12 +69,27 @@ public class MainActivity extends android.app.Activity {
       )); // Hello world\n[2020-01-09 十二月十五⁄30巳时 09:06:21] --> Hello world\n[2020-01-09 09:06:21]\n十二月十五⁄30巳时
 
     final android.widget.Spinner spinner1 = new android.widget.Spinner(this);
-      final java.util.Hashtable<String, String> radioStations = new java.util.Hashtable<String, String>();
+      // Hashtable is in random order: https://beginnersbook.com/2014/06/how-to-sort-hashtable-in-java/
+      final java.util.LinkedHashMap<String, String> radioStations = new java.util.LinkedHashMap<String, String>();
         // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
-        radioStations.put("SleepRadio", "http://149.56.234.138:8169/;");
-        radioStations.put("澳門電台", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
+        radioStations.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
+        radioStations.put("港台#1", "http://stm.rthk.hk:80/radio1");
+        radioStations.put("新城知讯	", "http://metroradio-lh.akamaihd.net/i/997_h@349799/index_48_a-p.m3u8");
         radioStations.put("AiFM", "https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020.m3u8");
-        radioStations.put("香港電台第一台", "http://stm.rthk.hk:80/radio1");
+        radioStations.put("988", "http://starrfm.rastream.com/starrfm-988.android");
+        radioStations.put("南非", "http://129.232.169.93/proxy/arrowline?codec=mp3");
+        radioStations.put("Surabaya", "http://streaming.stratofm.com:8300/;stream.nsv");
+        radioStations.put("三藩市", "http://50.7.71.27:9731/;?icy=http");
+        radioStations.put("Buddhist", "http://15913.live.streamtheworld.com/SAM11AAC025.mp3");
+        radioStations.put("良友", "http://listen2.txly1.net:8000/ly729_a");
+        radioStations.put("天主", "http://dreamsiteradiocp2.com:8038/;");
+        radioStations.put("大愛", "https://streamingv2.shoutcast.com/daai-radio_128.aac");
+        radioStations.put("cello", "http://streams.calmradio.com:4628/stream");
+        radioStations.put("piano", "https://pianosolo.streamguys1.com/live");
+        radioStations.put("华乐", "http://radio2.chinesemusicworld.com/;");
+        radioStations.put("rainforest", "https://music.wixstatic.com/mp3/e7f4d3_4ce223112471435c86d2292ddb4a6e7c.mp3");
+        radioStations.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
+        radioStations.put("SleepRadio", "http://149.56.234.138:8169/;");
       android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(
         this, android.R.layout.simple_spinner_item,
         //new String[] { "SleepRadio", "澳門電台", "AiFM", "港台" }
@@ -110,16 +125,13 @@ public class MainActivity extends android.app.Activity {
 
     android.widget.Button button2 = new android.widget.Button(this);
       button2.setAllCaps(false);
-      button2.setText(" ▶ "); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
+      button2.setText("▶"); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
       button2.setOnClickListener(
         new android.view.View.OnClickListener() {
           public void onClick(android.view.View v) {
             try {
 
-              String url = "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8";
-              url = "http://129.232.169.93/proxy/arrowline?codec=mp3";
-              url = "http://stm.rthk.hk:80/radio1";
-              url = radioStations.get(spinner1.getSelectedItem().toString());
+              String url = radioStations.get(spinner1.getSelectedItem().toString());
 
               android.content.Intent playbackAction
                = new android.content.Intent("com.quoinsight.minimal.myAudioServicePlayAction");
@@ -241,6 +253,24 @@ public class MainActivity extends android.app.Activity {
         }
       );
 
+    android.widget.Button button3 = new android.widget.Button(this);
+      button3.setAllCaps(false);
+      button3.setText("⏹"); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
+      button3.setOnClickListener(
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
+            try {
+              android.content.Intent playbackStopAction
+               = new android.content.Intent("com.quoinsight.minimal.myAudioServiceStopAction");
+                playbackStopAction.setPackage(MainActivity.this.getPackageName());
+              MainActivity.this.startService(playbackStopAction);
+            } catch(Exception e) {
+              commonGui.writeMessage(MainActivity.this, "MainActivity.playbackStopAction", e.getMessage());
+            }
+          }
+        }
+      );
+
     android.widget.TextView txt2 = new android.widget.TextView(this);
       txt2.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
       txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
@@ -353,7 +383,7 @@ public class MainActivity extends android.app.Activity {
         layout.addView(txt1, params);
         android.widget.LinearLayout layout2 = new android.widget.LinearLayout(this);
           layout2.setOrientation(android.widget.LinearLayout.HORIZONTAL);  layout2.setGravity(android.view.Gravity.CENTER);
-          layout2.addView(spinner1, params);  layout2.addView(button2, params);  layout2.addView(button1, params);
+          layout2.addView(spinner1, params);  layout2.addView(button2, params);  layout2.addView(button3, params);  layout2.addView(button1, params);
         layout.addView(layout2, params);
         layout.addView(txt2, params);
         layout.addView(btnCompass, params);
