@@ -176,6 +176,8 @@ public class commonUtil {
     return (url.endsWith("://")) ? s_url + "/" : url;
   }
 
+  //////////////////////////////////////////////////////////////////////
+
   public static String getNextSeq(String thisSeq) {
     int nextValue = 1 + Integer.parseInt(thisSeq);
     return String.format("%0"+String.valueOf(thisSeq.length())+"d", new Object[]{new Integer(nextValue)});
@@ -202,6 +204,7 @@ public class commonUtil {
     return url.endsWith(".m3u")||url.endsWith(".m3u8");
   }
 
+ /*
   public static String getMediaUrl(String s_url) {
     String url = s_url;
     if ( urlEndsWithM3u(url) ) {
@@ -231,6 +234,149 @@ public class commonUtil {
       }
     }
     return url;
+  }
+ */
+
+  public static String getMediaUrl2(String s_url) {
+    String url = s_url;  // if ( !urlEndsWithM3u(url) ) return url;
+
+    try {
+      java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
+
+      int respCode = urlConn.getResponseCode();
+      if (respCode != java.net.HttpURLConnection.HTTP_OK) {
+        return "ERROR: HTTP " + String.valueOf(respCode) + "; url=" + urlConn.getURL();
+      }
+
+      String contentType = urlConn.getContentType().toLowerCase();
+      // https://en.wikipedia.org/wiki/M3U
+      if ( ! (
+        contentType.equals("application/vnd.apple.mpegurl") || contentType.equals("application/vnd.apple.mpegurl.audio")
+         || contentType.equals("audio/mpegurl") || contentType.equals("audio/x-mpegurl")
+          || contentType.equals("application/mpegurl") || contentType.equals("application/x-mpegurl")
+      ) ) {
+        //return "ERROR: Invalid ContentType [" + contentType + "]; url=" + urlConn.getURL();
+        return url;
+      }
+
+      try {
+        java.io.InputStream in = new java.io.BufferedInputStream(urlConn.getInputStream());
+        java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8));
+        String thisLine=null, firstLine=null;
+        while ((thisLine=r.readLine())!=null) {
+          thisLine = thisLine.trim();
+          if ( thisLine.length()==0 ) {
+            continue;
+          } else if (firstLine==null) {
+            firstLine = thisLine;
+            if ( !firstLine.equals("#EXTM3U") ) {
+              //System.out.println("invalid m3u8");
+              url += "#invalid m3u8 [" + thisLine + "]";
+              break;
+            }
+          } else if ( !thisLine.startsWith("#") ) {
+            url = thisLine;
+            if ( ! ( url.startsWith("http://")||url.startsWith("https://") ) )
+              url = getBaseUrl(s_url) + url;
+            if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
+              url = getMediaUrl2(url);
+            break;
+          }
+        }
+      } catch (Exception e) {
+        return "ERROR: " + e.getMessage();
+      }
+
+      urlConn.disconnect();
+
+    } catch (Exception e) {
+
+      return "ERROR: " + e.getMessage();
+
+    }
+
+    return url;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public static java.util.HashMap<String, String> getIcyMetaData(String s_url) {
+    java.util.HashMap<String, String> icyData = new java.util.HashMap<String, String>();
+    // Hashtable does not allow null keys or values
+
+    // https://cast.readme.io/docs/icy
+    // https://people.kth.se/~johanmon/dse/casty.pdf
+    // http://ample.sourceforge.net/developers.shtml
+    // https://stackoverflow.com/questions/34267353/get-metadata-from-shoutcast-stream
+
+    try {
+      java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
+      urlConn.setRequestProperty("icy-metadata", "1");  // check for support and accepts ICY Metadata
+
+      int respCode = urlConn.getResponseCode();
+      if (respCode != java.net.HttpURLConnection.HTTP_OK) {
+        icyData.put("ERROR", "HTTP " + String.valueOf(respCode) + "; url=" + urlConn.getURL());
+        return icyData;
+      }
+
+      icyData.put("content-type", urlConn.getContentType().toLowerCase());
+      icyData.put("icy-metaint", urlConn.getHeaderField("icy-metaint"));
+
+      String icyMetaInt = icyData.get("icy-metaint");
+      if (icyMetaInt==null) {
+        return icyData;
+      }
+      
+      icyData.put("icy-name", urlConn.getHeaderField("icy-name"));
+      icyData.put("icy-url", urlConn.getHeaderField("icy-url"));
+
+      try {
+        int metadataOffset = Integer.parseInt(icyData.get("icy-metaint"));
+        int metadataEnd = metadataOffset + 4080 + 1; // 4080 is the max length
+
+        int b = -1;
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        java.io.InputStream in = urlConn.getInputStream();
+        //int count = -1; while ( (b=in.read()) != -1 ) { count++;
+        for (int count=0; count<=metadataEnd; count++) {
+          count += in.read(new byte[metadataOffset]);
+          if ( count < metadataOffset ) {
+            continue;
+          } else if ( count == metadataOffset ) {
+            if (b==-1) b=in.read();
+            int metadataLength = b * 16;
+            metadataEnd = metadataOffset + metadataLength + 1;
+            byte[] buffer = new byte[metadataLength];
+            count += in.read(buffer); out.write(buffer); break;
+          } else if ( count < metadataEnd ) {
+            if (b != 0) out.write(b);
+          } else {
+            break;
+          }
+        }
+        in.close();
+        out.close();
+
+        String metadata = out.toString("UTF-8");  // StreamTitle='....';StreamURL='...';
+        icyData.put("icy-metadata", metadata);
+
+        java.util.regex.Pattern re = java.util.regex.Pattern.compile("^([a-zA-Z]+)=\\'([^\\']*)\\'$");
+        for (String str: metadata.split(";")) {
+          java.util.regex.Matcher m = re.matcher(str);
+          if ( m.find() ) icyData.put(m.group(1), new String(m.group(2).getBytes(),"UTF-8"));
+        }
+
+      } catch (Exception e) {
+        icyData.put("ERROR", e.getMessage());
+      }
+
+      urlConn.disconnect();
+
+    } catch (Exception e) {
+      icyData.put("ERROR", e.getMessage());
+    }
+
+    return icyData;
   }
 
   //////////////////////////////////////////////////////////////////////

@@ -14,7 +14,7 @@ public class myAudioService extends android.app.Service
       android.media.MediaPlayer.OnErrorListener
 {
 
-  public String mUrl = "http://stm.rthk.hk:80/radio1",  mUrl2 = mUrl;
+  public String mName = "", mUrl = "http://stm.rthk.hk:80/radio1",  mUrl2 = mUrl;
   // http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8
   // https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020-96000.m3u8
 
@@ -39,7 +39,7 @@ public class myAudioService extends android.app.Service
 
   //////////////////////////////////////////////////////////////////////
 
-  public void submitForegroundNotification(int ntfnID, String msg) {
+  public void submitForegroundNotification(int ntfnID, String sbj, String msg) {
     android.support.v4.app.NotificationCompat.Builder builder
      = commonGui.createNotificationBuilder(
          this, "QuoInsight#ChannelID", "QuoInsight#Channel", "QuoInsight.Minimal"
@@ -50,6 +50,7 @@ public class myAudioService extends android.app.Service
     );
 
     builder.setSmallIcon(android.R.drawable.stat_sys_headset) // this is the only user-visible content that's required.
+      .setContentTitle(sbj)
       .setContentText(msg) // body text
       .setPriority(android.support.v4.app.NotificationCompat.PRIORITY_HIGH)
       .setVisibility(android.support.v4.app.NotificationCompat.VISIBILITY_PUBLIC) // android.app.Notification.VISIBILITY_PUBLIC
@@ -142,9 +143,143 @@ public class myAudioService extends android.app.Service
 
   //////////////////////////////////////////////////////////////////////
 
-  public com.google.android.exoplayer2.SimpleExoPlayer startSimpleExoPlayer(String s_url) {
+  public com.google.android.exoplayer2.SimpleExoPlayer.EventListener newExoEventListener() {
+    return new com.google.android.exoplayer2.SimpleExoPlayer.EventListener() {
 
-    String url = s_url.trim();
+      @Override public void onPositionDiscontinuity(int reason) {
+        try {
+          // !! myAudioService.this.exoPlayer will not work correctly for below !! //
+          int currWndIdx = exoPlayer.getCurrentWindowIndex();
+          String stateInf = "getCurrentWindowIndex:" + String.valueOf(currWndIdx);
+          if ( commonUtil.urlEndsWithM3u(myAudioService.this.mUrl) && !commonUtil.urlEndsWithM3u(myAudioService.this.mUrl2) ) {
+            stateInf += myAudioService.this.concatExoPlayerNextMediaSource(); // just add next track here
+          }
+          //commonGui.writeMessage(myAudioService.this, "onPositionDiscontinuity", stateInf);
+        } catch(Exception e) {
+          commonGui.writeMessage(myAudioService.this, "onPositionDiscontinuity", "ERROR: " + e.getMessage());
+        }
+      }
+
+      @Override public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
+      @Override public void onLoadingChanged(boolean isLoading) {}
+      @Override public void onTimelineChanged(com.google.android.exoplayer2.Timeline timeline, Object manifest, int reason) {}
+      @Override public void onSeekProcessed() {}
+
+      @Override public void onPlaybackParametersChanged(com.google.android.exoplayer2.PlaybackParameters playbackParameters) {}
+      @Override public void onRepeatModeChanged(int repeatMode) {}
+      @Override public void onTracksChanged(com.google.android.exoplayer2.source.TrackGroupArray trackGroups, com.google.android.exoplayer2.trackselection.TrackSelectionArray trackSelections) {
+        try {
+          String metaDataString = "";
+
+          myAsyncTask asyncTask = new myAsyncTask(myAudioService.this); 
+            asyncTask.setHandlers(new myAsyncTask.handlers() {
+              @Override public void onPostExecute(String returnVal) {
+                //myAudioService.this.writeMessage("getIcyMetaData", returnVal);
+                if ( !returnVal.startsWith("ERROR: ") ) {
+                  myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, returnVal);
+                }
+              }
+            });
+          asyncTask.execute("getIcyMetaData", myAudioService.this.mUrl2);
+
+          for ( int i = 0; i < trackGroups.length; i++ ) {
+            com.google.android.exoplayer2.source.TrackGroup trackGroup = trackGroups.get(i);
+            for ( int j = 0; j < trackGroup.length; j++ ) {
+              com.google.android.exoplayer2.Format trackFormat = trackGroup.getFormat(j);
+              metaDataString += " | id:" + trackFormat.id // + "; label:" + trackFormat.label
+                + "; language:" + trackFormat.language;
+              com.google.android.exoplayer2.metadata.Metadata trackMetadata = trackFormat.metadata;
+              if ( trackMetadata == null ) continue;
+              for (int k = 0; k < trackMetadata.length(); k++) {
+                com.google.android.exoplayer2.metadata.Metadata.Entry entry = trackMetadata.get(k);
+                if ( entry instanceof com.google.android.exoplayer2.metadata.id3.TextInformationFrame ) {
+                  // http://id3.org/id3v2.4.0-frames
+                  com.google.android.exoplayer2.metadata.id3.TextInformationFrame txtInf = (com.google.android.exoplayer2.metadata.id3.TextInformationFrame) entry;
+                  String eName="";  switch(txtInf.id) {
+                    case "TALB": eName="album"; break;
+                    case "TIT2": eName="title"; break;
+                    case "TPE1": eName="artist"; break;
+                    default : eName=txtInf.id.toString();
+                    metaDataString += eName + ":" + txtInf.value + ":" + txtInf.description + " | ";
+                  }
+                } else metaDataString += entry.toString() + " | ";
+              }
+            }
+          }
+          commonGui.writeMessage(myAudioService.this, "exoPlayer.onTracksChanged", "metaData: " + metaDataString);
+        } catch (Exception e) {
+          commonGui.writeMessage(myAudioService.this, "exoPlayer.onTracksChanged", "ERROR: " + e.getMessage());
+        }
+      }
+
+      //@Override public void onIsPlayingChanged(boolean isPlaying) { }
+        // ?? playback is paused, ended, suppressed, or the player
+        // is buffering, stopped or failed. Check player.getPlaybackState,
+        // player.getPlayWhenReady, player.getPlaybackError and
+        // player.getPlaybackSuppressionReason for details.
+
+      @Override public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        String s_playbackState = "";  switch (playbackState) {
+          case com.google.android.exoplayer2.SimpleExoPlayer.STATE_IDLE :
+            s_playbackState = "STATE_IDLE";       break;
+          case com.google.android.exoplayer2.SimpleExoPlayer.STATE_BUFFERING :
+            s_playbackState = "STATE_BUFFERING";  break;
+          case com.google.android.exoplayer2.SimpleExoPlayer.STATE_READY :
+            s_playbackState = "STATE_READY";      break;
+          case com.google.android.exoplayer2.SimpleExoPlayer.STATE_ENDED :
+            s_playbackState = "STATE_ENDED";      break;
+          default :
+            s_playbackState = String.valueOf(playbackState);
+        }
+
+        //commonGui.writeMessage(myAudioService.this, "exoPlayer.EventListener", "playbackState: " + s_playbackState);
+        myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, s_playbackState);
+
+        //int currWndIdx = myAudioService.this.exoPlayer.getCurrentWindowIndex();
+        //String mDescr = myAudioService.this.exoPlayer.getMediaDescriptionAtQueuePosition(currWndIdx);
+        //myAudioService.this.submitForegroundNotification(1001, mDescr, s_playbackState);
+      }
+
+      @Override public void onPlayerError(com.google.android.exoplayer2.ExoPlaybackException error) {
+        if (error.type == com.google.android.exoplayer2.ExoPlaybackException.TYPE_SOURCE) {
+          java.io.IOException cause = error.getSourceException();
+          writeMessage(
+            "exoPlayer.ExoPlaybackException",
+            "[URL]: " + myAudioService.this.mUrl2  + " [ERROR]: " + cause.getMessage()
+          );
+          if (cause instanceof com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) {
+            // An HTTP error occurred.
+            com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException httpError
+              = (com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) cause;
+            // This is the request for which the error occurred.
+            com.google.android.exoplayer2.upstream.DataSpec requestDataSpec = httpError.dataSpec;
+            // It's possible to find out more about the error both by casting and by
+            // querying the cause.
+            if (httpError instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
+              // Cast to InvalidResponseCodeException and retrieve the response code,
+              // message and headers.
+            } else {
+              // Try calling httpError.getCause() to retrieve the underlying cause,
+              // although note that it may be null.
+            }
+          }
+        } else {
+          commonGui.writeMessage(
+            myAudioService.this, "exoPlayer.onPlayerError",
+              "[URL]: " + myAudioService.this.mUrl2  + " [ERROR]: " + error.getMessage()
+          );
+        }
+      }
+
+    };
+
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public com.google.android.exoplayer2.SimpleExoPlayer startSimpleExoPlayer(String s_name, String s_url) {
+
+    String name = s_name.trim(),  url = s_url.trim();
     if ( commonUtil.urlEndsWithM3u(url) ) {
       // !! must use AsyncTask in Android for any direct HTTP request, else it will throw exception errors !!
       myAsyncTask asyncTask = new myAsyncTask(this); 
@@ -152,8 +287,9 @@ public class myAudioService extends android.app.Service
           @Override public void onPostExecute(String returnVal) {
             String url = returnVal;
             if ( !commonUtil.urlEndsWithM3u(url) ) {
-              myAudioService.this.exoPlayer = myAudioService.this.startSimpleExoPlayer(url);
-              myAudioService.this.concatExoPlayerNextMediaSource();
+              myAudioService.this.exoPlayer = myAudioService.this.startSimpleExoPlayer(myAudioService.this.mName, url);
+              String stateInf = myAudioService.this.concatExoPlayerNextMediaSource();
+              myAudioService.this.writeMessage("concatExoPlayerNextMediaSource", stateInf);
             } else {
               myAudioService.this.writeMessage("Invalid m3u8", returnVal);
             }
@@ -184,114 +320,24 @@ public class myAudioService extends android.app.Service
         this, new com.google.android.exoplayer2.trackselection.DefaultTrackSelector()
     );
 
-    this.exoPlayer.addListener(
-      new com.google.android.exoplayer2.SimpleExoPlayer.EventListener() {
-
-        //@Override public void onPositionDiscontinuity() { }
-        //@Override public void onLoadingChanged(boolean isLoading) {}
-
-        @Override public void onPositionDiscontinuity(int reason) {
-          try {
-            // !! myAudioService.this.exoPlayer will not work correctly for below !! //
-            int currWndIdx = exoPlayer.getCurrentWindowIndex();
-            String stateInf = "getCurrentWindowIndex:" + String.valueOf(currWndIdx);
-            if ( commonUtil.urlEndsWithM3u(myAudioService.this.mUrl) && !commonUtil.urlEndsWithM3u(myAudioService.this.mUrl2) ) {
-              // just add next track here
-              stateInf += myAudioService.this.concatExoPlayerNextMediaSource();
-            }
-            commonGui.writeMessage(myAudioService.this, "onPositionDiscontinuity", stateInf);
-          } catch(Exception e) {
-            commonGui.writeMessage(myAudioService.this, "onPositionDiscontinuity", "ERROR: " + e.getMessage());
+    this.exoPlayer.addListener( newExoEventListener() );
+    this.exoPlayer.addMetadataOutput(
+      // https://github.com/m-cakir/radio-player/issues/20
+      // https://github.com/googleads/googleads-ima-android-dai/issues/13
+      new com.google.android.exoplayer2.metadata.MetadataOutput() {
+        @Override public void onMetadata(com.google.android.exoplayer2.metadata.Metadata metaData) {
+          String metaDataString = "";
+          for (int i=0; i<metaData.length(); i++) {
+            metaDataString += metaData.get(i).toString() + "\n";
           }
+          commonGui.writeMessage(myAudioService.this, "exoPlayer.onMetadata", "metaData: " + metaDataString);
         }
-
-        @Override public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
-        @Override public void onLoadingChanged(boolean isLoading) {}
-        @Override public void onTimelineChanged(com.google.android.exoplayer2.Timeline timeline, Object manifest, int reason) {}
-        @Override public void onSeekProcessed() {}
-
-        @Override public void onPlaybackParametersChanged(com.google.android.exoplayer2.PlaybackParameters playbackParameters) {}
-        @Override public void onRepeatModeChanged(int repeatMode) {}
-        @Override public void onTracksChanged(com.google.android.exoplayer2.source.TrackGroupArray trackGroups, com.google.android.exoplayer2.trackselection.TrackSelectionArray trackSelections) {}
-
-        @Override public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-          String s_playbackState = "";  switch (playbackState) {
-            case com.google.android.exoplayer2.SimpleExoPlayer.STATE_IDLE :
-              s_playbackState = "STATE_IDLE";       break;
-            case com.google.android.exoplayer2.SimpleExoPlayer.STATE_BUFFERING :
-              s_playbackState = "STATE_BUFFERING";  break;
-            case com.google.android.exoplayer2.SimpleExoPlayer.STATE_READY :
-              s_playbackState = "STATE_READY";      break;
-            case com.google.android.exoplayer2.SimpleExoPlayer.STATE_ENDED :
-              s_playbackState = "STATE_ENDED";
-              if ( false && commonUtil.urlEndsWithM3u(myAudioService.this.mUrl) && !commonUtil.urlEndsWithM3u(myAudioService.this.mUrl2) ) {
-                //try {
-                //  myAudioService.this.exoPlayer = myAudioService.this.startSimpleExoPlayer(myAudioService.this.mUrl);
-                //} catch(Exception e) {
-                //  commonGui.writeMessage(myAudioService.this, "reloadSimpleExoPlayer: "+myAudioService.this.mUrl, e.getMessage());
-                //}
-                // above will cause a pause in between and some other issue for the player
-
-                //myAudioService.this.exoPlayer = myAudioService.this.startSimpleExoPlayer(commonUtil.getNextUrl(myAudioService.this.mUrl2));
-                // above may not work as this will be a different session ??!!
-
-                // instead just start next track without reinitialing the player, but this too will cause a pause in between
-                myAudioService.this.concatExoPlayerNextMediaSource();
-              }
-              break;
-            default :
-              s_playbackState = String.valueOf(playbackState);
-          }
-
-          String url = myAudioService.this.mUrl;
-          //if ( !commonUtil.urlEndsWithM3u(url) ) {
-            commonGui.writeMessage(myAudioService.this, "exoPlayer.EventListener", "playbackState: " + s_playbackState);
-          //}
-        }
-
-        //@Override public void onIsPlayingChanged(boolean isPlaying) { }
-          // ?? playback is paused, ended, suppressed, or the player
-          // is buffering, stopped or failed. Check player.getPlaybackState,
-          // player.getPlayWhenReady, player.getPlaybackError and
-          // player.getPlaybackSuppressionReason for details.
-
-        @Override public void onPlayerError(com.google.android.exoplayer2.ExoPlaybackException error) {
-          if (error.type == com.google.android.exoplayer2.ExoPlaybackException.TYPE_SOURCE) {
-            java.io.IOException cause = error.getSourceException();
-            writeMessage(
-              "exoPlayer.ExoPlaybackException",
-              "[URL]: " + myAudioService.this.mUrl2  + " [ERROR]: " + cause.getMessage()
-            );
-            if (cause instanceof com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) {
-              // An HTTP error occurred.
-              com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException httpError
-                = (com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) cause;
-              // This is the request for which the error occurred.
-              com.google.android.exoplayer2.upstream.DataSpec requestDataSpec = httpError.dataSpec;
-              // It's possible to find out more about the error both by casting and by
-              // querying the cause.
-              if (httpError instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
-                // Cast to InvalidResponseCodeException and retrieve the response code,
-                // message and headers.
-              } else {
-                // Try calling httpError.getCause() to retrieve the underlying cause,
-                // although note that it may be null.
-              }
-            }
-          } else {
-            commonGui.writeMessage(
-              myAudioService.this, "exoPlayer.onPlayerError",
-                "[URL]: " + myAudioService.this.mUrl2  + " [ERROR]: " + error.getMessage()
-            );
-          }
-        }
-
       }
     );
 
     try {
       loadExoPlayerMediaSource(exoPlayer, audioUri);
-      submitForegroundNotification(1001, "starting...");
+      submitForegroundNotification(1001, name, "starting...");
     } catch (Exception e) {
       commonGui.writeMessage(
         myAudioService.this, "startSimpleExoPlayer",
@@ -377,13 +423,11 @@ public class myAudioService extends android.app.Service
   public int onStartCommand(android.content.Intent intent, int flags, int startId) {
     if (intent.getAction().equals("com.quoinsight.minimal.myAudioServicePlayAction")) {
       try {
+        String name = intent.getStringExtra("name");
+         if (name==null||name.length()==0) name=this.mName; else this.mName=name;
         String url = intent.getStringExtra("url");
-         if (url==null || url.length()==0) {
-           url = this.mUrl;
-         } else {
-           this.mUrl = url;
-         }
-         exoPlayer = startSimpleExoPlayer(url);
+         if (url==null||url.length()==0) url=this.mUrl; else this.mUrl=url;
+        exoPlayer = this.startSimpleExoPlayer(name, url);
       } catch (Exception e) {
         commonGui.writeMessage(this, "myAudioServicePlayAction", e.getMessage());
       } finally {

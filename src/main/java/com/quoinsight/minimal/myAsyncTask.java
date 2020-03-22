@@ -34,8 +34,17 @@ public class myAsyncTask extends android.os.AsyncTask<String, Void, String> {
   @Override protected String doInBackground(String... params) {
     String returnVal = "";
     switch ( params[0] ) {
+      case "getIcyMetaData":
+        try {
+          java.util.HashMap<String, String> icyMetaData = commonUtil.getIcyMetaData(params[1]);
+          String streamTitle = icyMetaData.get("StreamTitle");  if (streamTitle!=null) returnVal = "StreamTitle:" + streamTitle; 
+          String icyName = icyMetaData.get("icy-name");  if (icyName!=null) returnVal = "[" + icyName + "] " + returnVal;
+        } catch (Exception e) {
+          returnVal = "ERROR: " + e.getMessage();
+        }
+        break;
       case "getMediaUrl":
-        returnVal = commonUtil.getMediaUrl(params[1]);
+        returnVal = commonUtil.getMediaUrl2(params[1]);
         break;
       case "wget":
         java.util.List lines = commonUtil.wgets(params[1]);

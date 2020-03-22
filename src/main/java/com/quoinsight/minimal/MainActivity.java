@@ -130,122 +130,13 @@ public class MainActivity extends android.app.Activity {
         new android.view.View.OnClickListener() {
           public void onClick(android.view.View v) {
             try {
-
-              String url = radioStations.get(spinner1.getSelectedItem().toString());
-
+              String selectedItem = spinner1.getSelectedItem().toString();
               android.content.Intent playbackAction
                = new android.content.Intent("com.quoinsight.minimal.myAudioServicePlayAction");
                 playbackAction.setPackage(MainActivity.this.getPackageName());
-                 playbackAction.putExtra("url", url);
+                 playbackAction.putExtra("name", selectedItem);
+                 playbackAction.putExtra("url", radioStations.get(selectedItem));
               startService(playbackAction);
-
-              if (true) return;
-
-              android.support.v4.app.NotificationCompat.Builder builder
-               = commonGui.createNotificationBuilder(
-                   MainActivity.this, "QuoInsight#ChannelID", "QuoInsight#Channel", "QuoInsight.Minimal"
-                 );
-
-              builder.setSmallIcon(android.R.drawable.stat_sys_headset) // this is the only user-visible content that's required.
-                .setContentText("playing...") // body text
-                .setPriority(android.support.v4.app.NotificationCompat.PRIORITY_HIGH)
-                .setVisibility(android.support.v4.app.NotificationCompat.VISIBILITY_PUBLIC) // android.app.Notification.VISIBILITY_PUBLIC
-                .setContentIntent( // default action when the user taps the notification
-                  android.app.PendingIntent.getActivity(
-                    MainActivity.this, 0,
-                    new android.content.Intent(MainActivity.this, MainActivity.class), 0
-                  )
-                )
-                .addAction(
-                  android.R.drawable.ic_media_play, "play", sysUtil.getPendingActivity(MainActivity.this, OtherActivity.class)
-                )
-                .addAction(
-                  android.R.drawable.ic_media_pause, "stop", sysUtil.getPendingActivity(MainActivity.this, CompassActivity.class)
-                )
-                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
-                  .setShowActionsInCompactView(0,1)
-                )
-                .setAutoCancel(false)
-              ;
-
-              commonGui.cancelNotification(MainActivity.this, 1001);
-              commonGui.submitNotification(MainActivity.this, builder, 1001);  // this does not show in lockscreen regardless of the options
-
-              if (true) return;
-
-              builder.setSmallIcon(android.R.drawable.stat_sys_headset) // this is the only user-visible content that's required.
-                .setContentText("playing...") // body text
-                .setPriority(android.support.v4.app.NotificationCompat.PRIORITY_DEFAULT)
-                .setContentIntent( // default action when the user taps the notification
-                  android.app.PendingIntent.getActivity(
-                    MainActivity.this, 0,
-                    new android.content.Intent(MainActivity.this, MainActivity.class), 0
-                  )
-                )
-                //.setVisibility(android.support.v4.app.NotificationCompat.VISIBILITY_PUBLIC)
-                //.addAction(R.drawable.ic_stop_white, "stop", pendingIntent)
-                .addAction(
-                  android.R.drawable.ic_media_pause, "stop", sysUtil.getPendingService(
-                    MainActivity.this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceStopAction", 3
-                  )
-                )
-                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
-                  .setShowActionsInCompactView(0)
-                )
-                .setWhen(System.currentTimeMillis())
-                .setAutoCancel(false)
-              ;
-
-              commonGui.submitNotification(MainActivity.this, builder, 1001);  // this does not show in lockscreen regardless of the options
-
-              if (true) return;
-
-             /*
-              android.os.Handler handler = new android.os.Handler();
-              com.google.android.exoplayer2.trackselection.TrackSelector trackSelector = new com.google.android.exoplayer2.trackselection.DefaultTrackSelector(handler);
-              com.google.android.exoplayer2.LoadControl loadControl = new com.google.android.exoplayer2.DefaultLoadControl();
-              com.google.android.exoplayer2.SimpleExoPlayer exoPlayer = com.google.android.exoplayer2.ExoPlayerFactory.newSimpleInstance(MainActivity.this, trackSelector, loadControl);
-
-              android.net.Uri audioUri = android.net.Uri.parse(url);
-              com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory dataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory("ExoPlayerDemo");
-              com.google.android.exoplayer2.extractor.ExtractorsFactory extractor = new com.google.android.exoplayer2.extractor.DefaultExtractorsFactory();
-              com.google.android.exoplayer2.source.MediaSource audioSource = new com.google.android.exoplayer2.source.ExtractorMediaSource(audioUri, dataSourceFactory, extractor, null, null);
-              exoPlayer.prepare(audioSource);
-              exoPlayer.setPlayWhenReady(true);
-             */
-
-              // notificationManager = new MediaNotificationManager(this);
-
-             /*
-              // https://stackoverflow.com/questions/48196181/how-to-put-media-buttons-on-the-lockscreen-with-exoplayer
-              // https://github.com/google/ExoPlayer/issues/3247 [add SimpleExoPlayerView Controls on Lock Screen and Notifications]
-              // https://medium.com/google-exoplayer/the-mediasession-extension-for-exoplayer-82b9619deb2d
-              android.support.v4.media.session.MediaSessionCompat mediaSession
-               = android.support.v4.media.session.MediaSessionCompat(MainActivity.this, "myAudioPlayer");
-              com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector mediaSessionConnector
-               = new com.google.android.exoplayer2.ext.mediasession.MediaSessionConnector(mediaSession);
-              mediaSessionConnector.setPlayer(exoPlayer);
-             */
-
-             // https://stackoverflow.com/questions/12821216/android-mediaplayer-takes-long-time-to-prepare-and-buffer
-
-             /*
-              android.media.MediaPlayer mPlayer = new android.media.MediaPlayer();
-              mPlayer.setAudioStreamType(android.media.AudioManager.STREAM_MUSIC);
-              mPlayer.setDataSource(url);
-              mPlayer.prepare(); // might take long! (for buffering, etc)
-              mPlayer.start();
-             */
-
-             /*
-              // C:\Data\adm\mobile\Android\apk\_src\radio-player\app\src\main\java\com\mcakir\radio\player\MediaNotificationManager.java
-              // deprecated: startService(new android.content.Intent("com.quoinsight.minimal.myAudioServicePlayAction"));
-
-              //android.content.Intent playbackAction
-              //  = new android.content.Intent(audioSvc, myAudioService.class);
-              //playbackAction.setAction("com.quoinsight.minimal.myAudioServicePlayAction");
-             */
-
             } catch(Exception e) {
               commonGui.writeMessage(MainActivity.this, "MainActivity.playbackAction", e.getMessage());
             }
