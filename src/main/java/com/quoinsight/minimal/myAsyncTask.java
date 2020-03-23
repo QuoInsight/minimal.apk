@@ -37,8 +37,8 @@ public class myAsyncTask extends android.os.AsyncTask<String, Void, String> {
       case "getIcyMetaData":
         try {
           java.util.HashMap<String, String> icyMetaData = commonUtil.getIcyMetaData(params[1]);
-          String streamTitle = icyMetaData.get("StreamTitle");  if (streamTitle!=null) returnVal = "StreamTitle:" + streamTitle; 
-          String icyName = icyMetaData.get("icy-name");  if (icyName!=null) returnVal = "[" + icyName + "] " + returnVal;
+          String streamTitle = icyMetaData.get("StreamTitle");  if (streamTitle!=null && streamTitle.length()>0) returnVal = streamTitle; 
+          String icyName = icyMetaData.get("icy-name");  if (icyName!=null && icyName.length()>0) returnVal = "[" + icyName + "] " + returnVal;
         } catch (Exception e) {
           returnVal = "ERROR: " + e.getMessage();
         }

@@ -40,14 +40,14 @@ public class myAudioService extends android.app.Service
   //////////////////////////////////////////////////////////////////////
 
   public void submitForegroundNotification(int ntfnID, String sbj, String msg) {
-    android.support.v4.app.NotificationCompat.Builder builder
-     = commonGui.createNotificationBuilder(
-         this, "QuoInsight#ChannelID", "QuoInsight#Channel", "QuoInsight.Minimal"
-       );
+    // max text length in Notification.MediaStyle CompactView : 40 characters ?? 
+    if (sbj.length()>25 || msg.length()>25) this.writeMessage("ntfnID#"+String.valueOf(ntfnID), sbj+" "+msg);
 
-    android.app.PendingIntent pendingStopIntent = sysUtil.getPendingService(
-      this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceQuitAction", 3
-    );
+    android.support.v4.app.NotificationCompat.Builder builder
+     = commonGui.createNotificationBuilder(this, "QuoInsight#ChannelID", "QuoInsight#Channel", "QuoInsight.Minimal");
+
+    android.app.PendingIntent pendingStopIntent
+     = sysUtil.getPendingService(this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceQuitAction", 3);
 
     builder.setSmallIcon(android.R.drawable.stat_sys_headset) // this is the only user-visible content that's required.
       .setContentTitle(sbj)
@@ -175,7 +175,7 @@ public class myAudioService extends android.app.Service
             asyncTask.setHandlers(new myAsyncTask.handlers() {
               @Override public void onPostExecute(String returnVal) {
                 //myAudioService.this.writeMessage("getIcyMetaData", returnVal);
-                if ( !returnVal.startsWith("ERROR: ") ) {
+                if ( returnVal.length()>0 && !returnVal.startsWith("ERROR: ") ) {
                   myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, returnVal);
                 }
               }
@@ -330,7 +330,7 @@ public class myAudioService extends android.app.Service
           for (int i=0; i<metaData.length(); i++) {
             metaDataString += metaData.get(i).toString() + "\n";
           }
-          commonGui.writeMessage(myAudioService.this, "exoPlayer.onMetadata", "metaData: " + metaDataString);
+          myAudioService.this.writeMessage("exoPlayer.onMetadata", "metaData: " + metaDataString);
         }
       }
     );

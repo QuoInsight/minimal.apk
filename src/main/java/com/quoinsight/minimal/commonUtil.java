@@ -334,22 +334,34 @@ public class commonUtil {
         int metadataOffset = Integer.parseInt(icyData.get("icy-metaint"));
         int metadataEnd = metadataOffset + 4080 + 1; // 4080 is the max length
 
-        int b = -1;
+        int b = -1, c = 0;
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         java.io.InputStream in = urlConn.getInputStream();
-        //int count = -1; while ( (b=in.read()) != -1 ) { count++;
-        for (int count=0; count<=metadataEnd; count++) {
-          count += in.read(new byte[metadataOffset]);
+        //int count=-1; while ( (b=in.read()) != -1 ) { count++;
+        int count=0; while ( count <= metadataEnd ) {
           if ( count < metadataOffset ) {
+            c = in.read(new byte[metadataOffset-count]);
+            if (c==0) break; 
+            count += c;
             continue;
           } else if ( count == metadataOffset ) {
-            if (b==-1) b=in.read();
+            if (b==-1) {
+              b = in.read();
+              if (b <= 0) break; 
+              count += 1;
+            }
             int metadataLength = b * 16;
             metadataEnd = metadataOffset + metadataLength + 1;
             byte[] buffer = new byte[metadataLength];
-            count += in.read(buffer); out.write(buffer); break;
+            c = in.read(buffer);
+            if (c==0) break; 
+            count += c;
+            //buffer = (new String(buffer)).trim().getBytes();
+            out.write(buffer);
+            break;
           } else if ( count < metadataEnd ) {
-            if (b != 0) out.write(b);
+            if (b==0) break;
+            out.write(b);
           } else {
             break;
           }
@@ -362,7 +374,7 @@ public class commonUtil {
 
         java.util.regex.Pattern re = java.util.regex.Pattern.compile("^([a-zA-Z]+)=\\'([^\\']*)\\'$");
         for (String str: metadata.split(";")) {
-          java.util.regex.Matcher m = re.matcher(str);
+          java.util.regex.Matcher m = re.matcher(str.trim());
           if ( m.find() ) icyData.put(m.group(1), new String(m.group(2).getBytes(),"UTF-8"));
         }
 
