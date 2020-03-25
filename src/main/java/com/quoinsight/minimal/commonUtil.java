@@ -307,7 +307,11 @@ public class commonUtil {
     // https://cast.readme.io/docs/icy
     // https://people.kth.se/~johanmon/dse/casty.pdf
     // http://ample.sourceforge.net/developers.shtml
+    // https://stackoverflow.com/questions/47388541/value-type-of-icy-metaint
     // https://stackoverflow.com/questions/34267353/get-metadata-from-shoutcast-stream
+    // https://github.com/saschpe/android-exoplayer2-ext-icy/blob/master/exoplayer2-ext-icy/src/main/java/saschpe/exoplayer2/ext/icy/IcyHttpDataSource.java
+
+    // [xxx bytes audio] [metadata] [xxx bytes audio] [metadata] …
 
     try {
       java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
