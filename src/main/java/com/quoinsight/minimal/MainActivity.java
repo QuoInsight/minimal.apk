@@ -67,6 +67,14 @@ public class MainActivity extends android.app.Activity {
         "Hello world!<br><small><small>[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]</small></small>"
           + "<br><font size='1.75em'>" + commonUtil.getChineseDateStr() + "</font>"
       )); // Hello world\n[2020-01-09 十二月十五⁄30巳时 09:06:21] --> Hello world\n[2020-01-09 09:06:21]\n十二月十五⁄30巳时
+      txt1.setClickable(true);
+      txt1.setOnClickListener(
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
+            startActivity(new android.content.Intent(v.getContext(), CalendarActivity.class));
+          }
+        }
+      );
 
     final android.widget.Spinner spinner1 = new android.widget.Spinner(this);
       // Hashtable is in random order: https://beginnersbook.com/2014/06/how-to-sort-hashtable-in-java/

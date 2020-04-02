@@ -22,7 +22,7 @@ public class myAudioService extends android.app.Service
   public android.os.Handler mTimeoutHandler = null;
 
   public int mWndIdx = -1;
-  public String mIcyMetaData = "";
+  public String mState = "",  mIcyMetaData = "";
   public com.google.android.exoplayer2.SimpleExoPlayer exoPlayer = null;
   public com.google.android.exoplayer2.source.ConcatenatingMediaSource exoMediaSource = null;
 
@@ -43,7 +43,7 @@ public class myAudioService extends android.app.Service
 
   //////////////////////////////////////////////////////////////////////
 
-  public void submitForegroundNotification(int ntfnID, String sbj, String msg) {
+  public void submitForegroundNotification(int ntfnID, String sbj, String msg, String state) {
     String thisNotification = String.valueOf(ntfnID) + "|" + sbj + "|" + msg;
     if ( thisNotification.equals(myAudioService.this.mLastNotification) ) {
       return;
@@ -55,11 +55,7 @@ public class myAudioService extends android.app.Service
     if (sbj.length()>25 || msg.length()>25) this.writeMessage("ntfnID#"+String.valueOf(ntfnID), sbj+" "+msg);
 
     android.support.v4.app.NotificationCompat.Builder builder
-     = commonGui.createNotificationBuilder(this, "QuoInsight#ChannelID", "QuoInsight#Channel", "QuoInsight.Minimal");
-
-    android.app.PendingIntent pendingStopIntent
-     = sysUtil.getPendingService(this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceQuitAction", 3);
-
+      = commonGui.createNotificationBuilder(this, "QuoInsight#ChannelID", "QuoInsight#Channel", "QuoInsight.Minimal");
     builder.setSmallIcon(android.R.drawable.stat_sys_headset) // this is the only user-visible content that's required.
       .setContentTitle(sbj)
       .setContentText(msg) // body text
@@ -69,27 +65,27 @@ public class myAudioService extends android.app.Service
         android.app.PendingIntent.getActivity(
           this, 0, new android.content.Intent(this, MainActivity.class), 0
         )
-      )
-      .addAction(
-        android.R.drawable.ic_media_play, "play",
-        // sysUtil.getPendingActivity(this, OtherActivity.class)
-        sysUtil.getPendingService(
+      );
+    if ( state.equals("") || state.equals("IDLE") || state.equals("ENDED")  || state.equals("STOPPED") ) {
+      builder.addAction(
+        android.R.drawable.ic_media_play, "play", sysUtil.getPendingService(
           this, myAudioService.class, "com.quoinsight.minimal.myAudioServicePlayAction", 1
-        )
-      )
-      .addAction(
+        ) // sysUtil.getPendingActivity(this, OtherActivity.class)
+      );
+    } else {
+      builder.addAction(
         android.R.drawable.ic_media_pause, "stop", sysUtil.getPendingService(
           this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceStopAction", 3
-        )              
-        // sysUtil.getPendingActivity(this, CompassActivity.class)
-      )
-      .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
-        .setShowActionsInCompactView(0,1)
-        .setShowCancelButton(true)
-        //.setCancelButtonIntent(pendingStopIntent)
-      )
-      .setAutoCancel(false)
-    ;
+        ) // sysUtil.getPendingActivity(this, CompassActivity.class)
+      );
+    }
+    android.app.PendingIntent pendingStopIntent
+     = sysUtil.getPendingService(this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceQuitAction", 3);
+    builder.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+      .setShowActionsInCompactView(0) // (0,1,2)
+      .setShowCancelButton(true)
+      .setCancelButtonIntent(pendingStopIntent)
+    ).setAutoCancel(false);
 
     commonGui.cancelNotification(this, ntfnID);
     //commonGui.submitNotification(this, builder, ntfnID); // this will not show in lockscreen regardless of the options
@@ -192,7 +188,7 @@ public class myAudioService extends android.app.Service
             return; // skip | ignore error
           } else {
             myAudioService.this.mIcyMetaData = returnVal;
-            myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, returnVal);
+            myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, returnVal, myAudioService.this.mState);
           }
         }
       });
@@ -317,27 +313,27 @@ public class myAudioService extends android.app.Service
         // player.getPlaybackSuppressionReason for details.
 
       @Override public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        String s_playbackState = "";  switch (playbackState) {
+        switch (playbackState) {
           case com.google.android.exoplayer2.SimpleExoPlayer.STATE_IDLE :
-            s_playbackState = "STATE_IDLE";       break;
+            myAudioService.this.mState = "IDLE";       break;
           case com.google.android.exoplayer2.SimpleExoPlayer.STATE_BUFFERING :
-            s_playbackState = "STATE_BUFFERING";  break;
+            myAudioService.this.mState = "BUFFERING";  break;
           case com.google.android.exoplayer2.SimpleExoPlayer.STATE_READY :
-            s_playbackState = "STATE_READY";      break;
+            myAudioService.this.mState = "READY";      break;
           case com.google.android.exoplayer2.SimpleExoPlayer.STATE_ENDED :
-            s_playbackState = "STATE_ENDED";      break;
+            myAudioService.this.mState = "ENDED";      break;
           default :
-            s_playbackState = String.valueOf(playbackState);
+            myAudioService.this.mState = String.valueOf(playbackState);
         }
 
-        //commonGui.writeMessage(myAudioService.this, "exoPlayer.EventListener", "playbackState: " + s_playbackState);
-        myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, s_playbackState);
+        //commonGui.writeMessage(myAudioService.this, "exoPlayer.EventListener", "playbackState: " + myAudioService.this.mState);
+        myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, "**"+myAudioService.this.mState, myAudioService.this.mState);
 
         //int currWndIdx = myAudioService.this.exoPlayer.getCurrentWindowIndex();
         //String mDescr = myAudioService.this.exoPlayer.getMediaDescriptionAtQueuePosition(currWndIdx);
-        //myAudioService.this.submitForegroundNotification(1001, mDescr, s_playbackState);
+        //myAudioService.this.submitForegroundNotification(1001, mDescr, , "**"+myAudioService.this.mState, myAudioService.this.mState);
 
-        if ( s_playbackState.equals("STATE_READY") ) {
+        if ( myAudioService.this.mState.equals("READY") ) {
           myAudioService.this.loadIcyMetaData();
           myAudioService.this.onTimeout(6500);
         }
@@ -384,6 +380,7 @@ public class myAudioService extends android.app.Service
     String name = s_name.trim(),  url = s_url.trim();
 
     myAudioService.this.mWndIdx = -1;
+    myAudioService.this.mState = "";
     myAudioService.this.mIcyMetaData = "";
     myAudioService.this.mLastNotification = "";
     if ( this.mTimeoutHandler != null ) {
@@ -399,7 +396,7 @@ public class myAudioService extends android.app.Service
             if ( !commonUtil.urlEndsWithM3u(url) ) {
               myAudioService.this.exoPlayer = myAudioService.this.startSimpleExoPlayer(myAudioService.this.mName, url);
               String stateInf = myAudioService.this.concatExoPlayerNextMediaSource();
-              myAudioService.this.writeMessage("concatExoPlayerNextMediaSource", stateInf);
+              // myAudioService.this.writeMessage("concatExoPlayerNextMediaSource", stateInf);
             } else {
               myAudioService.this.writeMessage("Invalid m3u8", returnVal);
             }
@@ -447,7 +444,7 @@ public class myAudioService extends android.app.Service
 
     try {
       loadExoPlayerMediaSource(exoPlayer, audioUri);
-      submitForegroundNotification(1001, name, "starting...");
+      submitForegroundNotification(1001, name, "starting...", myAudioService.this.mState);
     } catch (Exception e) {
       commonGui.writeMessage(
         myAudioService.this, "startSimpleExoPlayer",
