@@ -441,7 +441,7 @@ public class myAudioService extends android.app.Service
             // [PRIV: owner=com.apple.streaming.transportStreamTimestamp]
             metaDataString += metaData.get(i).toString() + " | ";
           }
-          if ( metaDataString.length()>0 && !metaDataString.equals("PRIV: owner=com.apple.streaming.transportStreamTimestamp") ) {
+          if ( metaDataString.length()>0 && !metaDataString.equals("PRIV: owner=com.apple.streaming.transportStreamTimestamp | ") ) {
             myAudioService.this.writeMessage("exoPlayer.onMetadata", "metaData: " + metaDataString);
           }
         }
