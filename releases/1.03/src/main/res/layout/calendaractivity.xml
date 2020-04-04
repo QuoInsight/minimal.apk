@@ -35,7 +35,7 @@
       android:layout_width="wrap_content" android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
       android:gravity="center" android:textAlignment="center"
-      android:text="[ &lt;A href='http://en.nongli.info'&gt;nongli.info&lt;/A&gt; ] [ &lt;A href='http://yun.rili.cn'&gt;万年历&lt;/A&gt; ]"
+      android:text="<br>[ &lt;A href='http://en.nongli.info'&gt;nongli.info&lt;/A&gt; ] [ &lt;A href='http://yun.rili.cn'&gt;万年历&lt;/A&gt; ]<br>"
     />
 
     <Button android:id="@+id/button9"
