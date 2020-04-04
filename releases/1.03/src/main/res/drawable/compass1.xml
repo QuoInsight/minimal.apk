@@ -1,0 +1,41 @@
+<!--
+  https://medium.com/@ali.muzaffar/understanding-vectordrawable-pathdata-commands-in-android-d56a6054610e
+  https://www.w3.org/TR/SVG/paths.html
+  https://github.com/dps/android-vector-climacons/blob/master/res/drawable/compass.xml
+
+  90 / 2 == 45 / 2 == 22.5 | 45 | 67.5 | 90
+  minor tick == 2°
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+ android:width="800dp" android:height="800dp"
+ android:viewportWidth="800.0" android:viewportHeight="800.0"
+>
+  <path android:fillColor="#FF000000"
+   android:pathData="M50,64
+     c-7.73,0 -14,-6.27 -14,-14
+     c0,-7.73 6.27,-14 14,-14
+     c7.73,0 14,6.27 14,14
+     C64,57.73 57.73,64 50,64 z
+     M50,40
+     c-5.52,0 -10,4.48 -10,10
+     c0,5.52 4.48,10 10,10
+     c5.52,0 10,-4.48 10,-10
+     C60,44.48 55.52,40 50,40 z
+     M53.12,52.47
+     c-0.1,0.14 -0.19,0.26 -0.29,0.36
+     c-0.1,0.1 -0.22,0.2 -0.36,0.29
+     c-0.43,0.34 -0.91,0.58 -1.41,0.72
+     c-2.6,1.06 -6.72,1.82 -6.72,1.82
+     s0.75,-4.11 1.82,-6.72
+     c0.14,-0.5 0.38,-0.98 0.72,-1.41
+     c0.1,-0.14 0.19,-0.26 0.29,-0.36
+     c0.1,-0.1 0.22,-0.2 0.36,-0.29
+     c0.43,-0.34 0.91,-0.58 1.41,-0.72
+     c2.6,-1.06 6.72,-1.82 6.72,-1.82
+     s-0.76,4.11 -1.82,6.72
+     C53.7,51.56 53.46,52.04 53.12,52.47 z
+     M50.71,49.29c-0.39,-0.39 -1.02,-0.39 -1.41,0
+     s-0.39,1.02 0,1.41s1.02,0.39 1.41,0
+     S51.1,49.68 50.71,49.29 z"
+  />
+</vector>
