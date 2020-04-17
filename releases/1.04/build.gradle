@@ -1,0 +1,45 @@
+buildscript {
+  repositories {
+    google()
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:3.0.0'
+  }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+  compileSdkVersion 29
+  buildToolsVersion '29.0.0'
+  defaultConfig {
+      minSdkVersion 14      // Both new apps and app updates must target at least Android 9  & API level 28
+      targetSdkVersion 28  // Change your app's target API level to at least 28
+      versionCode 1040     // A positive integer used as an internal version number
+      versionName "1.04"
+  }
+  compileOptions {
+    targetCompatibility JavaVersion.VERSION_1_8 // needed by exoplayer
+  }
+}
+
+repositories {
+  google()
+  jcenter()
+  //mavenCentral() //maven { url "https://maven.google.com" }
+  // Work around https://code.google.com/p/android/issues/detail?id=69270.
+  def androidHome = System.getenv("ANDROID_HOME")
+  maven { url "$androidHome/extras/android/m2repository/" }
+}
+
+dependencies {
+  //implementation "com.android.support:support-v4:25.0.0"
+  //implementation "com.android.support:support-compat:25.0.0"
+
+  implementation "com.android.support:support-media-compat:+"
+  implementation "com.google.android.exoplayer:exoplayer-core:2.8.+"
+
+  //implementation "com.google.android.exoplayer:extension-mediasession:2.8.0"
+  // add tools:overrideLibrary="com.google.android.exoplayer2.ext.mediasession" in AndroidManifest.xml to force usage (may lead to runtime failures)
+}
