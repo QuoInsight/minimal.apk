@@ -6,8 +6,77 @@ package com.quoinsight.minimal;
 
 public class MainActivity extends android.app.Activity {
 
+  public android.widget.TextView txt2 = null;
   public boolean toggleFlashLight = true;
-  public myAudioService audioSvc;
+  public myAudioService audioSvc = null;
+
+  public android.content.SharedPreferences gSharedPref;
+
+  private static MainActivity thisInstance;
+  public static MainActivity getInstance() {
+    return thisInstance;
+  }
+
+  // Hashtable is in random order: https://beginnersbook.com/2014/06/how-to-sort-hashtable-in-java/
+  public java.util.LinkedHashMap<String, String> streamUrls = new java.util.LinkedHashMap<String, String>();
+  public android.widget.ArrayAdapter<String> spinner1Adapter = null;
+  // public android.widget.Spinner spinner1 = null;
+
+  public java.util.LinkedHashMap<String, String> reloadStreamUrls(android.content.SharedPreferences gSharedPref, String prefName) {
+    String stationList = gSharedPref.getString(prefName,null);
+    streamUrls.clear();
+    if (stationList==null || stationList.length()==0) {
+      // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
+      streamUrls.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
+      streamUrls.put("港台#1", "http://stm.rthk.hk:80/radio1");
+      streamUrls.put("新城知讯", "http://metroradio-lh.akamaihd.net/i/997_h@349799/index_48_a-p.m3u8");
+      streamUrls.put("佛山", "https://live-hls-fs.linker.cc/fshs/fs_ts_01.m3u8");
+      streamUrls.put("AiFM", "https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020.m3u8");
+      streamUrls.put("988", "http://starrfm.rastream.com/starrfm-988.android");
+      streamUrls.put("南非", "http://129.232.169.93/proxy/arrowline?codec=mp3");
+      streamUrls.put("Surabaya", "http://streaming.stratofm.com:8300/;stream.nsv");
+      streamUrls.put("三藩市", "http://50.7.71.27:9731/;?icy=http");
+      streamUrls.put("Buddhist", "http://15913.live.streamtheworld.com/SAM11AAC025.mp3");
+      streamUrls.put("良友", "http://listen2.txly1.net:8000/ly729_a");
+      streamUrls.put("天主", "http://dreamsiteradiocp2.com:8038/;");
+      streamUrls.put("大愛", "https://streamingv2.shoutcast.com/daai-radio_128.aac");
+      streamUrls.put("cello", "http://streams.calmradio.com:4628/stream");
+      streamUrls.put("piano", "https://pianosolo.streamguys1.com/live");
+      streamUrls.put("华乐", "http://radio2.chinesemusicworld.com/;");
+      streamUrls.put("rainforest", "https://music.wixstatic.com/mp3/e7f4d3_4ce223112471435c86d2292ddb4a6e7c.mp3");
+      streamUrls.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
+      streamUrls.put("SleepRadio", "http://149.56.234.138:8169/;");
+    } else {
+      for(String s : stationList.split("\\r?\\n")) {
+        String[] a = s.split("\\|");
+        if (a.length > 1) streamUrls.put(a[0], a[1]);
+      }
+    }
+    return streamUrls;
+  }
+
+  public String getStreamUrls() {
+    String strList = "";
+    for (String k : this.streamUrls.keySet()) {
+      strList += k + "|" + this.streamUrls.get(k) + "\n";
+    }
+    return strList;
+  }
+
+  public void reloadSpinner1Adapter() {
+    java.util.LinkedHashMap<String, String> streamUrls = reloadStreamUrls(gSharedPref, "stationList");
+    android.widget.ArrayAdapter<String> adapter = spinner1Adapter;
+    java.util.ArrayList<String> list = new java.util.ArrayList<String>(streamUrls.keySet()); 
+    // String[] stringArr = commonUtil.getKeysetStringArr(streamUrls);
+    try {
+      adapter.clear();  adapter.addAll(list);
+      adapter.notifyDataSetChanged(); // optional, as the dataset change should trigger this by default
+    } catch(Exception e) {
+      commonGui.writeMessage(MainActivity.this, "MainActivity.reloadSpinner1Adapter", e.getMessage());
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////
 
   static final public void quit(final android.app.Activity parentActivity) {
     android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder((android.content.Context)parentActivity);
@@ -42,11 +111,15 @@ public class MainActivity extends android.app.Activity {
   private static final int NEW_MENU_ID=android.view.Menu.FIRST+1;
   @Override public boolean onCreateOptionsMenu(android.view.Menu menu) {
     super.onCreateOptionsMenu(menu);
+    menu.add(0, 88, 0, "⚙ Settings"); 
     menu.add(0, 99, 0, "⏏ Quit"); 
     return true;
   }
   @Override public boolean onOptionsItemSelected(android.view.MenuItem item) {
     switch (item.getItemId()) {
+      case 88:
+        startActivity(new android.content.Intent(this.getApplicationContext(), ListCfgActivity.class));
+        return true;
       case 99:
         quit(this);
         return true;
@@ -60,6 +133,9 @@ public class MainActivity extends android.app.Activity {
 
   @Override public void onCreate(android.os.Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    thisInstance = this;
+    gSharedPref = ((android.app.Activity)this).getSharedPreferences(getApplicationContext().getPackageName(), android.content.Context.MODE_PRIVATE);
 
     android.widget.TextView txt1 = new android.widget.TextView(this);
       txt1.setGravity(android.view.Gravity.CENTER_HORIZONTAL);  // txt1.setText("Hello world!\n[" + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "]");
@@ -76,101 +152,7 @@ public class MainActivity extends android.app.Activity {
         }
       );
 
-    final android.widget.Spinner spinner1 = new android.widget.Spinner(this);
-      // Hashtable is in random order: https://beginnersbook.com/2014/06/how-to-sort-hashtable-in-java/
-      final java.util.LinkedHashMap<String, String> radioStations = new java.util.LinkedHashMap<String, String>();
-        // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
-        radioStations.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
-        radioStations.put("港台#1", "http://stm.rthk.hk:80/radio1");
-        radioStations.put("新城知讯	", "http://metroradio-lh.akamaihd.net/i/997_h@349799/index_48_a-p.m3u8");
-        radioStations.put("AiFM", "https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020.m3u8");
-        radioStations.put("988", "http://starrfm.rastream.com/starrfm-988.android");
-        radioStations.put("南非", "http://129.232.169.93/proxy/arrowline?codec=mp3");
-        radioStations.put("Surabaya", "http://streaming.stratofm.com:8300/;stream.nsv");
-        radioStations.put("三藩市", "http://50.7.71.27:9731/;?icy=http");
-        radioStations.put("Buddhist", "http://15913.live.streamtheworld.com/SAM11AAC025.mp3");
-        radioStations.put("良友", "http://listen2.txly1.net:8000/ly729_a");
-        radioStations.put("天主", "http://dreamsiteradiocp2.com:8038/;");
-        radioStations.put("大愛", "https://streamingv2.shoutcast.com/daai-radio_128.aac");
-        radioStations.put("cello", "http://streams.calmradio.com:4628/stream");
-        radioStations.put("piano", "https://pianosolo.streamguys1.com/live");
-        radioStations.put("华乐", "http://radio2.chinesemusicworld.com/;");
-        radioStations.put("rainforest", "https://music.wixstatic.com/mp3/e7f4d3_4ce223112471435c86d2292ddb4a6e7c.mp3");
-        radioStations.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
-        radioStations.put("SleepRadio", "http://149.56.234.138:8169/;");
-      android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<String>(
-        this, android.R.layout.simple_spinner_item,
-        //new String[] { "SleepRadio", "澳門電台", "AiFM", "港台" }
-        new java.util.ArrayList<String>(radioStations.keySet())
-      );
-      spinner1.setAdapter(adapter);
-     /*
-      spinner1.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-        @Override public void onItemSelected(
-          android.widget.AdapterView<?> parent, android.view.View view, int position, long id
-        ) {
-          // android.util.Log.v("item", (String) parent.getItemAtPosition(position));
-          android.widget.Toast.makeText(MainActivity.this, 
-            "selected item: " + (String)parent.getItemAtPosition(position),
-          android.widget.Toast.LENGTH_LONG).show();  // .setDuration(int duration)
-        }
-        @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {
-          // TODO Auto-generated method stub
-        }
-      });
-     */
-
-    android.widget.Button button1 = new android.widget.Button(this);
-      button1.setAllCaps(false);  button1.setText("🌐");  
-      //button1.setText("🎧 OpenUrl 📻"); // 📻 🎤 🎧 🔈 🔉 🔊 🕨 🕩 🕪
-      button1.setOnClickListener(
-        new android.view.View.OnClickListener() {
-          public void onClick(android.view.View v) {
-            sysUtil.launchUrl(v.getContext(), radioStations.get(spinner1.getSelectedItem().toString()));
-          }
-        }
-      );
-
-    android.widget.Button button2 = new android.widget.Button(this);
-      button2.setAllCaps(false);
-      button2.setText("▶"); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
-      button2.setOnClickListener(
-        new android.view.View.OnClickListener() {
-          public void onClick(android.view.View v) {
-            try {
-              String selectedItem = spinner1.getSelectedItem().toString();
-              android.content.Intent playbackAction
-               = new android.content.Intent("com.quoinsight.minimal.myAudioServicePlayAction");
-                playbackAction.setPackage(MainActivity.this.getPackageName());
-                 playbackAction.putExtra("name", selectedItem);
-                 playbackAction.putExtra("url", radioStations.get(selectedItem));
-              startService(playbackAction);
-            } catch(Exception e) {
-              commonGui.writeMessage(MainActivity.this, "MainActivity.playbackAction", e.getMessage());
-            }
-          }
-        }
-      );
-
-    android.widget.Button button3 = new android.widget.Button(this);
-      button3.setAllCaps(false);
-      button3.setText("⏹"); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
-      button3.setOnClickListener(
-        new android.view.View.OnClickListener() {
-          public void onClick(android.view.View v) {
-            try {
-              android.content.Intent playbackStopAction
-               = new android.content.Intent("com.quoinsight.minimal.myAudioServiceStopAction");
-                playbackStopAction.setPackage(MainActivity.this.getPackageName());
-              MainActivity.this.startService(playbackStopAction);
-            } catch(Exception e) {
-              commonGui.writeMessage(MainActivity.this, "MainActivity.playbackStopAction", e.getMessage());
-            }
-          }
-        }
-      );
-
-    android.widget.TextView txt2 = new android.widget.TextView(this);
+    this.txt2 = new android.widget.TextView(this);
       txt2.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
       txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
       txt2.setText("🔋" + Integer.toString(sysUtil.getBatteryLevel(this)) + "%");
@@ -180,8 +162,8 @@ public class MainActivity extends android.app.Activity {
           public void onClick(android.view.View v) {
             // android.widget.TextView txt2 = (android.widget.TextView) v; // findViewById(v.getId());
             ((android.widget.TextView) v).setText(android.text.Html.fromHtml(
-              "<small><small><small><small># " + commonUtil.getDateStr("ss") + " :</small></small></small></small>"
-                 + "<br>🔋" + Integer.toString(sysUtil.getBatteryLevel(v.getContext())) + "%"
+              // "<small><small><small><small># " + commonUtil.getDateStr("ss") + " :</small></small></small></small><br>"
+              "🔋" + Integer.toString(sysUtil.getBatteryLevel(v.getContext())) + "%"
             ));
           }
         }
@@ -273,17 +255,15 @@ public class MainActivity extends android.app.Activity {
     android.widget.ScrollView scrollable = new android.widget.ScrollView(this);
       scrollable.setLayoutParams(new android.widget.ScrollView.LayoutParams(
         android.widget.ScrollView.LayoutParams.MATCH_PARENT, android.widget.ScrollView.LayoutParams.MATCH_PARENT
-      ));
+      ));  // scrollable.setFillViewport(true);
       android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
         layout.setOrientation(android.widget.LinearLayout.VERTICAL);  layout.setGravity(android.view.Gravity.CENTER);
         android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
           android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
         );
         layout.addView(txt1, params);
-        android.widget.LinearLayout layout2 = new android.widget.LinearLayout(this);
-          layout2.setOrientation(android.widget.LinearLayout.HORIZONTAL);  layout2.setGravity(android.view.Gravity.CENTER);
-          layout2.addView(spinner1, params);  layout2.addView(button2, params);  layout2.addView(button3, params);  layout2.addView(button1, params);
-        layout.addView(layout2, params);
+        android.widget.LinearLayout playerLayout = (android.widget.LinearLayout)android.view.View.inflate(this, R.layout.mainplayer, null);
+        layout.addView(playerLayout, params);  // load mainplayer.xml
         layout.addView(txt2, params);
         layout.addView(btnCompass, params);
         layout.addView(btnTorch, params);
@@ -298,9 +278,91 @@ public class MainActivity extends android.app.Activity {
 
     setContentView(scrollable);
 
+    ////////////////////////////////////////////////////////////////////
+
+      final android.widget.Spinner spinner1 =  (android.widget.Spinner)findViewById(R.id.spinner1);
+        spinner1Adapter = new android.widget.ArrayAdapter<String>(
+          this, android.R.layout.simple_spinner_item
+        );  spinner1.setAdapter(spinner1Adapter);
+        reloadSpinner1Adapter();
+       /*
+        spinner1.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+          @Override public void onItemSelected(
+            android.widget.AdapterView<?> parent, android.view.View view, int position, long id
+          ) {
+            // android.util.Log.v("item", (String) parent.getItemAtPosition(position));
+            android.widget.Toast.makeText(MainActivity.this, 
+              "selected item: " + (String)parent.getItemAtPosition(position),
+            android.widget.Toast.LENGTH_LONG).show();  // .setDuration(int duration)
+          }
+          @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            // TODO Auto-generated method stub
+          }
+        });
+       */
+
+      android.widget.Button button1 = (android.widget.Button)findViewById(R.id.openUrl);
+        button1.setAllCaps(false);  button1.setText("🌐");  
+        //button1.setText("🎧 OpenUrl 📻"); // 📻 🎤 🎧 🔈 🔉 🔊 🕨 🕩 🕪
+        button1.setOnClickListener(
+          new android.view.View.OnClickListener() {
+            public void onClick(android.view.View v) {
+              sysUtil.launchUrl(v.getContext(), MainActivity.this.streamUrls.get(spinner1.getSelectedItem().toString()));
+            }
+          }
+        );
+
+      android.widget.Button button2 = (android.widget.Button)findViewById(R.id.play);
+        button2.setAllCaps(false);
+        button2.setText("▶"); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
+        button2.setOnClickListener(
+          new android.view.View.OnClickListener() {
+            public void onClick(android.view.View v) {
+              try {
+                String selectedItem = spinner1.getSelectedItem().toString();
+                android.content.Intent playbackAction
+                 = new android.content.Intent("com.quoinsight.minimal.myAudioServicePlayAction");
+                  playbackAction.setPackage(MainActivity.this.getPackageName());
+                   playbackAction.putExtra("name", selectedItem);
+                   playbackAction.putExtra("url", MainActivity.this.streamUrls.get(selectedItem));
+                startService(playbackAction);
+              } catch(Exception e) {
+                commonGui.writeMessage(MainActivity.this, "MainActivity.playbackAction", e.getMessage());
+              }
+            }
+          }
+        );
+
+      android.widget.Button button3 = (android.widget.Button)findViewById(R.id.stop);
+        button3.setAllCaps(false);
+        button3.setText("⏹"); // ▶ ⏹ 🔈 🔉 🔊 🕨 🕩 🕪
+        button3.setOnClickListener(
+          new android.view.View.OnClickListener() {
+            public void onClick(android.view.View v) {
+              try {
+                android.content.Intent playbackStopAction
+                 = new android.content.Intent("com.quoinsight.minimal.myAudioServiceStopAction");
+                  playbackStopAction.setPackage(MainActivity.this.getPackageName());
+                MainActivity.this.startService(playbackStopAction);
+              } catch(Exception e) {
+                commonGui.writeMessage(MainActivity.this, "MainActivity.playbackStopAction", e.getMessage());
+              }
+            }
+          }
+        );
+
+    ////////////////////////////////////////////////////////////////////
+
     //android.widget.LinearLayout.LayoutParams p = button2.getLayoutParams();
     //p.width = (int) commonGui.dp2px(commonGui.getResourceDisplayMetrics(this), 30);
     //button2.setLayoutParams(p);
+
+  }
+
+  @Override protected void onResume() {
+    super.onResume();
+    txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
+    txt2.setText("🔋" + Integer.toString(sysUtil.getBatteryLevel(this)) + "%");
   }
 
 }

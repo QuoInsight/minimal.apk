@@ -314,7 +314,7 @@ public class CompassCfgActivity extends android.app.Activity
     }
 
     try {
-      gSharedPref = ((android.app.Activity)this).getPreferences(android.content.Context.MODE_PRIVATE);
+      gSharedPref = ((android.app.Activity)this).getSharedPreferences(getApplicationContext().getPackageName(), android.content.Context.MODE_PRIVATE);
       String obsrvLoc = gSharedPref.getString("obsrvLoc",null);
       if (obsrvLoc!=null && obsrvLoc.length()>0) {
         org.json.JSONArray jsonArr = new org.json.JSONArray(obsrvLoc);

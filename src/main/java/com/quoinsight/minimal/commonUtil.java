@@ -71,6 +71,10 @@ public class commonUtil {
     return str;
   }
 
+  static final public String[] getKeysetStringArr(java.util.LinkedHashMap<String, String> hashMap) {
+    return hashMap.keySet().toArray(new String[hashMap.size()]);
+  }
+
   //////////////////////////////////////////////////////////////////////
 
   public static String wget(String s_url) {
@@ -276,8 +280,13 @@ public class commonUtil {
             }
           } else if ( !thisLine.startsWith("#") ) {
             url = thisLine;
-            if ( ! ( url.startsWith("http://")||url.startsWith("https://") ) )
+            if ( url.startsWith("http://")||url.startsWith("https://") ) {
+              // OK: take the url as-is
+            } else if ( url.startsWith("/") ) {
+              url = getRootUrl(s_url) + url;
+            } else {
               url = getBaseUrl(s_url) + url;
+            }
             if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
               url = getMediaUrl2(url);
             break;

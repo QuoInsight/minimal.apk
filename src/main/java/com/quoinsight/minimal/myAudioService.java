@@ -83,7 +83,7 @@ public class myAudioService extends android.app.Service
      = sysUtil.getPendingService(this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceQuitAction", 3);
     builder.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
       .setShowActionsInCompactView(0) // (0,1,2)
-      .setShowCancelButton(true)
+      .setShowCancelButton(true) // not compatible with latest version
       .setCancelButtonIntent(pendingStopIntent)
     ).setAutoCancel(false);
 
@@ -273,6 +273,7 @@ public class myAudioService extends android.app.Service
       @Override public void onTracksChanged(com.google.android.exoplayer2.source.TrackGroupArray trackGroups, com.google.android.exoplayer2.trackselection.TrackSelectionArray trackSelections) {
         // this is triggered initially but not when song changes on 988
         try {
+          boolean txtInfFound = false;
           String metaDataString = "";
           for ( int i = 0; i < trackGroups.length; i++ ) {
             com.google.android.exoplayer2.source.TrackGroup trackGroup = trackGroups.get(i);
@@ -288,6 +289,7 @@ public class myAudioService extends android.app.Service
                   // http://id3.org/id3v2.4.0-frames
                   com.google.android.exoplayer2.metadata.id3.TextInformationFrame txtInf = (com.google.android.exoplayer2.metadata.id3.TextInformationFrame) entry;
                   if (txtInf.value!=null) {
+                    txtInfFound = true;
                     String eName="";  switch(txtInf.id) {
                       case "TALB": eName="album"; break;
                       case "TIT2": eName="title"; break;
@@ -300,7 +302,8 @@ public class myAudioService extends android.app.Service
               }
             }
           }
-          commonGui.writeMessage(myAudioService.this, "exoPlayer.onTracksChanged", "metaData: " + metaDataString);
+          //    [ | id:null ]    [ | id:0 | id:1 ]    [ | id:1/256 | id:1/257 ] 
+          if (txtInfFound) commonGui.writeMessage(myAudioService.this, "exoPlayer.onTracksChanged", "metaData: " + metaDataString);
         } catch (Exception e) {
           commonGui.writeMessage(myAudioService.this, "exoPlayer.onTracksChanged", "ERROR: " + e.getMessage());
         }
@@ -327,11 +330,11 @@ public class myAudioService extends android.app.Service
         }
 
         //commonGui.writeMessage(myAudioService.this, "exoPlayer.EventListener", "playbackState: " + myAudioService.this.mState);
-        myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, "**"+myAudioService.this.mState, myAudioService.this.mState);
+        myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, "-"+myAudioService.this.mState+"-", myAudioService.this.mState);
 
         //int currWndIdx = myAudioService.this.exoPlayer.getCurrentWindowIndex();
         //String mDescr = myAudioService.this.exoPlayer.getMediaDescriptionAtQueuePosition(currWndIdx);
-        //myAudioService.this.submitForegroundNotification(1001, mDescr, , "**"+myAudioService.this.mState, myAudioService.this.mState);
+        //myAudioService.this.submitForegroundNotification(1001, mDescr, , "-"+myAudioService.this.mState+"-", myAudioService.this.mState);
 
         if ( myAudioService.this.mState.equals("READY") ) {
           myAudioService.this.loadIcyMetaData();
@@ -435,9 +438,12 @@ public class myAudioService extends android.app.Service
         @Override public void onMetadata(com.google.android.exoplayer2.metadata.Metadata metaData) {
           String metaDataString = "";
           for (int i=0; i<metaData.length(); i++) {
-            metaDataString += metaData.get(i).toString() + "\n";
+            // [PRIV: owner=com.apple.streaming.transportStreamTimestamp]
+            metaDataString += metaData.get(i).toString() + " | ";
           }
-          myAudioService.this.writeMessage("exoPlayer.onMetadata", "metaData: " + metaDataString);
+          if ( metaDataString.length()>0 && !metaDataString.equals("PRIV: owner=com.apple.streaming.transportStreamTimestamp | ") ) {
+            myAudioService.this.writeMessage("exoPlayer.onMetadata", "metaData: " + metaDataString);
+          }
         }
       }
     );
