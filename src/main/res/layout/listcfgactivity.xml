@@ -67,7 +67,7 @@
       android:layout_width="wrap_content" android:layout_height="wrap_content"
       android:layout_gravity="center_horizontal" android:layout_centerHorizontal="true"
       android:gravity="center" android:textAlignment="center"
-      android:text="[ &lt;A href='https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0'&gt;LiveOnline&lt;/A&gt; ]"
+      android:text="&lt;br&gt;[ &lt;A href='https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0'&gt;LiveOnline&lt;/A&gt; ]"
     />
   </LinearLayout>
 </ScrollView>
