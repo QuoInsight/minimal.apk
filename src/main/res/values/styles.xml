@@ -6,4 +6,8 @@
   <style name="spinner1_item">
     <item name="android:gravity">left</item>
   </style>
+  <style name="DatePickerHeaderStyle">
+    <item name="android:textSize">18sp</item>
+    <item name="android:padding">0.2dp</item>
+  </style>
 </resources>
