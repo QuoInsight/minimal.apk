@@ -25,7 +25,7 @@ public class commonUtil {
       java.lang.reflect.Field IS_LEAP_MONTH = chineseCalendar.getClass().getField("IS_LEAP_MONTH");
         // notApplicable for IS_LEAP_MONTH ==> .getDeclaredField(<notForInheritedFields>);  <field>.setAccessible(true);
 
-      String dateStr = ( ((int)IS_LEAP_MONTH.get(chineseCalendar)==1) ? "闰" : "" )
+      String dateStr = ( ((int)get.invoke(chineseCalendar, Calendar.getDeclaredField("IS_LEAP_MONTH").get(null))==1) ? "闰" : "" )
         + monthArr[(int)get.invoke(chineseCalendar, java.util.Calendar.MONTH)] + "月" // MONTH==0..11
         + dayArr[(int)get.invoke(chineseCalendar, java.util.Calendar.DAY_OF_MONTH)-1] // DAY_OF_MONTH==1..31
         + "⁄" + (int)getActualMaximum.invoke(chineseCalendar, java.util.Calendar.DAY_OF_MONTH)
@@ -37,12 +37,20 @@ public class commonUtil {
         android.icu.util.Calendar chineseCalendar = android.icu.util.Calendar.getInstance(
           new android.icu.util.ULocale("zh_CN@calendar=chinese")  // android.icu.util.ChineseCalendar.getInstance();
         );
-        String dateStr = ( (chineseCalendar.IS_LEAP_MONTH==1) ? "闰" : "" )
+        String dateStr = ( (chineseCalendar.get(android.icu.util.Calendar.IS_LEAP_MONTH)==1) ? "闰" : "" )
           + monthArr[chineseCalendar.get(java.util.Calendar.MONTH)] + "月" // MONTH==0..11
           + dayArr[chineseCalendar.get(java.util.Calendar.DAY_OF_MONTH)-1] // DAY_OF_MONTH==1..31
           + "⁄" + chineseCalendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
           + hourArr[(int)(chineseCalendar.get(java.util.Calendar.HOUR_OF_DAY)+1)/2] + "时" // HOUR_OF_DAY==0..23
           ; // https://www.ntu.edu.sg/home/ehchua/programming/java/DateTimeCalendar.html
+
+        // https://developer.android.com/reference/android/icu/text/SimpleDateFormat
+        //android.icu.text.SimpleDateFormat simpleDateFormat
+        //  = new android.icu.text.SimpleDateFormat("UU年 MMM", new android.icu.util.ULocale("zh_CN@calendar=chinese"));
+        //dateStr = simpleDateFormat.format(chineseCalendar)
+        //  + dayArr[chineseCalendar.get(java.util.Calendar.DAY_OF_MONTH)-1]
+        //  + "⁄" + chineseCalendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+        //  ;
       */
       return dateStr;
     } catch(Exception e) {
@@ -205,7 +213,8 @@ public class commonUtil {
 
   public static boolean urlEndsWithM3u(String s_url) {
     String url = s_url.trim().toLowerCase();
-    return url.endsWith(".m3u")||url.endsWith(".m3u8");
+    return url.endsWith(".m3u")||url.endsWith(".m3u8")
+      ||url.contains(".m3u?")||url.contains(".m3u8?");
   }
 
  /*
@@ -231,7 +240,7 @@ public class commonUtil {
           url = thisLine;
           if ( ! ( url.startsWith("http://")||url.startsWith("https://") ) )
             url = getBaseUrl(s_url) + url;
-          if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
+          if ( urlEndsWithM3u(thisLine) )
             url = getMediaUrl(url);
           break;
         }
@@ -287,7 +296,7 @@ public class commonUtil {
             } else {
               url = getBaseUrl(s_url) + url;
             }
-            if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
+            if ( urlEndsWithM3u(thisLine) )
               url = getMediaUrl2(url);
             break;
           }
