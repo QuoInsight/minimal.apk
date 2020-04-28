@@ -34,17 +34,18 @@ public class CalendarActivity extends android.app.Activity {
     String debug = "";
     try {
       Class<?> ULocale = Class.forName("android.icu.util.ULocale");  // some devices or versions may not support this!
+      Class<?> Calendar = Class.forName("android.icu.util.Calendar");
       Class<?> ChineseCalendar = Class.forName("android.icu.util.ChineseCalendar");
       Object chineseCalendar = ChineseCalendar.getConstructor(java.util.Date.class).newInstance(date);
 
       java.lang.reflect.Method set = chineseCalendar.getClass().getMethod("set", int.class, int.class, int.class);
       java.lang.reflect.Method get = chineseCalendar.getClass().getMethod("get", int.class);
       java.lang.reflect.Method getActualMaximum = chineseCalendar.getClass().getMethod("getActualMaximum", int.class);
-      java.lang.reflect.Field IS_LEAP_MONTH = chineseCalendar.getClass().getField("IS_LEAP_MONTH");
+      //java.lang.reflect.Field IS_LEAP_MONTH = chineseCalendar.getClass().getField("IS_LEAP_MONTH");
         // notApplicable for IS_LEAP_MONTH ==> .getDeclaredField(<notForInheritedFields>);  <field>.setAccessible(true);
 
       // set.invoke(chineseCalendar, year, month, dayOfMonth); // year, month, dayOfMonth 此皆为农历的年月日
-      String dateStr = ( ((int)IS_LEAP_MONTH.get(chineseCalendar)==1) ? "闰" : "" )
+      String dateStr = ( ((int)get.invoke(chineseCalendar, Calendar.getDeclaredField("IS_LEAP_MONTH").get(null))==1) ? "闰" : "" )
         + monthArr[(int)get.invoke(chineseCalendar, java.util.Calendar.MONTH)] + "月" // MONTH==0..11
         + dayArr[(int)get.invoke(chineseCalendar, java.util.Calendar.DAY_OF_MONTH)-1] // DAY_OF_MONTH==1..31
         + "⁄" + (int)getActualMaximum.invoke(chineseCalendar, java.util.Calendar.DAY_OF_MONTH)
@@ -54,10 +55,11 @@ public class CalendarActivity extends android.app.Activity {
       /*
         android.icu.util.Calendar chineseCalendar = android.icu.util.Calendar.getInstance(
           new android.icu.util.ULocale("zh_CN@calendar=chinese")  // android.icu.util.ChineseCalendar.getInstance();
-        );  chineseCalendar.set(year, month, dayOfMonth); // year, month, dayOfMonth 此皆为农历的年月日
-
+        );  // chineseCalendar.set(year, month, dayOfMonth); // year, month, dayOfMonth 此皆为农历的年月日
+            // chineseCalendar.setTimeInMillis(date.getTime()); // 此为阳历
         android.icu.util.ChineseCalendar chineseCalendar = android.icu.util.ChineseCalendar(date); // 此为阳历
-        String dateStr = ( (chineseCalendar.IS_LEAP_MONTH==1) ? "闰" : "" )
+
+        String dateStr = ( (chineseCalendar.get(android.icu.util.Calendar.IS_LEAP_MONTH)==1) ? "闰" : "" )
           + monthArr[chineseCalendar.get(java.util.Calendar.MONTH)] + "月" // MONTH==0..11
           + dayArr[chineseCalendar.get(java.util.Calendar.DAY_OF_MONTH)-1] // DAY_OF_MONTH==1..31
           + "⁄" + chineseCalendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
