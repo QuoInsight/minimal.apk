@@ -79,12 +79,12 @@ public class myAudioService extends android.app.Service
         ) // sysUtil.getPendingActivity(this, CompassActivity.class)
       );
     }
-    android.app.PendingIntent pendingStopIntent
+    android.app.PendingIntent pendingQuitIntent
      = sysUtil.getPendingService(this, myAudioService.class, "com.quoinsight.minimal.myAudioServiceQuitAction", 3);
     builder.setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
       .setShowActionsInCompactView(0) // (0,1,2)
       .setShowCancelButton(true) // not compatible with latest version
-      .setCancelButtonIntent(pendingStopIntent)
+      .setCancelButtonIntent(pendingQuitIntent)
     ).setAutoCancel(false);
 
     commonGui.cancelNotification(this, ntfnID);
@@ -96,8 +96,9 @@ public class myAudioService extends android.app.Service
 
   public com.google.android.exoplayer2.source.MediaSource getExoMediaSource(android.net.Uri audioUri) {
     return new com.google.android.exoplayer2.source.ExtractorMediaSource(
-     audioUri, new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory("QuoInsight/1.0"),
-      new com.google.android.exoplayer2.extractor.DefaultExtractorsFactory(), null, null
+     audioUri, new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(
+      "QuoInsight/1.0", null, 3000, 5000, true // allowCrossProtocolRedirects=true
+     ), new com.google.android.exoplayer2.extractor.DefaultExtractorsFactory(), null, null
     );
   }
 
@@ -130,7 +131,7 @@ public class myAudioService extends android.app.Service
 
   public String concatExoPlayerNextMediaSource() {
     String stateInf = "";
-    if ( commonUtil.urlEndsWithM3u(myAudioService.this.mUrl) && !commonUtil.urlEndsWithM3u(myAudioService.this.mUrl2) ) {
+    if ( commonUtil.isPlaylistUrl(myAudioService.this.mUrl) && !commonUtil.isPlaylistUrl(myAudioService.this.mUrl2) ) {
       // just add next track here
       stateInf += ":mUrl2=" + myAudioService.this.mUrl2;
       String nextUrl = commonUtil.getNextUrl(myAudioService.this.mUrl2);
@@ -232,7 +233,7 @@ public class myAudioService extends android.app.Service
 
           if ( myAudioService.this.mWndIdx!=currWndIdx ) {
             myAudioService.this.mWndIdx = currWndIdx;
-            if ( commonUtil.urlEndsWithM3u(myAudioService.this.mUrl) && !commonUtil.urlEndsWithM3u(myAudioService.this.mUrl2) ) {
+            if ( commonUtil.isPlaylistUrl(myAudioService.this.mUrl) && !commonUtil.isPlaylistUrl(myAudioService.this.mUrl2) ) {
               String concatInf = myAudioService.this.concatExoPlayerNextMediaSource(); // just add next track here
               // stateInf += "; " + concatInf;
             }
@@ -349,6 +350,11 @@ public class myAudioService extends android.app.Service
             "exoPlayer.ExoPlaybackException",
             "[URL]: " + myAudioService.this.mUrl2  + " [ERROR]: " + cause.getMessage()
           );
+          /*
+           cause.getMessage() ==> "Response code: 302"
+            fix: https://github.com/google/ExoPlayer/issues/1190
+            passing allowCrossProtocolRedirects=true to DefaultHttpDataSourceFactory()
+          */
           if (cause instanceof com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) {
             // An HTTP error occurred.
             com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException httpError
@@ -390,13 +396,13 @@ public class myAudioService extends android.app.Service
       this.mTimeoutHandler.removeCallbacksAndMessages(null);
     }
 
-    if ( commonUtil.urlEndsWithM3u(url) ) {
+    if ( commonUtil.isPlaylistUrl(url) ) {
       // !! must use AsyncTask in Android for any direct HTTP request, else it will throw exception errors !!
       myAsyncTask asyncTask = new myAsyncTask(this); 
         asyncTask.setHandlers(new myAsyncTask.handlers() {
           @Override public void onPostExecute(String returnVal) {
             String url = returnVal;
-            if ( !commonUtil.urlEndsWithM3u(url) ) {
+            if ( !commonUtil.isPlaylistUrl(url) ) {
               myAudioService.this.exoPlayer = myAudioService.this.startSimpleExoPlayer(myAudioService.this.mName, url);
               String stateInf = myAudioService.this.concatExoPlayerNextMediaSource();
               // myAudioService.this.writeMessage("concatExoPlayerNextMediaSource", stateInf);
@@ -534,48 +540,64 @@ public class myAudioService extends android.app.Service
   }
 
   public int onStartCommand(android.content.Intent intent, int flags, int startId) {
+    /*
+      !! must define the matching intent/actions in AndroidManifest.xml !!
+      <service android:name="myAudioService">
+        <intent-filter>
+          <action android:name="com.quoinsight.minimal.myAudioServicePlayAction" />
+          <action android:name="com.quoinsight.minimal.myAudioServiceStopAction" />
+          <action android:name="com.quoinsight.minimal.myAudioServiceQuitAction" />
+        </intent-filter>
+      </service>
+    */
+
     if ( this.mTimeoutHandler != null ) {
       this.mTimeoutHandler.removeCallbacksAndMessages(null);
     }
 
-    if (intent.getAction().equals("com.quoinsight.minimal.myAudioServicePlayAction")) {
-      try {
-        String name = intent.getStringExtra("name");
-         if (name==null||name.length()==0) name=this.mName; else this.mName=name.trim();
-        String url = intent.getStringExtra("url");
-         if (url==null||url.length()==0) url=this.mUrl; else this.mUrl=url.trim();
-        exoPlayer = this.startSimpleExoPlayer(name, url);
-      } catch (Exception e) {
-        commonGui.writeMessage(this, "myAudioServicePlayAction", e.getMessage());
-      } finally {
-        //mPlayer.release();
-        //mPlayer = null;
-      }
-
-    } else if (intent.getAction().equals("com.quoinsight.minimal.myAudioServiceStopAction")) {
-
-      try {
-        exoPlayer.stop();
-        // exoPlayer.release();
-      } catch (Exception e) {
-        commonGui.writeMessage(this, "myAudioServiceStopAction", e.getMessage());
-      }
-
-    } else if (intent.getAction().equals("com.quoinsight.minimal.myAudioServiceQuitAction")) {
-
-      try {
-        exoPlayer.stop();
-        exoPlayer.release();
-        exoPlayer = null;
-      } catch (Exception e) {
-        commonGui.writeMessage(this, "myAudioServiceQuitAction", e.getMessage());
-      }
-      try {
-        myAudioService.this.stopForeground(true);
-      } catch (Exception e) {
-        commonGui.writeMessage(this, "myAudioServiceQuitAction.stopForeground", e.getMessage());
-      }
-
+    String thisIntentAction = intent.getAction();
+    switch(thisIntentAction) {
+      case "com.quoinsight.minimal.myAudioServicePlayAction":
+        try {
+          String name = intent.getStringExtra("name");
+           if (name==null||name.length()==0) name=this.mName; else this.mName=name.trim();
+          String url = intent.getStringExtra("url");
+           if (url==null||url.length()==0) url=this.mUrl; else this.mUrl=url.trim();
+          exoPlayer = this.startSimpleExoPlayer(name, url);
+        } catch (Exception e) {
+          commonGui.writeMessage(this, "myAudioServicePlayAction", e.getMessage());
+        } finally {
+          //mPlayer.release();
+          //mPlayer = null;
+        }
+        break;
+      case "com.quoinsight.minimal.myAudioServiceStopAction":
+        try {
+          exoPlayer.stop();
+          // exoPlayer.release();
+        } catch (Exception e) {
+          commonGui.writeMessage(this, "myAudioServiceStopAction", e.getMessage());
+        }
+        break;
+      case "com.quoinsight.minimal.myAudioServiceQuitAction":
+        if ( exoPlayer != null ) {
+          try {
+            exoPlayer.stop();
+            exoPlayer.release();
+            exoPlayer = null;
+          } catch (Exception e) {
+            commonGui.writeMessage(this, "myAudioServiceQuitAction", e.getMessage());
+          }
+        }
+        try {
+          this.stopForeground(true);
+          commonGui.cancelNotification(this, 1001);
+        } catch (Exception e) {
+          commonGui.writeMessage(this, "myAudioServiceQuitAction.stopForeground", e.getMessage());
+        }
+        break;
+      default:
+        commonGui.writeMessage(this, "myAudioService.onStartCommand", "Invalid intent action: " + thisIntentAction);
     }
 
     return 0;
@@ -630,4 +652,3 @@ public class myAudioService extends android.app.Service
  }
 
 }
-
