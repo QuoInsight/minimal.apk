@@ -211,16 +211,19 @@ public class commonUtil {
     return url;
   }
 
-  public static boolean urlEndsWithM3u(String s_url) {
+  public static boolean urlEndsWith(String s_url, String s) {
+    return s_url.endsWith(s)||s_url.contains(s+"?");
+  }
+
+  public static boolean isPlaylistUrl(String s_url) {
     String url = s_url.trim().toLowerCase();
-    return url.endsWith(".m3u")||url.endsWith(".m3u8")
-      ||url.contains(".m3u?")||url.contains(".m3u8?");
+    return urlEndsWith(url,".m3u")||urlEndsWith(url,".m3u8")||urlEndsWith(url,".pls");
   }
 
  /*
   public static String getMediaUrl(String s_url) {
     String url = s_url;
-    if ( urlEndsWithM3u(url) ) {
+    if ( isPlaylistUrl(url) ) {
       java.util.List lines = wgets(url);
       String firstLine = null;
       for (int i=0; i<lines.size(); i++) {
@@ -240,7 +243,7 @@ public class commonUtil {
           url = thisLine;
           if ( ! ( url.startsWith("http://")||url.startsWith("https://") ) )
             url = getBaseUrl(s_url) + url;
-          if ( urlEndsWithM3u(thisLine) )
+          if ( isPlaylistUrl(thisLine) )
             url = getMediaUrl(url);
           break;
         }
@@ -251,7 +254,7 @@ public class commonUtil {
  */
 
   public static String getMediaUrl2(String s_url) {
-    String url = s_url;  // if ( !urlEndsWithM3u(url) ) return url;
+    String url = s_url;  // if ( !isPlaylistUrl(url) ) return url;
 
     try {
       java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
@@ -300,9 +303,14 @@ public class commonUtil {
               url = "";
             }
             if ( url.length() > 0 ) {
-              if ( ! ( url.startsWith("http://")||url.startsWith("https://") ) )
+              if ( url.startsWith("http://")||url.startsWith("https://") ) {
+                // OK: take the url as-is
+              } else if ( url.startsWith("/") ) {
+                url = getRootUrl(s_url) + url;
+              } else {
                 url = getBaseUrl(s_url) + url;
-              if (thisLine.endsWith(".m3u")||thisLine.endsWith(".m3u8"))
+              }
+              if ( isPlaylistUrl(thisLine) )
                 url = getMediaUrl2(url);
               break;
             }
