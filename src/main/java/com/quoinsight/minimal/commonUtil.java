@@ -176,6 +176,25 @@ public class commonUtil {
 
   //////////////////////////////////////////////////////////////////////
 
+  public static String getRedirectUrl(String s_url) {
+    try {
+      java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
+      int respCode = urlConn.getResponseCode();
+      if (respCode==300||respCode==301||respCode==302||respCode==303||respCode==307||respCode==308) {
+        String redirectUrl = urlConn.getHeaderField("Location");
+        if (redirectUrl!=null && redirectUrl.length()>0)
+          return getRedirectUrl(redirectUrl);
+      } else if (respCode != java.net.HttpURLConnection.HTTP_OK) {
+        return "ERROR: HTTP " + String.valueOf(respCode) + "; url=" + urlConn.getURL();
+      }
+    } catch (Exception e) {
+      return "ERROR: " + e.getMessage() + "; url=" + s_url;
+    }
+    return s_url;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   public static String getRootUrl(String s_url) {
     int p = s_url.indexOf("://");  p = s_url.indexOf("/", p+3);
     // --** never include the first "/" **-- //
@@ -290,9 +309,16 @@ public class commonUtil {
             continue;
           } else if (firstLine==null) {
             firstLine = thisLine;
-            if ( ! ( firstLine.equals("[playlist]")||firstLine.equals("#EXTM3U") ) ) {
-              //System.out.println("invalid m3u8/pls");
-              url += "#invalid m3u8/pls [" + thisLine + "]";
+            if ( firstLine.equals("[playlist]")||firstLine.equals("#EXTM3U") ) {
+              // OK: this is expected
+              continue;
+            } else if ( firstLine.startsWith("http://")||firstLine.startsWith("https://") ) {
+              // OK: this is accepted
+              url = thisLine;
+              break;
+            } else {
+              //System.out.println("invalid playlist");
+              url += "#invalid playlist content [" + thisLine + "]";
               break;
             }
           } else if ( !thisLine.startsWith("#") ) {
