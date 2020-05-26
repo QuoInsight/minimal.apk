@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.CalendarView;
 import android.widget.Toast;
 
 public class CalendarActivity extends android.app.Activity {
@@ -34,17 +33,18 @@ public class CalendarActivity extends android.app.Activity {
     String debug = "";
     try {
       Class<?> ULocale = Class.forName("android.icu.util.ULocale");  // some devices or versions may not support this!
+      Class<?> Calendar = Class.forName("android.icu.util.Calendar");
       Class<?> ChineseCalendar = Class.forName("android.icu.util.ChineseCalendar");
       Object chineseCalendar = ChineseCalendar.getConstructor(java.util.Date.class).newInstance(date);
 
       java.lang.reflect.Method set = chineseCalendar.getClass().getMethod("set", int.class, int.class, int.class);
       java.lang.reflect.Method get = chineseCalendar.getClass().getMethod("get", int.class);
       java.lang.reflect.Method getActualMaximum = chineseCalendar.getClass().getMethod("getActualMaximum", int.class);
-      java.lang.reflect.Field IS_LEAP_MONTH = chineseCalendar.getClass().getField("IS_LEAP_MONTH");
+      //java.lang.reflect.Field IS_LEAP_MONTH = chineseCalendar.getClass().getField("IS_LEAP_MONTH");
         // notApplicable for IS_LEAP_MONTH ==> .getDeclaredField(<notForInheritedFields>);  <field>.setAccessible(true);
 
       // set.invoke(chineseCalendar, year, month, dayOfMonth); // year, month, dayOfMonth 此皆为农历的年月日
-      String dateStr = ( ((int)IS_LEAP_MONTH.get(chineseCalendar)==1) ? "闰" : "" )
+      String dateStr = ( ((int)get.invoke(chineseCalendar, Calendar.getDeclaredField("IS_LEAP_MONTH").get(null))==1) ? "闰" : "" )
         + monthArr[(int)get.invoke(chineseCalendar, java.util.Calendar.MONTH)] + "月" // MONTH==0..11
         + dayArr[(int)get.invoke(chineseCalendar, java.util.Calendar.DAY_OF_MONTH)-1] // DAY_OF_MONTH==1..31
         + "⁄" + (int)getActualMaximum.invoke(chineseCalendar, java.util.Calendar.DAY_OF_MONTH)
@@ -54,10 +54,11 @@ public class CalendarActivity extends android.app.Activity {
       /*
         android.icu.util.Calendar chineseCalendar = android.icu.util.Calendar.getInstance(
           new android.icu.util.ULocale("zh_CN@calendar=chinese")  // android.icu.util.ChineseCalendar.getInstance();
-        );  chineseCalendar.set(year, month, dayOfMonth); // year, month, dayOfMonth 此皆为农历的年月日
-
+        );  // chineseCalendar.set(year, month, dayOfMonth); // year, month, dayOfMonth 此皆为农历的年月日
+            // chineseCalendar.setTimeInMillis(date.getTime()); // 此为阳历
         android.icu.util.ChineseCalendar chineseCalendar = android.icu.util.ChineseCalendar(date); // 此为阳历
-        String dateStr = ( (chineseCalendar.IS_LEAP_MONTH==1) ? "闰" : "" )
+
+        String dateStr = ( (chineseCalendar.get(android.icu.util.Calendar.IS_LEAP_MONTH)==1) ? "闰" : "" )
           + monthArr[chineseCalendar.get(java.util.Calendar.MONTH)] + "月" // MONTH==0..11
           + dayArr[chineseCalendar.get(java.util.Calendar.DAY_OF_MONTH)-1] // DAY_OF_MONTH==1..31
           + "⁄" + chineseCalendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
@@ -74,7 +75,7 @@ public class CalendarActivity extends android.app.Activity {
 
   //////////////////////////////////////////////////////////////////////
 
-  CalendarView simpleCalendarView;
+  android.widget.DatePicker simpleCalendar;
 
   @Override protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -89,14 +90,16 @@ public class CalendarActivity extends android.app.Activity {
             + "<br><font size='1.75em'>" + commonUtil.getChineseDateStr() + "</font>"
         )); // Current Date:\n[2020-01-09 十二月十五⁄30巳时 09:06:21] --> Hello world\n[2020-01-09 09:06:21]\n十二月十五⁄30巳时
 
-      simpleCalendarView = (CalendarView) findViewById(R.id.simpleCalendarView); // get the reference of CalendarView
-        simpleCalendarView.setFocusedMonthDateColor(Color.RED); // set the red color for the dates of  focused month
-        simpleCalendarView.setUnfocusedMonthDateColor(Color.BLUE); // set the yellow color for the dates of an unfocused month
-        simpleCalendarView.setSelectedWeekBackgroundColor(Color.RED); // red color for the selected week's background
-        simpleCalendarView.setWeekSeparatorLineColor(Color.GREEN); // green color for the week separator line
-        // perform setOnDateChangeListener event on CalendarView
-        simpleCalendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
-          @Override public void onSelectedDayChange(CalendarView view, int year, int month, int dayOfMonth) {
+     /*
+      android.widget.CalendarView simpleCalendar = (android.widget.CalendarView) findViewById(R.id.simpleCalendar);
+        simpleCalendar.setOnDateChangeListener(new android.widget.CalendarView.OnDateChangeListener() {
+          @Override public void onSelectedDayChange(android.widget.CalendarView view, int year, int month, int dayOfMonth) {
+          }
+        });
+     */
+      android.widget.DatePicker simpleCalendar = (android.widget.DatePicker) findViewById(R.id.simpleCalendar);
+        simpleCalendar.setOnDateChangedListener(new android.widget.DatePicker.OnDateChangedListener() {
+          @Override public void onDateChanged(android.widget.DatePicker view, int year, int month, int dayOfMonth) {
             String dateString = dayOfMonth + "/" + month + "/" + year;
             // java.util.Date date = new java.util.Date(year, month, dayOfMonth); // deprecated: As of JDK version 1.1, replaced by Calendar.set()
 
@@ -125,12 +128,10 @@ public class CalendarActivity extends android.app.Activity {
         txt2.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         txt2.setText(android.text.Html.fromHtml(txt2.getText().toString()));
 
-     /*
       android.widget.TextView txt9 = (android.widget.TextView) findViewById(R.id.txt9);  // --> .\src\main\res\layout\otheractivity.xml
         txt9.setLinksClickable(true);  // do not setAutoLinkMask !! txt9.setAutoLinkMask(android.text.util.Linkify.ALL);
         txt9.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         txt9.setText(android.text.Html.fromHtml(txt9.getText().toString()));
-     */
 
     } catch(Exception e) {
 

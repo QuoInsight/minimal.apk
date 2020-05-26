@@ -27,6 +27,7 @@ public class MainActivity extends android.app.Activity {
     streamUrls.clear();
     if (stationList==null || stationList.length()==0) {
       // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
+      streamUrls.put("BBC", "http://bbc.co.uk/worldservice/meta/live/mp3/eneuk.pls");
       streamUrls.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
       streamUrls.put("港台#1", "http://stm.rthk.hk:80/radio1");
       streamUrls.put("新城知讯", "http://metroradio-lh.akamaihd.net/i/997_h@349799/index_48_a-p.m3u8");
@@ -35,14 +36,14 @@ public class MainActivity extends android.app.Activity {
       streamUrls.put("988", "http://starrfm.rastream.com/starrfm-988.android");
       streamUrls.put("南非", "http://129.232.169.93/proxy/arrowline?codec=mp3");
       streamUrls.put("Surabaya", "http://streaming.stratofm.com:8300/;stream.nsv");
-      streamUrls.put("三藩市", "http://50.7.71.27:9731/;?icy=http");
+      streamUrls.put("三藩市", "http://104.251.118.50:8765/;?icy=http");
       streamUrls.put("Buddhist", "http://15913.live.streamtheworld.com/SAM11AAC025.mp3");
       streamUrls.put("良友", "http://listen2.txly1.net:8000/ly729_a");
       streamUrls.put("天主", "http://dreamsiteradiocp2.com:8038/;");
       streamUrls.put("大愛", "https://streamingv2.shoutcast.com/daai-radio_128.aac");
       streamUrls.put("cello", "http://streams.calmradio.com:4628/stream");
       streamUrls.put("piano", "https://pianosolo.streamguys1.com/live");
-      streamUrls.put("华乐", "http://radio2.chinesemusicworld.com/;");
+      streamUrls.put("华乐", "https://radio.chinesemusicworld.com/chinesemusic.ogg");
       streamUrls.put("rainforest", "https://music.wixstatic.com/mp3/e7f4d3_4ce223112471435c86d2292ddb4a6e7c.mp3");
       streamUrls.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
       streamUrls.put("SleepRadio", "http://149.56.234.138:8169/;");
@@ -340,12 +341,12 @@ public class MainActivity extends android.app.Activity {
           new android.view.View.OnClickListener() {
             public void onClick(android.view.View v) {
               try {
-                android.content.Intent playbackStopAction
-                 = new android.content.Intent("com.quoinsight.minimal.myAudioServiceStopAction");
-                  playbackStopAction.setPackage(MainActivity.this.getPackageName());
-                MainActivity.this.startService(playbackStopAction);
+                android.content.Intent playbackQuitAction
+                 = new android.content.Intent("com.quoinsight.minimal.myAudioServiceQuitAction"); // myAudioServiceStopAction
+                  playbackQuitAction.setPackage(MainActivity.this.getPackageName());
+                MainActivity.this.startService(playbackQuitAction);
               } catch(Exception e) {
-                commonGui.writeMessage(MainActivity.this, "MainActivity.playbackStopAction", e.getMessage());
+                commonGui.writeMessage(MainActivity.this, "MainActivity.playbackQuitAction", e.getMessage());
               }
             }
           }

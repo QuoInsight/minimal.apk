@@ -13,11 +13,22 @@ public class sysUtil {
   //////////////////////////////////////////////////////////////////////
 
   static final public void launchUrl(android.content.Context parentContext, String url) {
-    android.content.Intent intent = new android.content.Intent();
-      intent.setAction(android.content.Intent.ACTION_VIEW);
-      intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
-      intent.setData(android.net.Uri.parse(url));
-    parentContext.startActivity(intent);
+    try {
+      android.content.Intent intent = new android.content.Intent();
+        intent.setAction(android.content.Intent.ACTION_VIEW);
+        intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
+        if ( url.startsWith("file://") ) {
+          // !! android.os.FileUriExposedException: "exposed beyond app through Intent.getData()" !!
+          intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+          intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+        }
+        intent.setData(android.net.Uri.parse(url));
+        //intent.setDataAndType(android.net.Uri.parse(url), "*/*");
+      //parentContext.startActivity(android.content.Intent.createChooser(intent, "Open"));
+      parentContext.startActivity(intent);
+    } catch(Exception e) {
+      commonGui.writeMessage(parentContext, "sysUtil.launchUrl", e.getMessage());
+    }
   }
 
   static final public int getBatteryLevel(android.content.Context parentContext) {

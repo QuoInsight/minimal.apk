@@ -85,6 +85,35 @@ public class commonUtil {
 
   //////////////////////////////////////////////////////////////////////
 
+  public static void disableSSLCertValidation() {
+    // https://www.b4x.com/android/forum/threads/webview-certificate-lets-encrypt.64832/#post-410628
+    javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
+      new javax.net.ssl.X509TrustManager() {   
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+        public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+        public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+      }
+    };
+    // Install the all-trusting trust manager
+    try {
+      javax.net.ssl.SSLContext sc = javax.net.ssl.SSLContext.getInstance("SSL");
+      sc.init(null, trustAllCerts, new java.security.SecureRandom());
+      javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+    } catch (java.security.GeneralSecurityException e) {  }
+
+    // below is considered as violation of the Malicious Behavior policy
+    // .. using an unsafe implementation of the HostnameVerifier interface.
+    /*
+      javax.net.ssl.HostnameVerifier allHostsValid = new javax.net.ssl.HostnameVerifier() {
+        public boolean verify(String hostname, javax.net.ssl.SSLSession session) { return true; }
+    };
+      // Install the all-trusting host verifier
+      javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid); 
+    */
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   public static String wget(String s_url) {
     String responseText = "";
     try {
