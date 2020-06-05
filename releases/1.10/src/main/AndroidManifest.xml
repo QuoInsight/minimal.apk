@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  # inspired by https://czak.pl/2016/01/13/minimal-android-project.html
+  thisSource: https://github.com/QuoInsight/minimal.apk/edit/master/src/main/AndroidManifest.xml
+
+  android:icon="@drawable/icon" ==> .\src\main\res\drawable[-*dpi]\icon.png
+    - the icon should not be larger than 192x192 px !! else it may clash during installation
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  package="com.quoinsight.minimal"
+>
+  <!--
+    Normal Permissions [PROTECTION_NORMAL] https://developer.android.com/guide/topics/permissions/overview#normal_permissions
+    If an app declares in its manifest that it needs a normal permission, the system automatically grants the app that permission at install time.
+    The system doesn't prompt the user to grant normal permissions, and users cannot revoke these permissions.
+
+    Below does not need to be specified explicitly
+      uses-permission android:name="android.permission.FLASHLIGHT"
+
+    These are incompatible with some tablets 
+      ACCESS_LOCATION_EXTRA_COMMANDS, BLUETOOTH, BLUETOOTH_ADMIN
+
+    These may prompt users
+      CHANGE_WIFI_MULTICAST_STATE, CHANGE_WIFI_STATE, DISABLE_KEYGUARD,
+      INTERNET, NFC, INSTALL_SHORTCUT
+  -->
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+  <uses-permission android:name="android.permission.BROADCAST_STICKY"/>
+  <uses-permission android:name="android.permission.CALL_COMPANION_APP"/>
+  <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+  <uses-permission android:name="android.permission.EXPAND_STATUS_BAR"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+  <uses-permission android:name="android.permission.GET_PACKAGE_SIZE"/>
+  <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES"/>
+  <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+  <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+  <uses-permission android:name="android.permission.NFC_TRANSACTION_EVENT"/>
+  <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
+  <uses-permission android:name="android.permission.READ_SYNC_STATS"/>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.REORDER_TASKS"/>
+  <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND"/>
+  <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND"/>
+  <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES"/>
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+  <uses-permission android:name="android.permission.REQUEST_PASSWORD_COMPLEXITY"/>
+  <uses-permission android:name="android.permission.SET_WALLPAPER"/>
+  <uses-permission android:name="android.permission.SET_WALLPAPER_HINTS"/>
+  <uses-permission android:name="android.permission.TRANSMIT_IR"/>
+  <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+  <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+  <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+  <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.WAKE_LOCK"/>
+  <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+  <uses-permission android:name="com.android.alarm.permission.SET_ALARM"/>
+  <!--
+    https://inthecheesefactory.com/blog/things-you-need-to-know-about-android-m-permission-developer-edition/en
+    https://stackoverflow.com/questions/36936914/list-of-android-permissions-normal-permissions-and-dangerous-permissions-in-api
+
+    https://developer.android.com/reference/android/Manifest.permission
+    Signature Permissions [PROTECTION_SIGNATURE] https://developer.android.com/guide/topics/permissions/overview#signature_permissions
+    Dangerous Permissions [PROTECTION_DANGEROUS] https://developer.android.com/guide/topics/permissions/overview#dangerous_permissions
+  -->
+
+  <uses-permission android:name="android.permission.INTERNET" /><!--for MediaPlayer streaming-->
+  <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><!--do not mix this with ACCESS_FINE_LOCATION, no need to add permission.INTERNET explicitly-->
+  <!--uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><!-x-must have this to enable LocationManager.GPS_PROVIDER-->
+
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/><!--read files outside the boundary of current app-->
+
+  <uses-sdk tools:overrideLibrary="com.google.android.exoplayer2.ext.mediasession, com.quoinsight.lib"/>
+
+  <application android:label="QuoInsight☸Minimal"
+    tools:replace="android:icon" android:icon="@drawable/icon"
+    android:usesCleartextTraffic="true"
+  >
+    <meta-data tools:replace="android:value"
+       android:name="android.support.VERSION"
+       android:value="25.4.0"
+    />
+    <service android:name="myAudioService">
+      <intent-filter>
+        <action android:name="com.quoinsight.minimal.myAudioServicePlayAction" />
+        <action android:name="com.quoinsight.minimal.myAudioServiceStopAction" />
+        <action android:name="com.quoinsight.minimal.myAudioServiceQuitAction" />
+      </intent-filter>
+    </service>
+
+    <provider android:name="android.support.v4.content.FileProvider"
+      android:authorities="${applicationId}.fprvdr"
+      android:exported="false" android:grantUriPermissions="true"
+    >
+      <!--
+        https://developer.android.com/reference/androidx/core/content/FileProvider
+        https://medium.com/@ali.muzaffar/what-is-android-os-fileuriexposedexception-and-what-you-can-do-about-it-70b9eb17c6d0
+      -->
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/provider_paths"
+      />
+    </provider>
+
+    <activity android:name="MainActivity" android:launchMode="singleInstance">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+      <intent-filter>
+        <action android:name="com.android.browser" />
+        <category android:name="com.android.browser.BrowserActivity" />
+        <data android:scheme="file" /> <!-- android.os.FileUriExposedException -->
+        <data android:scheme="content" />
+        <data android:scheme="http" />
+        <data android:scheme="https" />
+        <data android:mimeType="*/*" />
+      </intent-filter>
+      <intent-filter>
+        <!-- is this needed?? https://commonsware.com/blog/2019/03/27/death-external-storage-stay-away-files.html -->
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />      
+        <data android:scheme="file" /> <!-- android.os.FileUriExposedException -->
+        <data android:scheme="http" />
+        <data android:scheme="https" />
+        <data android:scheme="content" />
+        <data android:mimeType="*/*" />
+      </intent-filter>
+    </activity>
+    <activity android:name="ListCfgActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.ListConfiguration"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="CalendarActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.CalendarActivity"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="OtherActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.OtherActivity"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="CompassActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.CompassActivity"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="CompassCfgActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.CompassConfiguration"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+  </application>
+</manifest>

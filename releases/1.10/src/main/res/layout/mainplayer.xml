@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="fill_parent" android:layout_height="match_parent"
+  android:orientation="horizontal"
+><!-- do not use android:layout_width="match_parent" for above !-->
+  <!--TextView android:layout_weight="0.5" android:maxLines="1" android:ellipsize="end"
+    android:text="Streams:" android:textSize="12sp"
+    android:fontFamily="sans-serif-thin" android:textStyle="bold"
+    android:gravity="center" android:textAlignment="center"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+  /-->
+  <Spinner android:id="@+id/spinner1"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical" android:layout_centerVertical="true"
+    android:theme="@style/spinner1" 
+  /><!-- http://coding-thoughts.blogspot.com/2013/11/help-my-spinner-is-too-wide.html -->
+  <!-- @style/Spinner1 ==> .\src\main\res\style\styles.xml -->
+  <Button android:id="@+id/play" android:layout_weight="0.5"
+    android:layout_width="45dp" android:layout_height="wrap_content"
+    android:text="▶" android:textAllCaps="false" android:padding="1dp"
+    android:tooltipText="Play"
+  />
+  <Button android:id="@+id/stop" android:layout_weight="0.5"
+    android:layout_width="45dp" android:layout_height="wrap_content"
+    android:text="⏹" android:textAllCaps="false" android:padding="1dp"
+    android:tooltipText="Stop"
+  />
+  <Button android:id="@+id/openUrl" android:layout_weight="0.5"
+    android:layout_width="45dp" android:layout_height="wrap_content"
+    android:text="🌐" android:textAllCaps="false" android:padding="1dp"
+    android:tooltipText="Open in Browser"
+  />
+</LinearLayout>
