@@ -365,7 +365,11 @@ public class MainActivity extends android.app.Activity {
         button1.setOnClickListener(
           new android.view.View.OnClickListener() {
             public void onClick(android.view.View v) {
-              sysUtil.launchUrl(v.getContext(), MainActivity.this.streamUrls.get(spinner1.getSelectedItem().toString()));
+              try {
+                sysUtil.launchUrl(v.getContext(), MainActivity.this.streamUrls.get(spinner1.getSelectedItem().toString()));
+              } catch(Exception e) {
+                commonGui.writeMessage(MainActivity.this, "MainActivity.openUrl", e.getMessage());
+              }
             }
           }
         );
