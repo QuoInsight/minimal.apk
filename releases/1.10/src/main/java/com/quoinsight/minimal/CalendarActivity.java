@@ -98,6 +98,7 @@ public class CalendarActivity extends android.app.Activity {
         });
      */
       android.widget.DatePicker simpleCalendar = (android.widget.DatePicker) findViewById(R.id.simpleCalendar);
+       try {
         simpleCalendar.setOnDateChangedListener(new android.widget.DatePicker.OnDateChangedListener() {
           @Override public void onDateChanged(android.widget.DatePicker view, int year, int month, int dayOfMonth) {
             String dateString = dayOfMonth + "/" + month + "/" + year;
@@ -113,6 +114,9 @@ public class CalendarActivity extends android.app.Activity {
             Toast.makeText(getApplicationContext(), dateString, Toast.LENGTH_SHORT).show();
           }
         });
+       } catch(Exception e) {
+        commonGui.writeMessage(this, "CalendarActivity.setOnDateChangedListener", e.getMessage());
+       }
 
       findViewById(R.id.button9).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
         new android.view.View.OnClickListener() {
