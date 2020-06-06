@@ -16,7 +16,7 @@ android {
   defaultConfig {
       minSdkVersion 14     // Both new apps and app updates must target at least Android 9  & API level 28
       targetSdkVersion 28  // Change your app's target API level to at least 28
-      versionCode 1100     // A positive integer used as an internal version number
+      versionCode 1101     // A positive integer used as an internal version number
       versionName "1.10"
   }
   compileOptions {
