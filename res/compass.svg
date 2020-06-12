@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="70" stroke="#000" stroke-width="1" fill="none" fill-opacity="0"></circle>
+  <circle cx="100" cy="100" r="45" stroke="#000" stroke-width="1" fill="none" fill-opacity="0"></circle>
+  <circle cx="100" cy="100" r="40" stroke="#000" stroke-width="1" fill="none" fill-opacity="0"></circle>
+  <circle cx="100" cy="100" r="20" stroke="#000" stroke-width="1" fill="none" fill-opacity="0"></circle>
+  <line id="l0" x1="100" y1="15" x2="100" y2="185" stroke-width="1" stroke="#000" fill="none"/>
+  <line id="l90" x1="15" y1="100" x2="185" y2="100" stroke-width="1" stroke="#000" fill="none"/>
+  <path id="p0" d="M 100,15 L 93,100 L 107,100 z" fill="#C00000" stroke="#000000" stroke-width="1"/>
+  <path id="p180" d="M 100,185 L 93,100 L 107,100 z" fill="#C00000" stroke="#000000" stroke-width="1"/>
+  <path id="p90" d="M 185,100 L 100,93 L 100,107 z" fill="#C00000" stroke="#000000" stroke-width="1"/>
+  <path id="p270" d="M 15,100 L 100,93 L 100,107 z" fill="#C00000" stroke="#000000" stroke-width="1"/>
+  <text x="100" y="10" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold"
+  >N</text>
+  <text x="190" y="100" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold"
+   transform="rotate(90 190 100)"
+  >E</text>
+  <text x="100" y="190" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold"
+   transform="rotate(180 100 190)"
+  >南</text>
+  <text x="10" y="100" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold"
+   transform="rotate(270 10 100)"
+  >W</text>
+  <line id="l45" x1="39.9" y1="160.1" x2="160.1" y2="39.9" stroke-width="1" stroke="#000" fill="none"/>
+  <line id="l315" x1="39.9" y1="39.9" x2="160.1" y2="160.1" stroke-width="1" stroke="#000" fill="none"/>
+  <path id="p45" d="M 130.1,69.9 L 100,93 L 107,100 z" fill="#C0C0C0" stroke="#000000" stroke-width="1"/>
+  <path id="p135" d="M 130.1,130.1 L 107,100 L 100,107 z" fill="#C0C0C0" stroke="#000000" stroke-width="1"/>
+  <path id="p225" d="M 69.9,130.1 L 93,100 L 100,107 z" fill="#C0C0C0" stroke="#000000" stroke-width="1"/>
+  <path id="p315" d="M 69.9,69.9 L 100,93 L 93,100 z" fill="#C0C0C0" stroke="#000000" stroke-width="1"/>
+  <text x="160.1" y="39.9" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="8" font-weight="bold"
+   transform="rotate(45 160.1 39.9)"
+  >NE</text>
+  <text x="160.1" y="160.1" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="8" font-weight="bold"
+   transform="rotate(135 160.1 160.1)"
+  >SE</text>
+  <text x="39.9" y="160.1" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="8" font-weight="bold"
+   transform="rotate(225 39.9 160.1)"
+  >SW</text>
+  <text x="39.9" y="39.9" text-anchor="middle" stroke-width="0" stroke="#000" fill="#000000"
+   font-family="Helvetica, Arial, sans-serif" font-size="8" font-weight="bold"
+   transform="rotate(315 39.9 39.9)"
+  >NW</text>
+  <line id="l30" x1="57.5" y1="173.6" x2="142.5" y2="26.4" stroke-dasharray="2,2" stroke-width="1" stroke="#CCC" fill="none"/>
+  <line id="l60" x1="26.4" y1="142.5" x2="173.6" y2="57.5" stroke-dasharray="2,2" stroke-width="1" stroke="#CCC" fill="none"/>
+  <line id="l120" x1="26.4" y1="57.5" x2="173.6" y2="142.5" stroke-dasharray="2,2" stroke-width="1" stroke="#CCC" fill="none"/>
+  <line id="l150" x1="57.5" y1="26.4" x2="142.5" y2="173.6" stroke-dasharray="2,2" stroke-width="1" stroke="#CCC" fill="none"/>
+</svg>
