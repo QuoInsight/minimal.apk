@@ -96,23 +96,37 @@ public class CalendarActivity extends android.app.Activity {
           @Override public void onSelectedDayChange(android.widget.CalendarView view, int year, int month, int dayOfMonth) {
           }
         });
-     */
       android.widget.DatePicker simpleCalendar = (android.widget.DatePicker) findViewById(R.id.simpleCalendar);
+        // setOnDateChangedListener(): added in API level 26; NOT SUPPORTED on some devices
         simpleCalendar.setOnDateChangedListener(new android.widget.DatePicker.OnDateChangedListener() {
           @Override public void onDateChanged(android.widget.DatePicker view, int year, int month, int dayOfMonth) {
-            String dateString = dayOfMonth + "/" + month + "/" + year;
-            // java.util.Date date = new java.util.Date(year, month, dayOfMonth); // deprecated: As of JDK version 1.1, replaced by Calendar.set()
-
-            java.util.Calendar cal = java.util.Calendar.getInstance(); cal.set(year, month, dayOfMonth);
-            java.util.Date date = cal.getTime();
-            dateString = (new java.text.SimpleDateFormat(
-              "dd-MMM-yyyy", java.util.Locale.getDefault()
-            )).format(date) +  " " + getChineseDateStr(date);
-
-            // display the selected date by using a toast
-            Toast.makeText(getApplicationContext(), dateString, Toast.LENGTH_SHORT).show();
           }
         });
+     */
+      android.widget.DatePicker simpleCalendar = (android.widget.DatePicker) findViewById(R.id.simpleCalendar);
+       try {
+        java.util.Calendar cal0 = java.util.Calendar.getInstance();  cal0.setTimeInMillis(System.currentTimeMillis());
+        simpleCalendar.init(
+          cal0.get(java.util.Calendar.YEAR), cal0.get(java.util.Calendar.MONTH), cal0.get(java.util.Calendar.DAY_OF_MONTH),
+          new android.widget.DatePicker.OnDateChangedListener() {
+            @Override public void onDateChanged(android.widget.DatePicker view, int year, int month, int dayOfMonth) {
+              String dateString = dayOfMonth + "/" + month + "/" + year;
+              // java.util.Date date = new java.util.Date(year, month, dayOfMonth); // deprecated: As of JDK version 1.1, replaced by Calendar.set()
+
+              java.util.Calendar cal = java.util.Calendar.getInstance(); cal.set(year, month, dayOfMonth);
+              java.util.Date date = cal.getTime();
+              dateString = (new java.text.SimpleDateFormat(
+                "dd-MMM-yyyy", java.util.Locale.getDefault()
+              )).format(date) +  " " + getChineseDateStr(date);
+
+              // display the selected date by using a toast
+              Toast.makeText(getApplicationContext(), dateString, Toast.LENGTH_SHORT).show();
+            }
+          }
+        );
+       } catch(Exception e) {
+        commonGui.writeMessage(this, "CalendarActivity.setOnDateChangedListener", e.getMessage());
+       }
 
       findViewById(R.id.button9).setOnClickListener( // --> .\src\main\res\layout\otheractivity.xml
         new android.view.View.OnClickListener() {

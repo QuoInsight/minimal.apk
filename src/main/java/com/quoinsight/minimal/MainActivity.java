@@ -9,6 +9,8 @@ public class MainActivity extends android.app.Activity {
   public android.widget.TextView txt2 = null;
   public boolean toggleFlashLight = true;
   public myAudioService audioSvc = null;
+  public android.os.Handler timeoutHandler = null;
+  public myContentObserver contentObsrvr = null;
 
   public android.content.SharedPreferences gSharedPref;
 
@@ -23,35 +25,40 @@ public class MainActivity extends android.app.Activity {
   // public android.widget.Spinner spinner1 = null;
 
   public java.util.LinkedHashMap<String, String> reloadStreamUrls(android.content.SharedPreferences gSharedPref, String prefName) {
-    String stationList = gSharedPref.getString(prefName,null);
-    streamUrls.clear();
-    if (stationList==null || stationList.length()==0) {
-      // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
-      streamUrls.put("BBC", "http://bbc.co.uk/worldservice/meta/live/mp3/eneuk.pls");
-      streamUrls.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
-      streamUrls.put("港台#1", "http://stm.rthk.hk:80/radio1");
-      streamUrls.put("新城知讯", "http://metroradio-lh.akamaihd.net/i/997_h@349799/index_48_a-p.m3u8");
-      streamUrls.put("佛山", "https://live-hls-fs.linker.cc/fshs/fs_ts_01.m3u8");
-      streamUrls.put("AiFM", "https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020.m3u8");
-      streamUrls.put("988", "http://starrfm.rastream.com/starrfm-988.android");
-      streamUrls.put("南非", "http://129.232.169.93/proxy/arrowline?codec=mp3");
-      streamUrls.put("Surabaya", "http://streaming.stratofm.com:8300/;stream.nsv");
-      streamUrls.put("三藩市", "http://104.251.118.50:8765/;?icy=http");
-      streamUrls.put("Buddhist", "http://15913.live.streamtheworld.com/SAM11AAC025.mp3");
-      streamUrls.put("良友", "http://listen2.txly1.net:8000/ly729_a");
-      streamUrls.put("天主", "http://dreamsiteradiocp2.com:8038/;");
-      streamUrls.put("大愛", "https://streamingv2.shoutcast.com/daai-radio_128.aac");
-      streamUrls.put("cello", "http://streams.calmradio.com:4628/stream");
-      streamUrls.put("piano", "https://pianosolo.streamguys1.com/live");
-      streamUrls.put("华乐", "https://radio.chinesemusicworld.com/chinesemusic.ogg");
-      streamUrls.put("rainforest", "https://music.wixstatic.com/mp3/e7f4d3_4ce223112471435c86d2292ddb4a6e7c.mp3");
-      streamUrls.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
-      streamUrls.put("SleepRadio", "http://149.56.234.138:8169/;");
-    } else {
-      for(String s : stationList.split("\\r?\\n")) {
-        String[] a = s.split("\\|");
-        if (a.length > 1) streamUrls.put(a[0], a[1]);
+    try {
+      String stationList = gSharedPref.getString(prefName,null);
+      streamUrls.clear();
+      if (stationList==null || stationList.length()==0) {
+        // https://docs.google.com/spreadsheets/d/1cj66AnWNgJ3GqDTIQBWeUEsapjp_Zk37v11iwoa8xzM/edit#gid=0
+        streamUrls.put("BBC", "http://bbc.co.uk/worldservice/meta/live/mp3/eneuk.pls");
+        streamUrls.put("NPR", "https://npr-ice.streamguys1.com/live.mp3");
+        streamUrls.put("佛山", "https://live-hls-fs.linker.cc/fshs/fs_ts_01.m3u8");
+        streamUrls.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
+        streamUrls.put("港台#1", "http://stm.rthk.hk:80/radio1");
+        streamUrls.put("新城知讯", "http://metroradio-lh.akamaihd.net/i/997_h@349799/index_48_a-p.m3u8");
+        streamUrls.put("AiFM", "https://aifmmobile.secureswiftcontent.com/memorystreams/HLS/rtm-ch020/rtm-ch020.m3u8");
+        streamUrls.put("988", "http://starrfm.rastream.com/starrfm-988.android");
+        streamUrls.put("南非", "http://129.232.169.93/proxy/arrowline?codec=mp3");
+        streamUrls.put("Surabaya", "http://streaming.stratofm.com:8300/;stream.nsv");
+        streamUrls.put("三藩市", "http://104.251.118.50:8765/;?icy=http");
+        streamUrls.put("Buddhist", "http://15913.live.streamtheworld.com/SAM11AAC025.mp3");
+        streamUrls.put("良友", "http://listen2.txly1.net:8000/ly729_a");
+        streamUrls.put("天主", "http://dreamsiteradiocp2.com:8038/;");
+        streamUrls.put("大愛", "http://38.96.148.28:8156/stream");
+        streamUrls.put("cello", "http://streams.calmradio.com:4628/stream");
+        streamUrls.put("piano", "https://pianosolo.streamguys1.com/live");
+        streamUrls.put("华乐", "https://radio.chinesemusicworld.com/chinesemusic.ogg");
+        streamUrls.put("rainforest", "https://music.wixstatic.com/mp3/e7f4d3_4ce223112471435c86d2292ddb4a6e7c.mp3");
+        streamUrls.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
+        streamUrls.put("SleepRadio", "http://149.56.234.138:8169/;");
+      } else {
+        for(String s : stationList.split("\\r?\\n")) {
+          String[] a = s.split("\\|");
+          if (a.length > 1) streamUrls.put(a[0], a[1]);
+        }
       }
+    } catch(Exception e) {
+      commonGui.writeMessage(MainActivity.this, "MainActivity.reloadStreamUrls", e.getMessage());
     }
     return streamUrls;
   }
@@ -65,16 +72,48 @@ public class MainActivity extends android.app.Activity {
   }
 
   public void reloadSpinner1Adapter() {
-    java.util.LinkedHashMap<String, String> streamUrls = reloadStreamUrls(gSharedPref, "stationList");
-    android.widget.ArrayAdapter<String> adapter = spinner1Adapter;
-    java.util.ArrayList<String> list = new java.util.ArrayList<String>(streamUrls.keySet()); 
-    // String[] stringArr = commonUtil.getKeysetStringArr(streamUrls);
     try {
-      adapter.clear();  adapter.addAll(list);
-      adapter.notifyDataSetChanged(); // optional, as the dataset change should trigger this by default
+      java.util.LinkedHashMap<String, String> streamUrls = reloadStreamUrls(gSharedPref, "stationList");
+      android.widget.ArrayAdapter<String> adapter = spinner1Adapter;
+      java.util.ArrayList<String> list = new java.util.ArrayList<String>(streamUrls.keySet()); 
+      // String[] stringArr = commonUtil.getKeysetStringArr(streamUrls);
+        adapter.clear();  adapter.addAll(list);
+        adapter.notifyDataSetChanged(); // optional, as the dataset change should trigger this by default
     } catch(Exception e) {
       commonGui.writeMessage(MainActivity.this, "MainActivity.reloadSpinner1Adapter", e.getMessage());
     }
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public void stopOnTimeout(final long timeout) {
+    if ( timeoutHandler!=null ) {
+      try {
+        timeoutHandler.removeCallbacksAndMessages(null);
+      } catch(Exception e) { 
+        commonGui.writeMessage(MainActivity.this, "MainActivity.stopOnTimeout", e.getMessage());
+      }
+    }
+    if (timeout <= 0) {
+      return;
+    }
+    try {
+      timeoutHandler = new android.os.Handler();
+        timeoutHandler.postDelayed(new Runnable(){@Override public void run(){ // !! must use this to avoid issue for UI thread !!
+          try {
+            android.content.Intent playbackStopAction
+             = new android.content.Intent("com.quoinsight.minimal.myAudioServiceStopAction");
+              playbackStopAction.setPackage(MainActivity.this.getPackageName());
+            MainActivity.this.startService(playbackStopAction);
+          } catch(Exception e) { 
+            commonGui.writeMessage(MainActivity.this, "MainActivity.stopOnTimeout", e.getMessage());
+          }
+        }}, timeout);
+      commonGui.writeMessage(MainActivity.this, "MainActivity.stopOnTimeout", "Stopping in next " + String.format("%.1f", (timeout/60000.0)) + " minute(s) ...");
+    } catch(Exception e) { 
+      commonGui.writeMessage(MainActivity.this, "MainActivity.stopOnTimeout", e.getMessage());
+    }
+    return;
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -171,7 +210,8 @@ public class MainActivity extends android.app.Activity {
       );
 
     android.widget.Button btnNext = new android.widget.Button(this);
-      btnNext.setText("⎘ Next");
+      btnNext.setAllCaps(false);
+      btnNext.setText("⎘ SysInfo ⓘ");
       btnNext.setOnClickListener(
         new android.view.View.OnClickListener() {
           public void onClick(android.view.View v) {
@@ -193,7 +233,7 @@ public class MainActivity extends android.app.Activity {
 
     android.widget.Button btnTorch = new android.widget.Button(this);
       btnTorch.setAllCaps(false);
-      btnTorch.setText("🔦 FlashLight");
+      btnTorch.setText("🔦 FlashLight ☼");
       btnTorch.setOnClickListener(
         new android.view.View.OnClickListener() {
           public void onClick(android.view.View v) {
@@ -263,7 +303,7 @@ public class MainActivity extends android.app.Activity {
           android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
         );
         layout.addView(txt1, params);
-        android.widget.LinearLayout playerLayout = (android.widget.LinearLayout)android.view.View.inflate(this, R.layout.mainplayer, null);
+        android.widget.LinearLayout playerLayout = (android.widget.LinearLayout)android.view.View.inflate(this, R.layout.mainplayer2, null);
         layout.addView(playerLayout, params);  // load mainplayer.xml
         layout.addView(txt2, params);
         layout.addView(btnCompass, params);
@@ -302,13 +342,35 @@ public class MainActivity extends android.app.Activity {
         });
        */
 
+      ((android.widget.Button)findViewById(R.id.prev)).setOnClickListener(
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
+            int i = spinner1.getSelectedItemPosition();
+            if ( i > 0) spinner1.setSelection(i-1);
+          }
+        }
+      );
+      ((android.widget.Button)findViewById(R.id.next)).setOnClickListener(
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
+            int i = spinner1.getSelectedItemPosition();
+            if ( i < spinner1.getAdapter().getCount()-1)
+              spinner1.setSelection(i+1);
+          }
+        }
+      );
+
       android.widget.Button button1 = (android.widget.Button)findViewById(R.id.openUrl);
         button1.setAllCaps(false);  button1.setText("🌐");  
         //button1.setText("🎧 OpenUrl 📻"); // 📻 🎤 🎧 🔈 🔉 🔊 🕨 🕩 🕪
         button1.setOnClickListener(
           new android.view.View.OnClickListener() {
             public void onClick(android.view.View v) {
-              sysUtil.launchUrl(v.getContext(), MainActivity.this.streamUrls.get(spinner1.getSelectedItem().toString()));
+              try {
+                sysUtil.launchUrl(v.getContext(), MainActivity.this.streamUrls.get(spinner1.getSelectedItem().toString()));
+              } catch(Exception e) {
+                commonGui.writeMessage(MainActivity.this, "MainActivity.openUrl", e.getMessage());
+              }
             }
           }
         );
@@ -327,6 +389,7 @@ public class MainActivity extends android.app.Activity {
                    playbackAction.putExtra("name", selectedItem);
                    playbackAction.putExtra("url", MainActivity.this.streamUrls.get(selectedItem));
                 startService(playbackAction);
+                sysUtil.setMusicVolSeekBar((android.widget.SeekBar)findViewById(R.id.volSeekBar));
               } catch(Exception e) {
                 commonGui.writeMessage(MainActivity.this, "MainActivity.playbackAction", e.getMessage());
               }
@@ -345,6 +408,7 @@ public class MainActivity extends android.app.Activity {
                  = new android.content.Intent("com.quoinsight.minimal.myAudioServiceQuitAction"); // myAudioServiceStopAction
                   playbackQuitAction.setPackage(MainActivity.this.getPackageName());
                 MainActivity.this.startService(playbackQuitAction);
+                MainActivity.this.stopOnTimeout(-1);
               } catch(Exception e) {
                 commonGui.writeMessage(MainActivity.this, "MainActivity.playbackQuitAction", e.getMessage());
               }
@@ -352,18 +416,106 @@ public class MainActivity extends android.app.Activity {
           }
         );
 
+      android.widget.Button btnCfg = (android.widget.Button)findViewById(R.id.conf);
+        btnCfg.setOnClickListener(
+          new android.view.View.OnClickListener() {
+            public void onClick(android.view.View v) {
+              startActivity(new android.content.Intent(MainActivity.this, ListCfgActivity.class));
+            }
+          }
+        );
+
+      ((android.widget.Button)findViewById(R.id.timer)).setOnClickListener(
+        new android.view.View.OnClickListener() {
+          public void onClick(android.view.View v) {
+            try {
+              MainActivity.this.stopOnTimeout(15*60000);
+            } catch(Exception e) { 
+              commonGui.writeMessage(MainActivity.this, "MainActivity.timer", e.getMessage());
+            }
+          }
+        }
+      );
+
+      android.widget.TextView txtHeadphones = (android.widget.TextView)findViewById(R.id.headphones);
+        txtHeadphones.setClickable(true);
+        txtHeadphones.setOnClickListener(
+          new android.view.View.OnClickListener() {
+            public void onClick(android.view.View v) {
+              try {
+                sysUtil.adjustMusicVolume(MainActivity.this, 0);
+startActivity(new android.content.Intent(MainActivity.this, TestActivity.class));
+              } catch(Exception e) { 
+                commonGui.writeMessage(MainActivity.this, "MainActivity.adjustMusicVolume", e.getMessage());
+              }
+            }
+          }
+        );
+
+      android.widget.SeekBar volSeekBar = (android.widget.SeekBar)findViewById(R.id.volSeekBar);
+        volSeekBar.setProgress(sysUtil.getMusicVolume(MainActivity.this));
+        volSeekBar.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
+          @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) { }
+          @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {
+            sysUtil.setMusicVolume(MainActivity.this, seekBar.getProgress());
+            //commonGui.writeMessage(MainActivity.this, "MainActivity.onProgressChanged", "progress="+String.valueOf(seekBar.getProgress()));
+          }
+          @Override public void onProgressChanged(android.widget.SeekBar seekBar, int progress, boolean fromUser) {
+          }
+        });
+
     ////////////////////////////////////////////////////////////////////
 
     //android.widget.LinearLayout.LayoutParams p = button2.getLayoutParams();
     //p.width = (int) commonGui.dp2px(commonGui.getResourceDisplayMetrics(this), 30);
     //button2.setLayoutParams(p);
 
+    contentObsrvr = new myContentObserver(MainActivity.this, null);
+    // will also work if 'new android.os.Handler()' is replaced with null
+    // contentObsrvr = new myContentObserver(new android.os.Handler()); // this works as well, but we need [contentObsrvr.parentContext=MainActivity.this] for other operations 
+      contentObsrvr.setHandlers(new myContentObserver.handlers() {
+        @Override public void OnChange(boolean selfChange, android.net.Uri uri) {
+          //below commonGui.writeMessage() not working !! and break this function
+          //commonGui.writeMessage(MainActivity.getInstance(), "myContentObserver.OnChange", uri.toString());
+          //txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 10); txt2.setText(uri.toString());
+          if ( uri!=null && uri.toString().equals("content://settings/system/volume_music_speaker") ) {
+            sysUtil.setMusicVolSeekBar((android.widget.SeekBar)findViewById(R.id.volSeekBar));
+          }
+        }
+      });
+
+    /*
+      contentObsrvr = new myContentObserver(MainActivity.this, new android.os.Handler(new android.os.Handler.Callback(){
+          // this does not work
+          @Override public boolean handleMessage(android.os.Message msg) {
+            sysUtil.setMusicVolSeekBar((android.widget.SeekBar)findViewById(R.id.volSeekBar));
+            return false;
+          }
+       }));
+      contentObsrvr = new myContentObserver(MainActivity.this, new android.os.Handler(){
+        // this does not work as well
+        @Override public void handleMessage(android.os.Message msg) {
+          super.handleMessage(msg);
+          sysUtil.setMusicVolSeekBar((android.widget.SeekBar)findViewById(R.id.volSeekBar));
+        }
+      });
+    */
+
+    if (contentObsrvr.parentContext==null) contentObsrvr.parentContext = MainActivity.this;
+    contentObsrvr.register( android.provider.Settings.System.CONTENT_URI );
   }
 
   @Override protected void onResume() {
     super.onResume();
     txt2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 72);
     txt2.setText("🔋" + Integer.toString(sysUtil.getBatteryLevel(this)) + "%");
+
+    sysUtil.setMusicVolSeekBar((android.widget.SeekBar)findViewById(R.id.volSeekBar));
+  }
+
+  @Override protected void onDestroy() {
+    super.onDestroy();
+    if (contentObsrvr != null) contentObsrvr.unregister();
   }
 
 }

@@ -61,6 +61,7 @@ public class myAsyncTask extends android.os.AsyncTask<String, Void, String> {
         try {
           //Open a new URL connection 
           urlConn = (java.net.HttpURLConnection) (new java.net.URL(url)).openConnection();
+          urlConn.setConnectTimeout(3000); urlConn.setReadTimeout(5000);
           urlConn.setRequestMethod("GET");
           // sets request headers 
           //urlConn.setRequestProperty("Content-Type", "application/json");

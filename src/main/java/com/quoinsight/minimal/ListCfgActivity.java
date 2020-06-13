@@ -64,6 +64,9 @@ public class ListCfgActivity extends android.app.Activity
         stationList = MainActivity.getInstance().getStreamUrls();
       }
       ((android.widget.EditText)findViewById(R.id.edit1)).setText( stationList );
+      // editText.setHorizontallyScrolling(true);
+      // editText.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_LEFT);
+      // editText.setMovementMethod(new ScrollingMovementMethod());
 
       // "💾Save 🔄Update ⛝Close"
 

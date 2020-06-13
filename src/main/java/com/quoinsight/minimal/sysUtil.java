@@ -12,16 +12,86 @@ public class sysUtil {
 
   //////////////////////////////////////////////////////////////////////
 
-  static final public void launchUrl(android.content.Context parentContext, String url) {
+  static final public void shareText(android.content.Context parentContext, String txt) {
     try {
       android.content.Intent intent = new android.content.Intent();
+        // [ https://developer.android.com/training/sharing/send ]
+        intent.setAction(android.content.Intent.ACTION_SEND);
+        intent.putExtra(android.content.Intent.EXTRA_TEXT, txt);
+        intent.setType("text/plain");
+      parentContext.startActivity(android.content.Intent.createChooser(intent, null));
+    } catch(Exception e) {
+      commonGui.writeMessage(parentContext, "sysUtil.shareText", e.getMessage());
+    }
+  }
+
+  static final public void openFileWith(android.content.Context parentContext, String filePath) {
+    try {
+      android.content.Intent intent = new android.content.Intent();
+        /*
+          !! will need to use FileProvider.getUriForFile() to avoid the below error
+          !! android.os.FileUriExposedException: "exposed beyond app through Intent.getData()"
+        */
+        intent.addFlags(
+          android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+           // | android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+        );
+        //android.net.Uri contentUri = android.net.Uri.parse(url);
+        //android.net.Uri contentUri = androidx.core.content.FileProvider.getUriForFile(
+        android.net.Uri contentUri = android.support.v4.content.FileProvider.getUriForFile(
+          parentContext, parentContext.getApplicationContext().getPackageName()+".fprvdr", new java.io.File(filePath)
+        );
+        /*
+          FileProvider is a special subclass of ContentProvider
+          that facilitates secure sharing of files associated
+          with an app by creating a content:// Uri for a file
+          instead of a file:/// Uri.
+          e.g. "file:///storage/emulated/0/Download"
+               "content://downloads/all_downloads"
+               "content://downloads/public_downloads"
+               "content://downloads/my_downloads"
+          file:///storage/emulated/0/Android/data/com.android.chrome/files/Download/icon.png
+          # notepad C:\\usr2\apk\gradle\src\main\res\xml\provider_paths.xml
+          #  error if the path is not declared in provider_paths.xml:
+          #   !! Failed to find configured root that contains <...> !!
+        */
+        commonGui.writeMessage(parentContext, "sysUtil.openFileWith", contentUri.toString());
+        parentContext.grantUriPermission(
+          parentContext.getPackageName(), contentUri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+        );
+        intent.setData(contentUri);
+      parentContext.startActivity(android.content.Intent.createChooser(intent, null));
+    } catch(Exception e) {
+      commonGui.writeMessage(parentContext, "sysUtil.openFileWith", e.getMessage());
+    }
+  }
+
+  static final public void launchUrl(android.content.Context parentContext, String url) {
+    try {
+      if ( url.startsWith("file://") ) {
+        // launchUrl with "file://..." will cause android.os.FileUriExposedException:
+        //   !!  "exposed beyond app through Intent.getData()"  !!
+        // will need to handle this differently
+        //   may add the below in Application.onCreate() as a workaround in diagnotic mode 
+        //   StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        //   StrictMode.setVmPolicy(builder.build());
+        //   !! above overrides builder.detectFileUriExposure()
+        // !! should use FileProvider.getUriForFile() instead !!
+        openFileWith(parentContext, url.replace("file://", ""));
+        return;
+      }
+      android.content.Intent intent = new android.content.Intent();
+        /*
+         intent = new android.content.Intent("com.android.browser");
+           intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+           intent.setComponent(new android.content.ComponentName("com.android.browser", "com.android.browser.BrowserActivity"));
+           intent.setData(android.net.Uri.parse(url));
+           // Unable to find explicit activity class {}; have you declared this activity in your AndroidManifest.xml?
+         parentContext.startActivity(intent);
+        */
+        // [ https://developer.android.com/guide/components/intents-common#ViewUrl ]
         intent.setAction(android.content.Intent.ACTION_VIEW);
         intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
-        if ( url.startsWith("file://") ) {
-          // !! android.os.FileUriExposedException: "exposed beyond app through Intent.getData()" !!
-          intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
-          intent.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
-        }
         intent.setData(android.net.Uri.parse(url));
         //intent.setDataAndType(android.net.Uri.parse(url), "*/*");
       //parentContext.startActivity(android.content.Intent.createChooser(intent, "Open"));
@@ -31,6 +101,63 @@ public class sysUtil {
     }
   }
 
+  //////////////////////////////////////////////////////////////////////
+
+  static final public int getMusicVolume(android.content.Context parentContext) {
+    try {
+      // [ https://developer.android.com/reference/android/media/AudioManager ]
+      android.media.AudioManager audMgr
+        = (android.media.AudioManager) parentContext.getSystemService(parentContext.AUDIO_SERVICE);
+      int minVol = audMgr.getStreamMinVolume(android.media.AudioManager.STREAM_MUSIC);
+      int maxVol = audMgr.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+      int curVol = audMgr.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+      return (int)(100.0*((1.0*curVol)/(maxVol-minVol-0.0)));
+    } catch(Exception e) {}
+    return -1;
+  }
+
+  static final public int setMusicVolume(android.content.Context parentContext, int volLevel) {
+    try {
+      // [ https://developer.android.com/reference/android/media/AudioManager ]
+      android.media.AudioManager audMgr
+        = (android.media.AudioManager) parentContext.getSystemService(parentContext.AUDIO_SERVICE);
+      int minVol = audMgr.getStreamMinVolume(android.media.AudioManager.STREAM_MUSIC);
+      int maxVol = audMgr.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+      audMgr.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, (int)((volLevel/100.0)*(maxVol-minVol)), 0);
+      return audMgr.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+    } catch(Exception e) {}
+    return -1;
+  }
+
+  static final public int setMusicVolSeekBar(android.widget.SeekBar volSeekBar) {
+    try {
+      volSeekBar.setProgress(getMusicVolume(volSeekBar.getContext()));
+    } catch(Exception e) {}
+    return -1;
+  }
+
+  static final public int adjustMusicVolume(android.content.Context parentContext, int adjOpt) {
+    try {
+      // [ https://developer.android.com/reference/android/media/AudioManager ]
+      android.media.AudioManager audMgr = (android.media.AudioManager) parentContext.getSystemService(parentContext.AUDIO_SERVICE);
+      audMgr.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, adjOpt, android.media.AudioManager.FLAG_SHOW_UI);
+      // android.media.AudioManager.ADJUST_SAME : MUTE=-100|LOWER=-1|SAME=0|RAISE=+1|UNMUTE=+100|TOGGLE=+101
+      // ADJUST_SAME|ADJUST_RAISE|ADJUST_LOWER|ADJUST_TOGGLE_MUTE|ADJUST_MUTE|ADJUST_UNMUTE
+
+      int minVol = audMgr.getStreamMinVolume(android.media.AudioManager.STREAM_MUSIC);
+      int maxVol = audMgr.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+      int curVol = audMgr.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+      commonGui.writeMessage(
+        parentContext, "sysUtil.adjustMusicVolume",
+        "min="+String.valueOf(minVol) + "; vol=" + String.valueOf(curVol) + "; max="+String.valueOf(maxVol)
+      );
+      return 0;
+    } catch(Exception e) {}
+    return -1;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   static final public int getBatteryLevel(android.content.Context parentContext) {
     try {
       android.os.BatteryManager battMgr
@@ -39,6 +166,8 @@ public class sysUtil {
     } catch(Exception e) {}
     return -1;
   }
+
+  //////////////////////////////////////////////////////////////////////
 
   static final public void enableTorchLigth(android.content.Context parentContext, boolean enabled) {
     android.hardware.camera2.CameraManager camMgr

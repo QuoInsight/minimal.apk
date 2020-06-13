@@ -120,6 +120,8 @@ public class commonUtil {
       java.net.URL url = new java.net.URL(s_url);
       java.net.HttpURLConnection urlConnection
         = (java.net.HttpURLConnection) url.openConnection();
+      urlConnection.setConnectTimeout(3000);
+      urlConnection.setReadTimeout(5000);
       try {
         // !! below will throw exception if running in Android without AsyncTask !!
         java.io.InputStream in = new java.io.BufferedInputStream(urlConnection.getInputStream());
@@ -306,7 +308,7 @@ public class commonUtil {
 
     try {
       java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
-
+      urlConn.setConnectTimeout(3000); urlConn.setReadTimeout(5000);
       int respCode = urlConn.getResponseCode();
       if (respCode==300||respCode==301||respCode==302||respCode==303||respCode==307||respCode==308) {
         String redirectUrl = urlConn.getHeaderField("Location");
@@ -403,6 +405,7 @@ public class commonUtil {
 
     try {
       java.net.HttpURLConnection urlConn = (java.net.HttpURLConnection) (new java.net.URL(s_url)).openConnection();
+      urlConn.setConnectTimeout(3000); urlConn.setReadTimeout(5000);
       urlConn.setRequestProperty("icy-metadata", "1");  // check for support and accepts ICY Metadata
 
       int respCode = urlConn.getResponseCode();

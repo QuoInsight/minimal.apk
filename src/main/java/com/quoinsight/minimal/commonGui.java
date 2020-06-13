@@ -186,4 +186,23 @@ public class commonGui {
 
   //////////////////////////////////////////////////////////////////////
 
+  public static android.graphics.Bitmap getBitmapFromVectorDrawable(android.content.Context parentContext, android.graphics.drawable.Drawable drawable) {
+    // [ https://stackoverflow.com/questions/33696488/getting-bitmap-from-vector-drawable ]
+    //Drawable drawable = ContextCompat.getDrawable(parentContext, drawableId);
+    //if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+    //  drawable = (DrawableCompat.wrap(drawable)).mutate();
+    //}
+
+    android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(
+      drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), android.graphics.Bitmap.Config.ARGB_8888
+    );
+    android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+    drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+    drawable.draw(canvas);
+
+    return bitmap;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
 }

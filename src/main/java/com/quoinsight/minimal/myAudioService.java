@@ -109,7 +109,7 @@ public class myAudioService extends android.app.Service
       dataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory(
         "QuoInsight/1.0", null, 3000, 5000, true // allowCrossProtocolRedirects=true support https://stream.rcs.revma.com/55tyxsy4qtzuv?1589079394
       );
-    } else if ( uriScheme.equals("file") ) {
+    } else if ( uriScheme.equals("file") || uriScheme.equals("content") ) {
       dataSourceFactory = new com.google.android.exoplayer2.upstream.FileDataSourceFactory();
       // new com.google.android.exoplayer2.source.upstream.FileDataSource.Factory();
     }

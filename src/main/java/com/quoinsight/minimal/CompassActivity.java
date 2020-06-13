@@ -63,29 +63,63 @@ public class CompassActivity extends android.app.Activity
     return new float[] {(float)coordinates[0], -(float)coordinates[1]}; // inverse y-axis
   }
 
-  public void drawMarkersOnCompassImg(android.widget.ImageView img, float[] solarPos, float[] lunarPos, float[] venusPos, float[] siriusPos) {
+  public void drawTextLabelsOnCompassImg(android.widget.ImageView img) {
+  }
 
+  public void drawMarkersOnCompassImg(android.widget.ImageView img, float[] solarPos, float[] lunarPos, float[] venusPos, float[] siriusPos) {
     android.graphics.drawable.Drawable
       drawable = img.getDrawable();
     android.graphics.Bitmap
-      bmp0 = ((android.graphics.drawable.BitmapDrawable)drawable).getBitmap(),
+      //bmp0 = ((android.graphics.drawable.BitmapDrawable)drawable).getBitmap(),
+      bmp0 = commonGui.getBitmapFromVectorDrawable(this, drawable),
       bmp1 = bmp0.copy(android.graphics.Bitmap.Config.ARGB_8888, true); // Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
     android.graphics.Canvas
       canvas = new android.graphics.Canvas(bmp1);
     android.graphics.Paint
       paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
-    float x0=canvas.getWidth()/2, y0=canvas.getHeight()/2, radius=x0*0.85f, mkrSz=30f;
+    float x0=canvas.getWidth()/2, y0=canvas.getHeight()/2, radius=x0*0.85f, mkrSz=10f;
 
     /*
       use pixels as UOM for drawing objects on the Canvas in android !
     */
 
-    float[] coordinates;
+    float[] coordinates;  float x1, y1;
+
+    coordinates = getCanvasCoordinates(0, radius, x0, y0);
+      paint.setColor(android.graphics.Color.BLACK);
+      paint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.BOLD));
+      paint.setTextSize(30); x1 = coordinates[0]-(30f*1.5f);  y1 = coordinates[1]+1;
+      canvas.rotate(90, x0, y0); canvas.drawText("卯🄔震", x1, y1, paint);
+      canvas.rotate(90, x0, y0); canvas.drawText("午🄢离", x1, y1, paint);
+      canvas.rotate(90, x0, y0); canvas.drawText("酉🄦兑", x1, y1, paint);
+      canvas.rotate(90, x0, y0); canvas.drawText("子🅽坎", x1, y1, paint);
+
+      paint.setTextSize(24);  x1 = coordinates[0]-(24f*1.5f)+6;
+      canvas.rotate(45, x0, y0); canvas.drawText("N艮E", x1, y1, paint);
+      canvas.rotate(90, x0, y0); canvas.drawText("S巽E", x1, y1, paint);
+      canvas.rotate(90, x0, y0); canvas.drawText("S坤W", x1, y1, paint);
+      canvas.rotate(90, x0, y0); canvas.drawText("N乾W", x1, y1, paint);
+      canvas.rotate(45, x0, y0); // rotate back to 0|360
+
+      paint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL));
+      paint.setTextSize(22);  x1 = coordinates[0]-(22f*0.5f);  y1 = coordinates[1];
+      canvas.rotate(30, x0, y0); canvas.drawText("丑", x1, y1, paint);
+      canvas.rotate(30, x0, y0); canvas.drawText("寅", x1, y1, paint);
+      canvas.rotate(60, x0, y0); canvas.drawText("辰", x1, y1, paint);
+      canvas.rotate(30, x0, y0); canvas.drawText("巳", x1, y1, paint);
+      canvas.rotate(60, x0, y0); canvas.drawText("未", x1, y1, paint);
+      canvas.rotate(30, x0, y0); canvas.drawText("申", x1, y1, paint);
+      canvas.rotate(60, x0, y0); canvas.drawText("戌", x1, y1, paint);
+      canvas.rotate(30, x0, y0); canvas.drawText("亥", x1, y1, paint);
+      canvas.rotate(30, x0, y0); // rotate back to 0|360
+
+    paint.setTextSize(20);
+
     if ( solarPos[1] > -10 ) {
       coordinates = getCanvasCoordinates(solarPos[0], radius*(1-Math.abs(solarPos[1])/90), x0, y0);
       paint.setColor(android.graphics.Color.RED);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
-      paint.setTextSize(40);  canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50, coordinates[1]+50, paint);
+      canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50, coordinates[1]+50, paint);
       // https://alvinalexander.com/android/android-method-center-text-font-canvas-drawtext
     }
 
@@ -144,7 +178,7 @@ public class CompassActivity extends android.app.Activity
 
     txt.setText( android.text.Html.fromHtml(summaryCaption) ); // CSS is not supported!
 
-    img.setImageResource(R.drawable.compass);
+    img.setImageResource(R.drawable.compass_svg);
     drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos, siriusPos);
     //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
   }
