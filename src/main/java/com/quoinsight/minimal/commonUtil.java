@@ -267,7 +267,8 @@ public class commonUtil {
 
   public static boolean isPlaylistUrl(String s_url) {
     String url = s_url.trim().toLowerCase();
-    return urlEndsWith(url,".m3u")||urlEndsWith(url,".m3u8")||urlEndsWith(url,".pls");
+    return urlEndsWith(url,".m3u")||urlEndsWith(url,".m3u8")
+      ||urlEndsWith(url,".pls")||urlEndsWith(url,"playlist.php");
   }
 
  /*
@@ -319,13 +320,19 @@ public class commonUtil {
       }
 
       String contentType = urlConn.getContentType().toLowerCase();
-      if ( ! (
-        contentType.equals("audio/x-scpls")
-         // https://en.wikipedia.org/wiki/PLS_(file_format) || https://en.wikipedia.org/wiki/M3U
-          || contentType.equals("application/vnd.apple.mpegurl") || contentType.equals("application/vnd.apple.mpegurl.audio")
-           || contentType.equals("audio/mpegurl") || contentType.equals("audio/x-mpegurl")
-            || contentType.equals("application/mpegurl") || contentType.equals("application/x-mpegurl")
-      ) ) {
+      if ( contentType.equals("application/vnd.apple.mpegurl") || contentType.equals("application/vnd.apple.mpegurl.audio")
+        || contentType.equals("audio/mpegurl") || contentType.equals("audio/x-mpegurl")
+        || contentType.equals("application/mpegurl") || contentType.equals("application/x-mpegurl")
+      ) {
+        // [ https://en.wikipedia.org/wiki/M3U ]
+        // OK
+      } else if ( contentType.equals("audio/x-scpls") ) {
+        // [ https://en.wikipedia.org/wiki/PLS_(file_format) ]
+        // OK
+      } else if ( url.contains("/getAudioPlaylist.php?") && contentType.startsWith("text/") ) {
+        // [ http://world.kbs.co.kr/ipod/radio/getAudioPlaylist.php ]
+        // OK
+      } else {
         //return "ERROR: Invalid ContentType [" + contentType + "]; url=" + urlConn.getURL();
         return url;
       }
@@ -346,6 +353,15 @@ public class commonUtil {
             } else if ( firstLine.startsWith("http://")||firstLine.startsWith("https://") ) {
               // OK: this is accepted
               url = thisLine;
+              break;
+            } else if ( firstLine.startsWith("{") ) {
+              // [ http://world.kbs.co.kr/ipod/radio/getAudioPlaylist.php ]
+              org.json.JSONObject jsonObj = new org.json.JSONObject(firstLine);
+              url =  jsonObj.optString("playurl");
+              // java.util.regex.Pattern re = java.util.regex.Pattern.compile("\\\"(http\\S+?)\\\"");
+              // java.util.regex.Matcher m = re.matcher(firstLine);
+              // if ( m.find() ) url = m.group(1);
+              url = getMediaUrl2(url);
               break;
             } else {
               //System.out.println("invalid playlist");

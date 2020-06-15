@@ -78,7 +78,8 @@ public class CompassCfgActivity extends android.app.Activity
     android.graphics.Paint
       paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
-    float x0=canvas.getWidth()/2, y0=canvas.getHeight()/2, radius=x0*0.85f, mkrSz=10f;
+    final float scale = img.getContext().getResources().getDisplayMetrics().density;
+    float x0=canvas.getWidth()/2, y0=canvas.getHeight()/2, radius=x0*0.85f, mkrSz=radius*0.05f;
 
       android.util.DisplayMetrics defaultMetrics = commonGui.getDefaultDisplayMetrics(this);
       android.util.DisplayMetrics displayMetrics = commonGui.getResourceDisplayMetrics(img.getContext()); // img.getContext().getResources().getDisplayMetrics();
@@ -107,23 +108,25 @@ public class CompassCfgActivity extends android.app.Activity
     }
     commonGui.canvasDrawLine(canvas, this.gReferenceAzimuth, x0, y0);
 
-    float[] coordinates;  float x1, y1;
+    float[] coordinates;  float x1, y1, txtSzPx;
 
     coordinates = getCanvasCoordinates(0, radius, x0, y0);
-      paint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.BOLD));
-      paint.setColor(android.graphics.Color.BLACK); paint.setTextSize(40);
-      x1 = coordinates[0]-(40f*0.5f)+2;  y1 = coordinates[1]+4;
+      txtSzPx = 60f*scale;  paint.setTextSize(txtSzPx);
+      paint.setTypeface(android.graphics.Typeface.create(
+        android.graphics.Typeface.SERIF, android.graphics.Typeface.BOLD
+      ));  paint.setColor(android.graphics.Color.BLACK);
+      x1 = coordinates[0]-(txtSzPx*0.5f)+2;  y1 = coordinates[1]+4;
       canvas.rotate(90, x0, y0); canvas.drawText("E", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("南", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("W", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("N", x1, y1, paint);
 
-    paint.setTextSize(20);
+    txtSzPx = 30f*scale;  paint.setTextSize(txtSzPx);
 
     if ( solarPos[1] > -10 ) {
       coordinates = getCanvasCoordinates(solarPos[0], radius*(1-Math.abs(solarPos[1])/90), x0, y0);
       paint.setColor(android.graphics.Color.RED);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
-      canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50, coordinates[1]+50, paint);
+      canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50*scale, coordinates[1]+50*scale, paint);
       // https://alvinalexander.com/android/android-method-center-text-font-canvas-drawtext
     }
 
@@ -182,7 +185,7 @@ public class CompassCfgActivity extends android.app.Activity
 
     txt.setText( android.text.Html.fromHtml(summaryCaption) ); // CSS is not supported!
 
-    img.setImageResource(R.drawable.compass_svg);
+    img.setImageResource(R.drawable.compass_svg_out);
     drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos, siriusPos);
   }
 

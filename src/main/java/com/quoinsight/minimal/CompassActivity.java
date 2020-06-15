@@ -78,32 +78,40 @@ public class CompassActivity extends android.app.Activity
     android.graphics.Paint
       paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
 
-    float x0=canvas.getWidth()/2, y0=canvas.getHeight()/2, radius=x0*0.85f, mkrSz=10f;
+    final float scale = img.getContext().getResources().getDisplayMetrics().density;
+    float x0=canvas.getWidth()/2, y0=canvas.getHeight()/2, radius=x0*0.85f, mkrSz=radius*0.05f;
 
     /*
       use pixels as UOM for drawing objects on the Canvas in android !
     */
 
-    float[] coordinates;  float x1, y1;
+    float[] coordinates;  float x1, y1, txtSzPx;
 
     coordinates = getCanvasCoordinates(0, radius, x0, y0);
       paint.setColor(android.graphics.Color.BLACK);
-      paint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.BOLD));
-      paint.setTextSize(30); x1 = coordinates[0]-(30f*1.5f);  y1 = coordinates[1]+1;
+      paint.setTypeface(android.graphics.Typeface.create(
+        android.graphics.Typeface.SERIF, android.graphics.Typeface.BOLD
+      ));
+
+      txtSzPx = 42f*scale;  paint.setTextSize(txtSzPx);  // txtEdt1.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, txtSzPx);
+      x1 = coordinates[0]-(txtSzPx*1.5f);  y1 = coordinates[1]+1;
       canvas.rotate(90, x0, y0); canvas.drawText("卯🄔震", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("午🄢离", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("酉🄦兑", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("子🅽坎", x1, y1, paint);
 
-      paint.setTextSize(24);  x1 = coordinates[0]-(24f*1.5f)+6;
+      txtSzPx = 36f*scale;  paint.setTextSize(txtSzPx);
+      x1 = coordinates[0]-(txtSzPx*1.5f)+6;
       canvas.rotate(45, x0, y0); canvas.drawText("N艮E", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("S巽E", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("S坤W", x1, y1, paint);
       canvas.rotate(90, x0, y0); canvas.drawText("N乾W", x1, y1, paint);
       canvas.rotate(45, x0, y0); // rotate back to 0|360
 
-      paint.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL));
-      paint.setTextSize(22);  x1 = coordinates[0]-(22f*0.5f);  y1 = coordinates[1];
+      txtSzPx = 33f*scale;  x1 = coordinates[0]-(txtSzPx*0.5f);
+      paint.setTypeface(android.graphics.Typeface.create(
+        android.graphics.Typeface.SERIF, android.graphics.Typeface.NORMAL
+      ));  paint.setTextSize(txtSzPx);  
       canvas.rotate(30, x0, y0); canvas.drawText("丑", x1, y1, paint);
       canvas.rotate(30, x0, y0); canvas.drawText("寅", x1, y1, paint);
       canvas.rotate(60, x0, y0); canvas.drawText("辰", x1, y1, paint);
@@ -114,12 +122,12 @@ public class CompassActivity extends android.app.Activity
       canvas.rotate(30, x0, y0); canvas.drawText("亥", x1, y1, paint);
       canvas.rotate(30, x0, y0); // rotate back to 0|360
 
-    paint.setTextSize(20);
+      txtSzPx = 20f*scale;  paint.setTextSize(txtSzPx);
 
     if ( solarPos[1] > -10 ) {
       coordinates = getCanvasCoordinates(solarPos[0], radius*(1-Math.abs(solarPos[1])/90), x0, y0);
       paint.setColor(android.graphics.Color.RED);  canvas.drawCircle(coordinates[0], coordinates[1], mkrSz, paint);
-      canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50, coordinates[1]+50, paint);
+      canvas.drawText("☼🌞︎V♀🌕︎🌝︎", coordinates[0]+50*scale, coordinates[1]+50*scale, paint);
       // https://alvinalexander.com/android/android-method-center-text-font-canvas-drawtext
     }
 
@@ -178,7 +186,7 @@ public class CompassActivity extends android.app.Activity
 
     txt.setText( android.text.Html.fromHtml(summaryCaption) ); // CSS is not supported!
 
-    img.setImageResource(R.drawable.compass_svg);
+    img.setImageResource(R.drawable.compass_svg_out);
     drawMarkersOnCompassImg(img, solarPos, lunarPos, venusPos, siriusPos);
     //overlayImgVw(img1, android.graphics.BitmapFactory.decodeResource(img1.getContext().getResources(), R.drawable.icon)); 
   }
