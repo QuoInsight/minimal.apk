@@ -1,0 +1,6 @@
+#!/bin/sh
+export JAVA_HOME=/var/lib/flatpak/app/com.google.AndroidStudio/current/active/files/extra/android-studio/jbr
+
+cd /home/user/StudioProjects/minimal.apk
+./gradlew assembleRelease ## build ## take up to 16 minutes ## assembleRelease ## cleanBuildCache
+

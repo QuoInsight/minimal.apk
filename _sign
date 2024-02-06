@@ -1,0 +1,26 @@
+#!/bin/sh
+export JAVA_HOME=/var/lib/flatpak/app/com.google.AndroidStudio/current/active/files/extra/android-studio/jbr
+
+# !! apk from jarsigner not compatible with latest android versions !!
+# "$JAVA_HOME/bin/jarsigner" \
+#   -verbose -sigalg SHA1withRSA -digestalg SHA1 \
+#   -keystore /home/user/.android/quoinsight.apk.keystore.jks \
+#   -storepass ****** \
+#   -keypass ****** \
+#   -signedjar quoinsight.apk \
+#   /home/user/StudioProjects/minimal.apk/app/build/outputs/apk/release/app-release-unsigned.apk \
+#   upload
+
+# https://developer.android.com/tools/apksigner
+"/home/user/Android/Sdk/build-tools/34.0.0/apksigner" sign \
+ --verbose \
+ --ks /home/user/.android/quoinsight.apk.keystore.jks \
+ --ks-pass pass:****** \
+ --key-pass pass:****** \
+ --ks-key-alias upload \
+ --out quoinsight.apk \
+ /home/user/StudioProjects/minimal.apk/app/build/outputs/apk/release/app-release-unsigned.apk
+
+# !! zipalign not needed !!
+# "/home/user/Android/Sdk/build-tools/34.0.0/zipalign" \
+#  -f 4 quoinsight.apk quoinsight-aligned.apk
