@@ -23,11 +23,11 @@ public class myAudioService extends android.app.Service
 
   public int mWndIdx = -1;
   public String mState = "",  mIcyMetaData = "";
-  public com.google.android.exoplayer2.ExoPlayer exoPlayer = null;
-  public com.google.android.exoplayer2.source.ConcatenatingMediaSource exoMediaSource = null;
+  public androidx.media3.exoplayer.ExoPlayer exoPlayer = null;
+  public androidx.media3.exoplayer.source.ConcatenatingMediaSource exoMediaSource = null;
 
   public String mLastNotification = "";
-  //public android.support.v4.media.session.MediaSessionCompat mediaSession;
+  //public androidx.media3.session.MediaSession mediaSession;
   //public android.support.v4.app.NotificationManagerCompat notificationManager;
   public androidx.core.app.NotificationManagerCompat notificationManager;
 
@@ -111,34 +111,34 @@ public class myAudioService extends android.app.Service
 
   //////////////////////////////////////////////////////////////////////
 
-  public com.google.android.exoplayer2.source.MediaSource getExoMediaSource(android.net.Uri audioUri) {
-    // com.google.android.exoplayer2.source.MediaSource exoMediaSource = null;
-    com.google.android.exoplayer2.upstream.DataSource.Factory dataSourceFactory = null;
+  public androidx.media3.exoplayer.source.MediaSource getExoMediaSource(android.net.Uri audioUri) {
+    // androidx.media3.exoplayer.source.MediaSource exoMediaSource = null;
+    androidx.media3.datasource.DataSource.Factory dataSourceFactory = null;
     String uriScheme = audioUri.getScheme();
     if ( uriScheme.equals("http") || uriScheme.equals("https") ) {
-      dataSourceFactory = new com.google.android.exoplayer2.upstream.DefaultHttpDataSource.Factory();
+      dataSourceFactory = new androidx.media3.datasource.DefaultHttpDataSource.Factory();
       //  "QuoInsight/1.0", null, 3000, 5000, true // allowCrossProtocolRedirects=true support https://stream.rcs.revma.com/55tyxsy4qtzuv?1589079394
     } else if ( uriScheme.equals("file") || uriScheme.equals("content") ) {
-      dataSourceFactory = new com.google.android.exoplayer2.upstream.FileDataSource.Factory();
+      dataSourceFactory = new androidx.media3.datasource.FileDataSource.Factory();
     }
-    return new com.google.android.exoplayer2.source.ProgressiveMediaSource.Factory(
-     dataSourceFactory, new com.google.android.exoplayer2.extractor.DefaultExtractorsFactory()
+    return new androidx.media3.exoplayer.source.ProgressiveMediaSource.Factory(
+     dataSourceFactory, new androidx.media3.extractor.DefaultExtractorsFactory()
     ).createMediaSource(
-	 com.google.android.exoplayer2.MediaItem.fromUri(audioUri)
+	 androidx.media3.common.MediaItem.fromUri(audioUri)
 	);
   }
 
-  //public com.google.android.exoplayer2.source.MediaSource getExoProgressiveMediaSource(android.net.Uri audioUri) {
-  //  return new com.google.android.exoplayer2.source.ProgressiveMediaSource.Factory(
-  //    new com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory("QuoInsight/1.0")
+  //public androidx.media3.exoplayer.source.MediaSource getExoProgressiveMediaSource(android.net.Uri audioUri) {
+  //  return new androidx.media3.exoplayer.source.ProgressiveMediaSource.Factory(
+  //    new androidx.media3.datasource.DefaultHttpDataSourceFactory("QuoInsight/1.0")
   //  ).createMediaSource(audioUri);
   //}
 
-  public void loadExoPlayerMediaSource(com.google.android.exoplayer2.ExoPlayer exoPlayer, android.net.Uri audioUri) {
-    //com.google.android.exoplayer2.source.MediaSource audioSource = getExoMediaSource(audioUri);  // audioUri.toString()
+  public void loadExoPlayerMediaSource(androidx.media3.exoplayer.ExoPlayer exoPlayer, android.net.Uri audioUri) {
+    //androidx.media3.exoplayer.source.MediaSource audioSource = getExoMediaSource(audioUri);  // audioUri.toString()
     //exoPlayer.prepare(audioSource); // prepareAsync() not applicable for exoPlayer
  
-    this.exoMediaSource = new com.google.android.exoplayer2.source.ConcatenatingMediaSource();
+    this.exoMediaSource = new androidx.media3.exoplayer.source.ConcatenatingMediaSource();
     this.exoMediaSource.addMediaSource( getExoMediaSource(audioUri) );
     myAudioService.this.mUrl2 = audioUri.toString();
 
@@ -146,7 +146,7 @@ public class myAudioService extends android.app.Service
     exoPlayer.setPlayWhenReady(true);
   }
 
-  public void concatExoPlayerMediaSource(com.google.android.exoplayer2.ExoPlayer exoPlayer, android.net.Uri audioUri) {
+  public void concatExoPlayerMediaSource(androidx.media3.exoplayer.ExoPlayer exoPlayer, android.net.Uri audioUri) {
     // 2.8.0 (2018-05-03)
     // Merged DynamicConcatenatingMediaSource into ConcatenatingMediaSource and deprecated DynamicConcatenatingMediaSource.
     myAudioService.this.exoMediaSource.addMediaSource(
@@ -234,24 +234,24 @@ if (true) return;
 
   //////////////////////////////////////////////////////////////////////
 
-  public com.google.android.exoplayer2.Player.Listener newExoEventListener() {
-    return new com.google.android.exoplayer2.Player.Listener() {
+  public androidx.media3.common.Player.Listener newExoEventListener() {
+    return new androidx.media3.common.Player.Listener() {
 
       @Override public void onPositionDiscontinuity(int reason) {
         // this is never triggered for 988
 if (true) return;
         String s_reason = "";  switch (reason) {
-          case com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_AUTO_TRANSITION :
+          case androidx.media3.common.Player.DISCONTINUITY_REASON_AUTO_TRANSITION :
             // Discontinuity to or from an ad within one period in the timeline.
             // Automatic playback transition from one period in the timeline to the next.
             s_reason = "AUTO_TRANSITION";     break;
-          case com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_INTERNAL :
+          case androidx.media3.common.Player.DISCONTINUITY_REASON_INTERNAL :
             // Discontinuity introduced internally by the source.
             s_reason = "INTERNAL";  break;
-          case com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_SEEK :
+          case androidx.media3.common.Player.DISCONTINUITY_REASON_SEEK :
             // Seek within the current period or to another period.
             s_reason = "SEEK";     break;
-          case com.google.android.exoplayer2.Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT :
+          case androidx.media3.common.Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT :
             // Seek adjustment due to being unable to seek to the requested position or because the seek was permitted to be inexact.
             s_reason = "SEEK_ADJUSTMENT";     break;
           default :
@@ -280,10 +280,10 @@ if (true) return;
       }
 
     /*
-      @Override public void onTimelineChanged(com.google.android.exoplayer2.Timeline timeline, Object manifest, int reason) {
+      @Override public void onTimelineChanged(androidx.media3.exoplayer.Timeline timeline, Object manifest, int reason) {
         // this is only triggered for one time as PREPARED during the initial stage of a session for 988
         String s_reason = "";  switch (reason) {
-          case com.google.android.exoplayer2.Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED :
+          case androidx.media3.exoplayer.Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED :
             // Timeline and manifest changed as a result of a player initialization with new media.
             // typically, this is closely linked to onPlayerStateChanged(STATE_BUFFERING-->STATE_READY)
             s_reason = "PLAYLIST_CHANGED";  break;
@@ -297,30 +297,30 @@ if (true) return;
 
       @Override public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {}
       @Override public void onLoadingChanged(boolean isLoading) {}
-      @Override public void onSeekProcessed() {}
+      //@Override public void onSeekProcessed() {}
 
-      @Override public void onPlaybackParametersChanged(com.google.android.exoplayer2.PlaybackParameters playbackParameters) {}
+      @Override public void onPlaybackParametersChanged(androidx.media3.common.PlaybackParameters playbackParameters) {}
       @Override public void onRepeatModeChanged(int repeatMode) {}
 
     /*
-      @Override public void onTracksChanged(com.google.android.exoplayer2.source.TrackGroupArray trackGroups, com.google.android.exoplayer2.trackselection.TrackSelectionArray trackSelections) {
+      @Override public void onTracksChanged(androidx.media3.exoplayer.source.TrackGroupArray trackGroups, androidx.media3.exoplayer.trackselection.TrackSelectionArray trackSelections) {
         // this is triggered initially but not when song changes on 988
         try {
           boolean txtInfFound = false;
           String metaDataString = "";
           for ( int i = 0; i < trackGroups.length; i++ ) {
-            com.google.android.exoplayer2.source.TrackGroup trackGroup = trackGroups.get(i);
+            androidx.media3.exoplayer.source.TrackGroup trackGroup = trackGroups.get(i);
             for ( int j = 0; j < trackGroup.length; j++ ) {
-              com.google.android.exoplayer2.Format trackFormat = trackGroup.getFormat(j);
+              androidx.media3.exoplayer.Format trackFormat = trackGroup.getFormat(j);
               metaDataString += " | id:" + trackFormat.id;
               if (trackFormat.language!=null) metaDataString+="; language:"+trackFormat.language;
-              com.google.android.exoplayer2.metadata.Metadata trackMetadata = trackFormat.metadata;
+              androidx.media3.extractor.metadata.Metadata trackMetadata = trackFormat.metadata;
               if ( trackMetadata == null ) continue;
               for (int k = 0; k < trackMetadata.length(); k++) {
-                com.google.android.exoplayer2.metadata.Metadata.Entry entry = trackMetadata.get(k);
-                if ( entry instanceof com.google.android.exoplayer2.metadata.id3.TextInformationFrame ) {
+                androidx.media3.extractor.metadata.Metadata.Entry entry = trackMetadata.get(k);
+                if ( entry instanceof androidx.media3.extractor.metadata.id3.TextInformationFrame ) {
                   // http://id3.org/id3v2.4.0-frames
-                  com.google.android.exoplayer2.metadata.id3.TextInformationFrame txtInf = (com.google.android.exoplayer2.metadata.id3.TextInformationFrame) entry;
+                  androidx.media3.extractor.metadata.id3.TextInformationFrame txtInf = (androidx.media3.extractor.metadata.id3.TextInformationFrame) entry;
                   if (txtInf.value!=null) {
                     txtInfFound = true;
                     String eName="";  switch(txtInf.id) {
@@ -349,7 +349,7 @@ if (true) return;
         // player.getPlayWhenReady, player.getPlaybackError and
         // player.getPlaybackSuppressionReason for details.
 
-      @Override public void onMetadata(com.google.android.exoplayer2.metadata.Metadata metaData) {
+      @Override public void onMetadata(androidx.media3.common.Metadata metaData) {
         String metaDataString = "";
 if (true) return;
 		try {
@@ -368,13 +368,13 @@ if (true) return;
       @Override public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         try {
           switch (playbackState) {
-            case com.google.android.exoplayer2.ExoPlayer.STATE_IDLE :
+            case androidx.media3.exoplayer.ExoPlayer.STATE_IDLE :
               myAudioService.this.mState = "IDLE";       break;
-            case com.google.android.exoplayer2.ExoPlayer.STATE_BUFFERING :
+            case androidx.media3.exoplayer.ExoPlayer.STATE_BUFFERING :
               myAudioService.this.mState = "BUFFERING";  break;
-            case com.google.android.exoplayer2.ExoPlayer.STATE_READY :
+            case androidx.media3.exoplayer.ExoPlayer.STATE_READY :
               myAudioService.this.mState = "READY";      break;
-            case com.google.android.exoplayer2.ExoPlayer.STATE_ENDED :
+            case androidx.media3.exoplayer.ExoPlayer.STATE_ENDED :
               myAudioService.this.mState = "ENDED";      break;
             default :
               myAudioService.this.mState = String.valueOf(playbackState);
@@ -397,28 +397,28 @@ if (true) return; // crashed when continue with the below block
         }
       }
 
-      @Override public void onPlayerError(com.google.android.exoplayer2.PlaybackException error) {
-        //if (error.type == com.google.android.exoplayer2.PlaybackException.TYPE_SOURCE) {
+      @Override public void onPlayerError(androidx.media3.common.PlaybackException error) {
+        //if (error.type == androidx.media3.exoplayer.PlaybackException.TYPE_SOURCE) {
           Throwable cause = error.getCause();
           writeMessage(
             "exoPlayer.PlaybackException",
             "[URL]: " + myAudioService.this.mUrl2  + " [ERROR]: " + cause.getMessage()
           );
-if (true) return;
           /*
            cause.getMessage() ==> "Response code: 302"
             fix: https://github.com/google/ExoPlayer/issues/1190
             passing allowCrossProtocolRedirects=true to DefaultHttpDataSourceFactory()
           */
-          if (cause instanceof com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) {
+if (true) return;
+          if (cause instanceof androidx.media3.datasource.HttpDataSource.HttpDataSourceException) {
             // An HTTP error occurred.
-            com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException httpError
-              = (com.google.android.exoplayer2.upstream.HttpDataSource.HttpDataSourceException) cause;
+            androidx.media3.datasource.HttpDataSource.HttpDataSourceException httpError
+              = (androidx.media3.datasource.HttpDataSource.HttpDataSourceException) cause;
             // This is the request for which the error occurred.
-            com.google.android.exoplayer2.upstream.DataSpec requestDataSpec = httpError.dataSpec;
+            androidx.media3.datasource.DataSpec requestDataSpec = httpError.dataSpec;
             // It's possible to find out more about the error both by casting and by
             // querying the cause.
-            if (httpError instanceof com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException) {
+            if (httpError instanceof androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException) {
               // Cast to InvalidResponseCodeException and retrieve the response code,
               // message and headers.
             } else {
@@ -440,7 +440,7 @@ if (true) return;
 
   //////////////////////////////////////////////////////////////////////
 
-  public com.google.android.exoplayer2.ExoPlayer startExoPlayer(String s_name, String s_url) {
+  public androidx.media3.exoplayer.ExoPlayer startExoPlayer(String s_name, String s_url) {
     String name = s_name.trim(),  url = s_url.trim();
 
     myAudioService.this.mWndIdx = -1;
@@ -482,13 +482,13 @@ if (true) return;
 // writeMessage("url", url);  if (true) return myAudioService.this.exoPlayer;
 
     this.exoPlayer
-     = (new com.google.android.exoplayer2.SimpleExoPlayer.Builder(myAudioService.this)).build();
-    // = com.google.android.exoplayer2.ExoPlayerFactory.newSimpleInstance(
-    //  this, new com.google.android.exoplayer2.trackselection.DefaultTrackSelector(),
-    //  new com.google.android.exoplayer2.DefaultLoadControl()
+     = (new androidx.media3.exoplayer.SimpleExoPlayer.Builder(myAudioService.this)).build();
+    // = androidx.media3.exoplayer.ExoPlayerFactory.newSimpleInstance(
+    //  this, new androidx.media3.exoplayer.trackselection.DefaultTrackSelector(),
+    //  new androidx.media3.exoplayer.DefaultLoadControl()
     //);
-    // = com.google.android.exoplayer2.ExoPlayerFactory.newInstance(
-    //    this, new com.google.android.exoplayer2.trackselection.DefaultTrackSelector()
+    // = androidx.media3.exoplayer.ExoPlayerFactory.newInstance(
+    //    this, new androidx.media3.exoplayer.trackselection.DefaultTrackSelector()
     //);
 
     this.exoPlayer.addListener( newExoEventListener() );
@@ -497,8 +497,8 @@ if (true) return;
     this.exoPlayer.addMetadataOutput(
       // https://github.com/m-cakir/radio-player/issues/20
       // https://github.com/googleads/googleads-ima-android-dai/issues/13
-      new com.google.android.exoplayer2.metadata.MetadataOutput() {
-        @Override public void onMetadata(com.google.android.exoplayer2.metadata.Metadata metaData) {
+      new androidx.media3.extractor.metadata.MetadataOutput() {
+        @Override public void onMetadata(androidx.media3.exoplayer.metadata.Metadata metaData) {
           String metaDataString = "";
           for (int i=0; i<metaData.length(); i++) {
             // [PRIV: owner=com.apple.streaming.transportStreamTimestamp]
@@ -513,7 +513,7 @@ if (true) return;
 	*/
 
     try {
-      if ( audioUri.getScheme().equals("file") ) this.exoPlayer.setRepeatMode(com.google.android.exoplayer2.Player.REPEAT_MODE_ALL);
+      if ( audioUri.getScheme().equals("file") ) this.exoPlayer.setRepeatMode(androidx.media3.common.Player.REPEAT_MODE_ALL);
       loadExoPlayerMediaSource(exoPlayer, audioUri);
       submitForegroundNotification(1001, name, "starting...", myAudioService.this.mState);
     } catch (Exception e) {
@@ -537,43 +537,6 @@ if (true) return;
         .setShowCancelButton(true)
         .setCancelButtonIntent(stopAction)
       );
-   */
-
-   /*
-    com.google.android.exoplayer2.PlayerNotificationManager playerNotificationManager
-     = com.google.android.exoplayer2.PlayerNotificationManager.createWithNotificationChannel(
-        context, "CHANNEL", "QuoInsight.Minimal", 1000,
-        new com.google.android.exoplayer2.PlayerNotificationManager.MediaDescriptionAdapter() {
-          @Override public String getCurrentContentTitle(com.google.android.exoplayer2.Player player) {
-            //return title[player.getCurrentWindowIndex()];
-          }
-          @Nullable @Override public String getCurrentContentText(
-            com.google.android.exoplayer2.Player player
-          ) { 
-            // return title[player.getCurrentWindowIndex()]; 
-          }
-          @Nullable @Override public android.app.PendingIntent createCurrentContentIntent(
-            com.google.android.exoplayer2.Player player
-          ) {
-            //Intent intent = new Intent(context,ExoPlayerActivity.class);
-            //return PendingIntent.getActivity(context,0,intent,PendingIntent.FLAG_UPDATE_CURRENT);
-          }
-          @Nullable @Override public android.graphics.Bitmap getCurrentLargeIcon(
-            com.google.android.exoplayer2.Player player, com.google.android.exoplayer2.PlayerNotificationManager.BitmapCallback callback
-          ) {
-            //Resources res = getResources();
-            //Bitmap bmp = BitmapFactory.decodeResource(res, R.mipmap.ic_launcher);
-            //return bmp;
-          }
-        }
-       );
-
-    playerNotificationManager.setNotificationListener(new PlayerNotificationManager.NotificationListener() {
-      @Override public void onNotificationStarted(int notificationId, Notification notification) { startForeground(notificationId,notification); }
-      @Override public void onNotificationCancelled(int notificationId) { stopSelf(); }
-    });
-
-    playerNotificationManager.setPlayer(player);
    */
 
    /*
@@ -734,22 +697,22 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
-import com.google.android.exoplayer2.util.Util;
+import androidx.media3.exoplayer.ExoPlaybackException;
+import androidx.media3.exoplayer.ExoPlayerFactory;
+import androidx.media3.exoplayer.PlaybackParameters;
+import androidx.media3.exoplayer.Player;
+import androidx.media3.exoplayer.SimpleExoPlayer;
+import androidx.media3.exoplayer.Timeline;
+import androidx.media3.extractor.DefaultExtractorsFactory;
+import androidx.media3.exoplayer.source.ExtractorMediaSource;
+import androidx.media3.exoplayer.source.TrackGroupArray;
+import androidx.media3.exoplayer.trackselection.AdaptiveTrackSelection;
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+import androidx.media3.exoplayer.trackselection.TrackSelectionArray;
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter;
+import androidx.media3.exoplayer.upstream.DefaultDataSourceFactory;
+import androidx.media3.exoplayer.upstream.DefaultHttpDataSourceFactory;
+import androidx.media3.exoplayer.util.Util;
 import com.mcakir.radio.R;
 import org.greenrobot.eventbus.EventBus;
 public class RadioService extends Service implements Player.EventListener, AudioManager.OnAudioFocusChangeListener {
