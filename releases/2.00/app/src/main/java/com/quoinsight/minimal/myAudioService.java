@@ -35,7 +35,9 @@ public class myAudioService extends android.app.Service
 
   public myAudioService() {
     // constructor
-    commonUtil.disableSSLCertValidation();  // support https://streams.pacifica.org:9000/kpfa 
+
+    // below is consider as an unsafe implementation of TrustManager - in violation of the Device and Network Abuse policy
+    // commonUtil.disableSSLCertValidation();  // support https://streams.pacifica.org:9000/kpfa 
   }
 
   //////////////////////////////////////////////////////////////////////

@@ -85,6 +85,9 @@ public class commonUtil {
 
   //////////////////////////////////////////////////////////////////////
 
+  // unsafe implementation of TrustManager - considered to be in violation of the Device and Network Abuse policy
+
+ /*
   public static void disableSSLCertValidation() {
     // https://www.b4x.com/android/forum/threads/webview-certificate-lets-encrypt.64832/#post-410628
     javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[] {
@@ -103,14 +106,14 @@ public class commonUtil {
 
     // below is considered as violation of the Malicious Behavior policy
     // .. using an unsafe implementation of the HostnameVerifier interface.
-    /*
-      javax.net.ssl.HostnameVerifier allHostsValid = new javax.net.ssl.HostnameVerifier() {
-        public boolean verify(String hostname, javax.net.ssl.SSLSession session) { return true; }
-    };
-      // Install the all-trusting host verifier
-      javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid); 
-    */
+    //
+    //  javax.net.ssl.HostnameVerifier allHostsValid = new javax.net.ssl.HostnameVerifier() {
+    //    public boolean verify(String hostname, javax.net.ssl.SSLSession session) { return true; }
+    //};
+    //  // Install the all-trusting host verifier
+    //  javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid); 
   }
+ */
 
   //////////////////////////////////////////////////////////////////////
 
