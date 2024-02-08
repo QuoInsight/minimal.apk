@@ -107,6 +107,7 @@ public class myAudioService extends android.app.Service
     commonGui.cancelNotification(this, ntfnID);
     //commonGui.submitNotification(this, builder, ntfnID); // this will not show in lockscreen regardless of the options
     myAudioService.this.startForeground(ntfnID, builder.build()); // this shows in lockscreen correctly
+
   }
 
   //////////////////////////////////////////////////////////////////////
@@ -177,8 +178,12 @@ public class myAudioService extends android.app.Service
 
   //////////////////////////////////////////////////////////////////////
 
-  public void onTimeout(final long timeout) {
-if (true) return;
+  public void onTimeout(final int timeout) {
+    /*
+      !! Java integer literals default to int and not long !!
+      !! if it is declared as final long timeout, and not invoked with (long)1234
+      !! it will end up crashing with NoSuchMethodError !!
+    */
     try {
       if ( this.mTimeoutHandler != null ) {
         this.mTimeoutHandler.removeCallbacksAndMessages(null);
@@ -201,14 +206,12 @@ if (true) return;
   //////////////////////////////////////////////////////////////////////
 
   public void loadIcyMetaData() {
-if (true) return;
     try {
-      if ( myAudioService.this.mIcyMetaData.startsWith("ERROR: ICY metadata not supported") ) {
-        return;
-      }
-      myAsyncTask asyncTask = new myAsyncTask(myAudioService.this); 
-        asyncTask.setHandlers(new myAsyncTask.handlers() {
-          @Override public void onPostExecute(String returnVal) {
+      if ( myAudioService.this.mIcyMetaData!=null
+        && myAudioService.this.mIcyMetaData.startsWith("ERROR: ICY metadata not supported")
+      ) return;
+      myAsyncTask asyncTask = new myAsyncTask(this) {
+        @Override public void onComplete(String returnVal) {
             //myAudioService.this.writeMessage("getIcyMetaData", returnVal);
             if ( returnVal==null || returnVal.length()==0 ) {
               return; // skip
@@ -224,8 +227,8 @@ if (true) return;
               myAudioService.this.mIcyMetaData = returnVal;
               myAudioService.this.submitForegroundNotification(1001, myAudioService.this.mName, returnVal, myAudioService.this.mState);
             }
-          }
-        });
+        } // onComplete
+	  };
       asyncTask.execute("getIcyMetaData", myAudioService.this.mUrl2);
     } catch(Exception e) {
       commonGui.writeMessage(myAudioService.this, "myAudioService.loadIcyMetaData()", "ERROR: " + e.getMessage());
@@ -351,7 +354,6 @@ if (true) return;
 
       @Override public void onMetadata(androidx.media3.common.Metadata metaData) {
         String metaDataString = "";
-if (true) return;
 		try {
           for (int i=0; i<metaData.length(); i++) {
             // [PRIV: owner=com.apple.streaming.transportStreamTimestamp]
@@ -373,7 +375,8 @@ if (true) return;
             case androidx.media3.exoplayer.ExoPlayer.STATE_BUFFERING :
               myAudioService.this.mState = "BUFFERING";  break;
             case androidx.media3.exoplayer.ExoPlayer.STATE_READY :
-              myAudioService.this.mState = "READY";      break;
+              myAudioService.this.mState = "READY";
+              break;
             case androidx.media3.exoplayer.ExoPlayer.STATE_ENDED :
               myAudioService.this.mState = "ENDED";      break;
             default :
@@ -387,8 +390,8 @@ if (true) return;
           //String mDescr = myAudioService.this.exoPlayer.getMediaDescriptionAtQueuePosition(currWndIdx);
           //myAudioService.this.submitForegroundNotification(1001, mDescr, , "-"+myAudioService.this.mState+"-", myAudioService.this.mState);
 
-          if ( myAudioService.this.mState.equals("READY") ) {
-if (true) return; // crashed when continue with the below block
+          if ( myAudioService.this.mState!=null && myAudioService.this.mState.equals("READY") ) {
+//if (true) return; // crashed when continue with the below block, even those are dummy functions only !!
             myAudioService.this.loadIcyMetaData();
             myAudioService.this.onTimeout(6500);
           }
@@ -453,9 +456,8 @@ if (true) return;
 
     if ( commonUtil.isPlaylistUrl(url) ) {
       // !! must use AsyncTask in Android for any direct HTTP request, else it will throw exception errors !!
-      myAsyncTask asyncTask = new myAsyncTask(this); 
-        asyncTask.setHandlers(new myAsyncTask.handlers() {
-          @Override public void onPostExecute(String returnVal) {
+      myAsyncTask asyncTask = new myAsyncTask(this) {
+        @Override public void onComplete(String returnVal) {
             String url = returnVal;
             if ( !commonUtil.isPlaylistUrl(url) ) {
               myAudioService.this.exoPlayer = myAudioService.this.startExoPlayer(myAudioService.this.mName, url);
@@ -464,8 +466,8 @@ if (true) return;
             } else {
               myAudioService.this.writeMessage("Invalid m3u8", returnVal);
             }
-          }
-        });
+        } // onComplete
+	  };
       asyncTask.execute("getMediaUrl", url);
       return this.exoPlayer;
     }
