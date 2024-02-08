@@ -35,8 +35,8 @@ public class MainActivity extends android.app.Activity {
         streamUrls.put("NPR", "https://npr-ice.streamguys1.com/live.mp3");
         streamUrls.put("澳門", "http://live4.tdm.com.mo:1935/live/_definst_/rch2.live/playlist.m3u8");
         streamUrls.put("港台#1", "http://stm.rthk.hk:80/radio1");
-        streamUrls.put("AiFM", "http://22253.live.streamtheworld.com/988_FMAAC.aac");
-        streamUrls.put("988", "http://22253.live.streamtheworld.com/988_FMAAC.aac");
+        streamUrls.put("AiFM", "https://playerservices.streamtheworld.com/api/livestream-redirect/AI_FMAAC.aac");
+        streamUrls.put("988", "https://playerservices.streamtheworld.com/api/livestream-redirect/988_FMAAC.aac");
         streamUrls.put("Buddhist", "https://playerservices.streamtheworld.com/api/livestream-redirect/SAM11AAC025.mp3");
         streamUrls.put("良友", "https://ly729.out.airtime.pro/ly729_a");
         streamUrls.put("天主", "http://dreamsiteradiocp2.com:8038/;");
