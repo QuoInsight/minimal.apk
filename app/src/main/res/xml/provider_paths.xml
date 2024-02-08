@@ -4,4 +4,9 @@
   <external-path name="root"     path="/" />
   <cache-path    name="cache"    path="/" />
   <files-path    name="files"    path="/" />
+
+  <!--
+    https://github.com/RohitSurwase/UCE-Handler
+  -->
+  <external-path name="external_files" path="."/>
 </paths>
