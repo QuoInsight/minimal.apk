@@ -48,8 +48,10 @@ public class MainActivity extends android.app.Activity {
         streamUrls.put("birds", "http://strm112.1.fm/brazilianbirds_mobile_mp3");
       } else {
         for(String s : stationList.split("\\r?\\n")) {
-          String[] a = s.split("\\|");
-          if (a.length > 1) streamUrls.put(a[0], a[1]);
+          if (s.length() > 1 && !(s.startsWith(";")||s.startsWith("#"))) {
+            String[] a = s.split("\\|");
+            if (a.length > 1) streamUrls.put(a[0], a[1]);
+          }
         }
       }
     } catch(Exception e) {
