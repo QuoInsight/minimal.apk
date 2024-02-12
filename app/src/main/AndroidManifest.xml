@@ -76,7 +76,7 @@
 
   <uses-sdk tools:overrideLibrary="com.google.android.exoplayer2.ext.mediasession, com.quoinsight.lib"/>
 
-  <application android:label="QuoInsight?Minimal"
+  <application android:label="QuoInsight☸Minimal"
     tools:replace="android:icon" android:icon="@drawable/icon"
     android:usesCleartextTraffic="true"
 	android:name="myApp" _comment="myApp is optional and for debugging only"
@@ -103,26 +103,31 @@
       </intent-filter>
     </activity>
     <activity android:name="OtherActivity" android:launchMode="singleTop"
-       android:label="QuoInsight?Minimal.OtherActivity"
+       android:label="QuoInsight☸Minimal.OtherActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>
     <activity android:name="CalendarActivity" android:launchMode="singleTop"
-       android:label="QuoInsight?Minimal.CalendarActivity"
+       android:label="QuoInsight☸Minimal.CalendarActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>    <activity android:name="CompassActivity" android:launchMode="singleTop"
-       android:label="QuoInsight?Minimal.CompassActivity"
+       android:label="QuoInsight☸Minimal.CompassActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>
     <activity android:name="CompassCfgActivity" android:launchMode="singleTop"
-       android:label="QuoInsight?Minimal.CompassConfiguration"
+       android:label="QuoInsight☸Minimal.CompassConfiguration"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>
     <activity android:name="ListCfgActivity" android:launchMode="singleTop"
-       android:label="QuoInsight?Minimal.ListCfgActivity"
+       android:label="QuoInsight☸Minimal.ListCfgActivity"
+       android:exported="true"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="TestActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.TestActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>
@@ -130,10 +135,5 @@
       android:name="UCEDefaultActivity"
       android:process=":error_activity"
     />
-    <activity android:name="TestActivity" android:launchMode="singleTop"
-       android:label="QuoInsight☸Minimal.TestActivity"
-       android:exported="true"
-    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
-    </activity>
   </application>
 </manifest>
