@@ -130,5 +130,10 @@
       android:name="UCEDefaultActivity"
       android:process=":error_activity"
     />
+    <activity android:name="TestActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.TestActivity"
+       android:exported="true"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
   </application>
 </manifest>
