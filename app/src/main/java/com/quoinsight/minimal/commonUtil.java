@@ -268,10 +268,14 @@ public class commonUtil {
     return s_url.endsWith(s)||s_url.contains(s+"?");
   }
 
-  public static boolean isPlaylistUrl(String s_url) {
+  public static boolean isM3uHlsUrl(String s_url) {
     String url = s_url.trim().toLowerCase();
-    return urlEndsWith(url,".m3u")||urlEndsWith(url,".m3u8")
-      ||urlEndsWith(url,".pls")||urlEndsWith(url,"playlist.php");
+    return urlEndsWith(url,".m3u")||urlEndsWith(url,".m3u8");
+  }
+
+  public static boolean isOtherPlaylistUrl(String s_url) {
+    String url = s_url.trim().toLowerCase();
+    return urlEndsWith(url,".pls")||urlEndsWith(url,"playlist.php");
   }
 
  /*
@@ -386,7 +390,7 @@ public class commonUtil {
               } else {
                 url = getBaseUrl(s_url) + url;
               }
-              if ( isPlaylistUrl(thisLine) )
+              if ( isOtherPlaylistUrl(thisLine) )
                 url = getMediaUrl2(url);
               break;
             }
