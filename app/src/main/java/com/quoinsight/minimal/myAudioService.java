@@ -117,8 +117,17 @@ public class myAudioService extends android.app.Service
   public androidx.media3.exoplayer.source.MediaSource getExoMediaSource(android.net.Uri audioUri) {
     // androidx.media3.exoplayer.source.MediaSource exoMediaSource = null;
     androidx.media3.datasource.DataSource.Factory dataSourceFactory = null;
+
+    String uriPath = audioUri.getPath().toLowerCase();;
+    if ( uriPath.endsWith(".m3u")||uriPath.endsWith(".m3u8") ) {
+      dataSourceFactory = new androidx.media3.datasource.DefaultDataSource.Factory(this);
+      return new androidx.media3.exoplayer.hls.HlsMediaSource.Factory(dataSourceFactory).createMediaSource(
+        androidx.media3.common.MediaItem.fromUri(audioUri)
+      );
+    }
+
     String uriScheme = audioUri.getScheme();
-    if ( uriScheme.equals("http") || uriScheme.equals("https") ) {
+	if ( uriScheme.equals("http") || uriScheme.equals("https") ) {
       dataSourceFactory = new androidx.media3.datasource.DefaultHttpDataSource.Factory();
       //  "QuoInsight/1.0", null, 3000, 5000, true // allowCrossProtocolRedirects=true support https://stream.rcs.revma.com/55tyxsy4qtzuv?1589079394
     } else if ( uriScheme.equals("file") || uriScheme.equals("content") ) {
@@ -160,7 +169,7 @@ public class myAudioService extends android.app.Service
 
   public String concatExoPlayerNextMediaSource() {
     String stateInf = "";
-    if ( commonUtil.isPlaylistUrl(myAudioService.this.mUrl) && !commonUtil.isPlaylistUrl(myAudioService.this.mUrl2) ) {
+    if ( commonUtil.isOtherPlaylistUrl(myAudioService.this.mUrl) && !commonUtil.isOtherPlaylistUrl(myAudioService.this.mUrl2) ) {
       // just add next track here
       stateInf += ":mUrl2=" + myAudioService.this.mUrl2;
       String nextUrl = commonUtil.getNextUrl(myAudioService.this.mUrl2);
@@ -273,7 +282,7 @@ if (true) return;
 
           if ( myAudioService.this.mWndIdx!=currWndIdx ) {
             myAudioService.this.mWndIdx = currWndIdx;
-            if ( commonUtil.isPlaylistUrl(myAudioService.this.mUrl) && !commonUtil.isPlaylistUrl(myAudioService.this.mUrl2) ) {
+            if ( commonUtil.isOtherPlaylistUrl(myAudioService.this.mUrl) && !commonUtil.isOtherPlaylistUrl(myAudioService.this.mUrl2) ) {
               String concatInf = myAudioService.this.concatExoPlayerNextMediaSource(); // just add next track here
               // stateInf += "; " + concatInf;
             }
@@ -456,12 +465,12 @@ if (true) return;
       this.mTimeoutHandler.removeCallbacksAndMessages(null);
     }
 
-    if ( commonUtil.isPlaylistUrl(url) ) {
+    if ( commonUtil.isOtherPlaylistUrl(url) ) {
       // !! must use AsyncTask in Android for any direct HTTP request, else it will throw exception errors !!
       myAsyncTask asyncTask = new myAsyncTask(this) {
         @Override public void onComplete(String returnVal) {
             String url = returnVal;
-            if ( !commonUtil.isPlaylistUrl(url) ) {
+            if ( !commonUtil.isOtherPlaylistUrl(url) ) {
               myAudioService.this.exoPlayer = myAudioService.this.startExoPlayer(myAudioService.this.mName, url);
               String stateInf = myAudioService.this.concatExoPlayerNextMediaSource();
               // myAudioService.this.writeMessage("concatExoPlayerNextMediaSource", stateInf);
