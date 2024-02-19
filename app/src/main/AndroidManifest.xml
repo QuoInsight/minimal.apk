@@ -72,7 +72,7 @@
   <permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
 
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><!--do not mix this with ACCESS_FINE_LOCATION, no need to add permission.INTERNET explicitly-->
-  <!--uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><!-x-must have this to enable LocationManager.GPS_PROVIDER-->
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><!--must have this to enable LocationManager.GPS_PROVIDER-->
 
   <uses-sdk tools:overrideLibrary="com.google.android.exoplayer2.ext.mediasession, com.quoinsight.lib"/>
 
@@ -111,7 +111,8 @@
        android:label="QuoInsight☸Minimal.CalendarActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
-    </activity>    <activity android:name="CompassActivity" android:launchMode="singleTop"
+    </activity>
+    <activity android:name="CompassActivity" android:launchMode="singleTop"
        android:label="QuoInsight☸Minimal.CompassActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
@@ -123,6 +124,11 @@
     </activity>
     <activity android:name="ListCfgActivity" android:launchMode="singleTop"
        android:label="QuoInsight☸Minimal.ListCfgActivity"
+       android:exported="true"
+    ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+    </activity>
+    <activity android:name="GeolocActivity" android:launchMode="singleTop"
+       android:label="QuoInsight☸Minimal.GeolocActivity"
        android:exported="true"
     ><intent-filter><category android:name="android.intent.category.DEFAULT" /></intent-filter>
     </activity>
