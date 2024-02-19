@@ -6,15 +6,19 @@ android {
   namespace 'com.quoinsight.minimal'
   compileSdk 34
   defaultConfig {
-      minSdkVersion 26      // Both new apps and app updates must target at least Android 9  & API level 28
-      targetSdkVersion 34  // Change your app's target API level to at least 28
-      versionCode 1902     // A positive integer used as an internal version number
-      versionName "2.00"
+    minSdkVersion 26      // Both new apps and app updates must target at least Android 9  & API level 28
+    targetSdkVersion 34  // Change your app's target API level to at least 28
+    versionCode 1902     // A positive integer used as an internal version number
+    versionName "2.00"
+    buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
   }
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8 // needed by exoplayer
 	//coreLibraryDesugaringEnabled true
+  }
+  buildFeatures {
+    buildConfig true
   }
   lint {
     baseline = file("lint-baseline.xml")
@@ -43,5 +47,7 @@ dependencies {
 
   //coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.5'
   implementation "androidx.work:work-runtime:2.7.1"
-}
 
+  // https://github.com/RohitSurwase/UCE-Handler
+  //implementation 'com.github.RohitSurwase.UCE-Handler:uce_handler:1.4'
+}
