@@ -30,6 +30,20 @@ public class sysUtil {
 
   //////////////////////////////////////////////////////////////////////
 
+  static final public boolean copyText2Clipboard(android.content.Context parentContext, String txt) {
+    try { // cpTxtClpbrd
+      android.content.ClipboardManager clipboard
+        = (android.content.ClipboardManager) parentContext.getSystemService(android.content.Context.CLIPBOARD_SERVICE); 
+      clipboard.setPrimaryClip(android.content.ClipData.newPlainText("newPlainText", txt));
+    } catch(Exception e) {
+      commonGui.writeMessage(parentContext, "sysUtil.copyText2Clipboard", e.getMessage());
+      return false;
+    }
+    return true;
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
   static final public void shareText(android.content.Context parentContext, String txt) {
     try {
       android.content.Intent intent = new android.content.Intent();
@@ -202,12 +216,21 @@ public class sysUtil {
 
   //////////////////////////////////////////////////////////////////////
 
-  static final public java.util.List<String> getPackageList(android.content.Context parentContext) {
+  static final public java.util.List<String> getPackageList(android.app.Activity parentActivity) {
     // https://devofandroid.blogspot.com/2018/02/get-list-of-user-installed-apps-with.html
+
+    // https://proandroiddev.com/how-to-get-users-installed-apps-in-android-11-b4a4d2754286
+    // <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+
+    android.content.Context parentContext = (android.content.Context) parentActivity;
     android.content.pm.PackageManager pkgMgr = parentContext.getPackageManager();
     java.util.List<String> pkgLst = new java.util.ArrayList<String>();
+
+/*
+	boolean permissionGranted = sysUtil.getPermission(parentActivity, android.Manifest.permission.QUERY_ALL_PACKAGES);
     for (android.content.pm.ApplicationInfo appInfo
       : pkgMgr.getInstalledApplications(android.content.pm.PackageManager.GET_META_DATA)
+	  // this will require QUERY_ALL_PACKAGES permission and will get all apps including system apps-with
     ) {
       String pkgName = appInfo.packageName;
       if ( pkgName.startsWith("com.coloros.")||pkgName.startsWith("com.oppo.") ) {
@@ -222,6 +245,20 @@ public class sysUtil {
       //Log.d(TAG, "Source dir : " + appInfo.sourceDir);
       //Log.d(TAG, "Launch Activity :" + pm.getLaunchIntentForPackage(appInfo.packageName)); 
     }
+*/
+    // below filters and excludes apps that do not contain the main activity, i.e. not a user-facing apps
+    android.content.Intent mainIntent = new android.content.Intent(android.content.Intent.ACTION_MAIN, null);
+	  mainIntent.addCategory(android.content.Intent.CATEGORY_LAUNCHER);
+    for (android.content.pm.ResolveInfo rInfo
+      : pkgMgr.queryIntentActivities(mainIntent, android.content.pm.PackageManager.ResolveInfoFlags.of(0L))
+    ) {
+      //android.content.pm.ActivityInfo actvtyInf = rslvInf.activityInfo;
+	  android.content.pm.ApplicationInfo appInfo = rInfo.activityInfo.applicationInfo;
+      String pkgName = appInfo.packageName; // rInfo.activityInfo.packageName;
+      String appName = appInfo.loadLabel(pkgMgr).toString().trim(); // resources.getString(rInfo.activityInfo.labelRes)
+      pkgLst.add( appName + " [" + pkgName + "]" );
+    }
+
     java.util.Collections.sort(pkgLst, String.CASE_INSENSITIVE_ORDER);  // java.util.Collections.reverseOrder()
     return pkgLst;
   }
@@ -351,6 +388,11 @@ public class sysUtil {
       }
      */
 
+      boolean permissionGranted = sysUtil.getPermission(MainActivity.getInstance(),
+        (prvdr!=null && prvdr==android.location.LocationManager.GPS_PROVIDER) ?
+          android.Manifest.permission.ACCESS_COARSE_LOCATION : android.Manifest.permission.ACCESS_FINE_LOCATION
+      );
+
       // https://github.com/MiCode/Compass/blob/master/src/net/micode/compass/CompassActivity.java
       android.location.LocationManager locMgr
         = (android.location.LocationManager) parentContext.getSystemService(parentContext.LOCATION_SERVICE);
@@ -361,7 +403,7 @@ public class sysUtil {
         criteria.setCostAllowed(false);
         criteria.setBearingRequired(false);
         criteria.setAltitudeRequired(false);
-        // LocationProvider provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
+        // android.location.LocationProvider provider = locMgr.getProvider(android.location.LocationManager.GPS_PROVIDER);
         prvdr = locMgr.getBestProvider(criteria, true); // "network" | "gps"
         commonGui.writeMessage(parentContext, "sysUtil.getBestProvider", prvdr);
       }
@@ -370,6 +412,24 @@ public class sysUtil {
       commonGui.writeMessage(parentContext, "sysUtil.getLastKnownLocation", e.getMessage());
       return (android.location.Location)null;
     }
+  }
+
+  static final public android.location.LocationManager getLatestGpsLocation(
+    android.app.Activity parentActivity, android.location.LocationListener locListener
+  ) {
+    boolean permissionGranted = sysUtil.getPermission(parentActivity, android.Manifest.permission.ACCESS_FINE_LOCATION);
+    if (! permissionGranted) {
+      //commonGui.msgBox(parentActivity, "getLatestGpsLocation", "permission not granted");
+      return (android.location.LocationManager)null;
+    }
+	android.content.Context parentContext = parentActivity.getApplicationContext();
+	android.location.LocationManager locMgr = (android.location.LocationManager) parentContext.getSystemService(parentContext.LOCATION_SERVICE);
+    locMgr.requestLocationUpdates(
+      android.location.LocationManager.GPS_PROVIDER,
+      1000, 0, // minTimeMs, minDistanceM
+      locListener
+    );
+	return locMgr;
   }
 
   //////////////////////////////////////////////////////////////////////
