@@ -19,6 +19,70 @@ public class commonGui {
     alrt.setTitle(title).setMessage(msg).setCancelable(false).setPositiveButton("OK", null).show();
   }
 
+  static final public void showAboutBox(android.content.Context parentContext) {
+    // Help-About "GUI Application About Box"
+    android.content.pm.PackageManager pkgMgr = parentContext.getPackageManager();
+	android.content.pm.ApplicationInfo appInfo = null;
+    String appLabel = "";
+	String apkTimestamp = "";
+    try {
+      // appInfo = parentContext.getApplicationInfo();
+      appInfo = pkgMgr.getApplicationInfo(parentContext.getPackageName(), 0);
+      appLabel = pkgMgr.getApplicationLabel(appInfo).toString();
+      if ( appLabel == null || appLabel == "null" || appLabel == "" ) {
+        int stringId = appInfo.labelRes;
+        appLabel = (stringId == 0) ? appInfo.nonLocalizedLabel.toString() : parentContext.getString(stringId);
+      }
+
+      // https://stackoverflow.com/questions/7607165/how-to-write-build-time-stamp-into-apk
+      java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+      apkTimestamp =  simpleDateFormat.format(new java.util.Date(com.quoinsight.minimal.BuildConfig.TIMESTAMP));
+
+      //java.util.zip.ZipFile f = java.util.zip.ZipFile(appInfo.sourceDir);
+      //java.util.zip.ZipEntry classesDex = f.getEntry("classes.dex");  // this is always 347131862000 == 1981-01-01 01:01:01 in latest Android/gradle !!
+      //apkTimestamp = java.text.SimpleDateFormat.getInstance().format(new java.util.Date(classesDex.getTime()));
+	  //f.close()
+	  /*
+	  java.util.zip.ZipInputStream zi = new java.util.zip.ZipInputStream(new java.io.FileInputStream(appInfo.sourceDir));
+	  java.util.zip.ZipEntry ze = null;  long t = 0; 
+      while ((ze = zi.getNextEntry()) != null) {
+		t = ze.getTime(); if ( t > (long)347131862000L ) { // ze.getName().endsWith("MANIFEST.MF")
+          java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+          apkTimestamp =  "[" + ze.getName() + "] " + simpleDateFormat.format(new java.util.Date(t));
+		  break;
+        }
+      }
+	  zi.close();
+	  */
+    } catch (Exception e) {}
+
+    android.app.AlertDialog.Builder alrt = new android.app.AlertDialog.Builder(parentContext);
+    alrt.setTitle("About " + appLabel).setMessage(android.text.Html.fromHtml(
+      appLabel + " " + com.quoinsight.minimal.BuildConfig.VERSION_NAME
+      + " (" + com.quoinsight.minimal.BuildConfig.VERSION_CODE + ")<br>\n"
+	  + "APK Built: " + apkTimestamp + "<br>\n"
+	  + "Current Time: " + commonUtil.getDateStr("yyyy-MM-dd HH:mm:ss") + "<br><br>\n\n"
+	  + "Open Application Home Page?"
+	)).setCancelable(false).setPositiveButton("OK", new android.content.DialogInterface.OnClickListener(){
+      public void onClick(android.content.DialogInterface dialog, int id) {
+        sysUtil.launchUrl(parentContext, "https://sites.google.com/site/quoinsight/home/minimal-apk");
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public static android.widget.ScrollView.LayoutParams newScrollViewParams(int width, int height) {
+    // android.widget.LinearLayout.ScrollView.MATCH_PARENT == -1
+    // android.widget.LinearLayout.ScrollView.WRAP_PARENT == -2
+    return new android.widget.ScrollView.LayoutParams(width, height);
+  }
+
+  public static android.widget.LinearLayout.LayoutParams newLinearLayoutParams(int width, int height) {
+    // android.widget.LinearLayout.LinearLayout.MATCH_PARENT == -1
+    // android.widget.LinearLayout.LinearLayout.WRAP_PARENT == -2
+    return new android.widget.LinearLayout.LayoutParams(width, height);
+  }
   //////////////////////////////////////////////////////////////////////
 
   // commonGui.createNotificationChannel(MainActivity.this, "QuoInsight", "QuoInsight", "QuoInsight.Minimal");
@@ -177,6 +241,18 @@ public class commonGui {
     canvas.drawBitmap(bmp, 0/*left*/, 0/*top*/, null);
     //img.invalidate(); img.draw(canvas); // this does not seem to change img
     img.setImageBitmap(bmp1); // this works correctly, and capture the changes
+  }
+
+  //////////////////////////////////////////////////////////////////////
+
+  public static boolean rotateImg(android.widget.ImageView img, float deg) {
+    try {
+      img.setVisibility(android.view.View.GONE);  img.requestLayout(); // redraw
+      img.setRotation(deg);  // img.setRotationX(360-(float)Math.toDegrees(orientationData[1]));  img.setRotationY(360-(float)Math.toDegrees(orientationData[2]));
+      img.setVisibility(android.view.View.VISIBLE);  img.requestLayout(); // redraw
+      return true;
+    } catch (Exception e) {}
+    return false;
   }
 
   //////////////////////////////////////////////////////////////////////
