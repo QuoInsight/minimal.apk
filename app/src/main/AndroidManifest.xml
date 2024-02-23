@@ -74,6 +74,12 @@
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/><!--do not mix this with ACCESS_FINE_LOCATION, no need to add permission.INTERNET explicitly-->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/><!--must have this to enable LocationManager.GPS_PROVIDER-->
 
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+
+  <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+  <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+  <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
+
   <uses-sdk tools:overrideLibrary="com.google.android.exoplayer2.ext.mediasession, com.quoinsight.lib"/>
 
   <application android:label="QuoInsight☸Minimal"
